@@ -9,43 +9,117 @@
 ## READ: Bedah Instalasi Laravel 12
 
 ### Analisis Berkas `public/index.php`
-1. Berkas `public/index.php` berfungsi sebagai satu-satunya pintu masuk utama bagi seluruh HTTP request yang diarahkan oleh web server menuju aplikasi Laravel.
-2. Di dalamnya dilakukan pengecekan status pemeliharaan serta registrasi autoloader Composer (`vendor/autoload.php`) agar seluruh dependensi dan class dapat dimuat secara otomatis.
-3. Berkas ini menginisialisasi instance aplikasi melalui `bootstrap/app.php` dan mengeksekusi method `handleRequest()` dengan menangkap request pengguna (`Request::capture()`) untuk menghasilkan HTTP response kembali ke browser.
+
+```php
+<?php
+error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
+use Illuminate\Foundation\Application;
+use Illuminate\Http\Request;
+
+define('LARAVEL_START', microtime(true));
+
+// Determine if the application is in maintenance mode...
+if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
+    require $maintenance;
+}
+
+// Register the Composer autoloader...
+require __DIR__.'/../vendor/autoload.php';
+
+// Bootstrap Laravel and handle the request...
+/** @var Application $app */
+$app = require_once __DIR__.'/../bootstrap/app.php';
+
+$app->handleRequest(Request::capture());
+```
+
+Berkas ini adalah **satu-satunya pintu masuk** bagi seluruh HTTP request. Web server (Apache/Nginx/Laragon) diarahkan agar semua URL mengarah ke berkas ini. Berikut alurnya baris per baris:
+
+| Baris | Kode | Fungsi |
+|-------|------|--------|
+| 2 | `error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED)` | Mengatur level pelaporan error PHP: tampilkan semua jenis error kecuali notice dan deprecated agar log tidak banjir pesan sepele. |
+| 3-4 | `use Illuminate\Foundation\Application` dan `use Illuminate\Http\Request` | Mendaftarkan alias class agar tidak perlu menulis namespace lengkap setiap kali dipakai. |
+| 6 | `define('LARAVEL_START', microtime(true))` | Mencatat timestamp awal dalam bentuk floating-point detik. Nilai ini dipakai framework untuk menghitung berapa lama total waktu pemrosesan sebuah request. |
+| 9-11 | `if (file_exists($maintenance ...)) { require $maintenance; }` | Memeriksa apakah ada berkas `storage/framework/maintenance.php`. Berkas ini dibuat oleh perintah `php artisan down`. Bila ada, Laravel langsung merespons dengan halaman "sedang pemeliharaan" dan menghentikan eksekusi — kode di bawahnya tidak dijalankan sama sekali. |
+| 14 | `require __DIR__.'/../vendor/autoload.php'` | Memuat **autoloader Composer**. Setelah baris ini, seluruh class dari package yang terinstal (termasuk framework Laravel sendiri) dapat dipakai tanpa perlu `require` satu per satu. |
+| 18 | `$app = require_once __DIR__.'/../bootstrap/app.php'` | Menjalankan `bootstrap/app.php` yang membangun dan mengonfigurasi instance aplikasi Laravel. Hasilnya disimpan ke variabel `$app`. |
+| 20 | `$app->handleRequest(Request::capture())` | `Request::capture()` membungkus seluruh data request yang masuk (URL, method, header, body, cookie) menjadi satu objek `Request`. Objek ini kemudian diserahkan ke `handleRequest()` yang menjalankan seluruh pipeline Laravel: middleware → routing → controller → response → kirim ke browser. |
 
 ---
 
 ### Analisis Berkas `bootstrap/app.php`
-Di Laravel 12, `bootstrap/app.php` merupakan pusat konfigurasi utama yang menggantikan peran `Kernel.php` pada versi Laravel sebelumnya.
-* **Routing (`->withRouting(...)`):** Mendaftarkan lokasi berkas routing web (`routes/web.php`), console command (`routes/console.php`), dan rute pemantau status kesehatan aplikasi (`health: '/up'`).
-* **Middleware (`->withMiddleware(...)`):** Titik konfigurasi untuk mendaftarkan middleware global, grup middleware, atau alias middleware.
-* **Exceptions (`->withExceptions(...)`):** Titik penanganan exception dan kustomisasi pelaporan error aplikasi.
+
+```php
+<?php
+
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Configuration\Middleware;
+
+return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(
+        web: __DIR__.'/../routes/web.php',
+        commands: __DIR__.'/../routes/console.php',
+        health: '/up',
+    )
+    ->withMiddleware(function (Middleware $middleware) {
+        //
+    })
+    ->withExceptions(function (Exceptions $exceptions) {
+        //
+    })->create();
+```
+
+Di Laravel 12, berkas ini adalah **pusat konfigurasi utama** — pengganti peran `app/Http/Kernel.php` yang ada di Laravel versi lama. Berikut alurnya baris per baris:
+
+| Baris | Kode | Fungsi |
+|-------|------|--------|
+| 3–5 | `use Illuminate\Foundation\Application` dst. | Mendaftarkan alias untuk tiga class utama yang dibutuhkan berkas ini. |
+| 7 | `Application::configure(basePath: dirname(__DIR__))` | Membuat *builder* konfigurasi aplikasi baru. Parameter `basePath` memberi tahu Laravel di mana root proyek berada (`dirname(__DIR__)` berarti satu folder di atas `bootstrap/`, yaitu folder `kampuslms/`). |
+| 8–12 | `->withRouting(...)` | Mendaftarkan tiga hal: `web:` menunjuk berkas `routes/web.php` sebagai daftar URL halaman web; `commands:` menunjuk `routes/console.php` untuk Artisan command; `health: '/up'` mendaftarkan rute `/up` secara otomatis sebagai endpoint pengecekan status aplikasi. |
+| 13–15 | `->withMiddleware(function (...) {})` | Titik untuk mendaftarkan middleware global, grup middleware, atau alias. Karena isinya kosong, Laravel memakai susunan middleware bawaan framework. |
+| 16–18 | `->withExceptions(function (...) {})->create()` | Titik untuk mengustomisasi cara Laravel menangani dan melaporkan exception. `->create()` mengakhiri proses konfigurasi dan membangun instance `Application` yang siap dipakai — inilah objek `$app` yang dikembalikan ke `public/index.php`. |
 
 ---
 
 ### Analisis `routes/web.php`
-* **Route Default Awal:**
-  Route awal yang menghasilkan halaman selamat datang bawaan Laravel:
-  ```php
-  Route::get('/', function () {
-      return view('welcome');
-  });
-  ```
-  **Tampilan Awal di Browser:**
-  ![Tampilan Awal Laravel Welcome](img/minggu-01-rifarizqul-welcome-default.png)
+
+```php
+<?php
+
+use Illuminate\Support\Facades\Route;
+
+Route::get('/', function () {
+    return view('welcome');
+});
+
+Route::get('/tentang', function () {
+    return view('tentang');
+});
+```
+
+Berkas ini adalah **daftar semua URL** yang dikenali aplikasi beserta tindakan yang harus diambil. Berikut alurnya baris per baris:
+
+| Baris | Kode | Fungsi |
+|-------|------|--------|
+| 3 | `use Illuminate\Support\Facades\Route` | Mengimpor facade `Route` agar bisa dipanggil dengan singkat `Route::get(...)` daripada menulis namespace penuh. |
+| 5–7 | `Route::get('/', function () { return view('welcome'); })` | Mendaftarkan rute untuk URL `/` (halaman root). Saat browser membuka `/`, Laravel menjalankan closure ini dan mengembalikan tampilan dari berkas `resources/views/welcome.blade.php`. |
+| 9–11 | `Route::get('/tentang', function () { return view('tentang'); })` | Mendaftarkan rute untuk URL `/tentang`. Saat browser membuka `/tentang`, Laravel mengembalikan tampilan dari berkas `resources/views/tentang.blade.php`. |
 
 * **Uji Perubahan Response Route:**
-  Mencoba mengubah response route langsung menjadi string teks:
+  Mencoba mengubah response route `/` langsung menjadi string teks:
   ```php
   Route::get('/', function () {
       return 'HALO NAMA KU RIFA';
   });
   ```
+  **Tampilan Awal di Browser (sebelum diubah):**
+  ![Tampilan Awal Laravel Welcome](img/minggu-01-rifarizqul-welcome-default.png)
+
   **Tampilan Setelah Diubah & Di-refresh:**
   ![Tampilan Setelah Route Diubah](img/minggu-01-rifarizqul-route-diubah.png)
 
-* **Kesimpulan Uji Perubahan:**
-  Ketika kode di dalam `routes/web.php` diubah, browser langsung memuat respon baru secara instan saat halaman di-*refresh*. Hal ini membuktikan bahwa alur request dari browser ke URL `/` sepenuhnya dikontrol dan ditangani oleh rute tersebut.
+* **Kesimpulan:** Browser langsung memuat respons baru saat halaman di-*refresh*, membuktikan bahwa alur request dari browser ke URL `/` sepenuhnya dikontrol oleh definisi rute di berkas ini — tanpa perlu restart server.
 
 ---
 
@@ -53,32 +127,22 @@ Di Laravel 12, `bootstrap/app.php` merupakan pusat konfigurasi utama yang mengga
 
 Keluaran terminal saat menjalankan perintah `php artisan route:list`:
 
-```text
-  GET|HEAD  / ....................................................................................... routes/web.php:5
-  GET|HEAD  storage/{path} storage.local › vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider...
-  PUT       storage/{path} storage.local.upload › vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemService...
-  GET|HEAD  up ........... vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php:219
+![Hasil php artisan route:list](img/minggu-01-rifarizqul-route-list.png)
 
-                                                                                                    Showing [4] routes
-```
-
-**Pencocokan dengan berkas proyek:**
-* **`GET|HEAD /`** $\rightarrow$ Didefinisikan secara manual pada berkas `routes/web.php` baris ke-5 yang mengarahkan request root ke view `welcome`.
-* **`GET|HEAD up`** $\rightarrow$ Rute health check otomatis yang didaftarkan pada berkas `bootstrap/app.php` (`health: '/up'`).
-* **`GET|HEAD storage/{path}` & `PUT storage/{path}`** $\rightarrow$ Rute bawaan framework (`FilesystemServiceProvider`) untuk mengelola akses berkas storage lokal.
+**Pencocokan dengan isi `routes/web.php`:**
+* **`GET|HEAD /`** $\rightarrow$ Didefinisikan pada `routes/web.php` (baris ke-5) untuk menangani request root menuju halaman welcome.
+* **`GET|HEAD tentang`** $\rightarrow$ Didefinisikan pada `routes/web.php` (baris ke-9) untuk menangani request menuju rute `/tentang`.
 
 ---
 
 ## BREAK: Eksperimen Penanganan Error
 
-| # | Skenario yang Dirusak | Prediksi Anda sebelum mencoba | Pesan Error Sebenarnya | Catatan & Analisis |
-|---|-----------------------|-------------------------------|------------------------|-------------------|
-| 1 | Ganti nama `.env` menjadi `.env.bak` | Server mendeteksi hilangnya berkas konfigurasi lokal dan server otomatis terhenti atau error. | ![Error rename .env](img/minggu-01-rifarizqul-break-env-error.png) | `php artisan serve` secara aktif memantau perubahan waktu modifikasi (`filemtime`) berkas `.env` untuk fitur *auto-reload*. Saat nama berkas diubah menjadi `.env.bak`, proses *watcher* gagal menemukan berkas dan server otomatis *crash* (`php artisan serve exited with code 1`). |
-| 2 | Kosongkan nilai `APP_KEY` di `.env` | Aplikasi menolak memproses enkripsi session/cookie dan memunculkan exception fatal. | ![Error kosongkan APP_KEY](img/minggu-01-rifarizqul-break-appkey-error.png) | `Illuminate\Encryption\MissingAppKeyException: No application encryption key has been specified.`<br>`APP_KEY` dibutuhkan oleh modul enkripsi Laravel untuk mengamankan data session, cookie, dan payload. Tanpa key, framework menolak memproses request demi keamanan. |
-| 3 | Ubah `DB_DATABASE` / `DB_CONNECTION` ke nama yang tidak ada | Koneksi ke database gagal saat query/migrasi dijalankan dan menampilkan pesan exception. | **Di Terminal (`php artisan migrate:status`):**<br>![Error DB Terminal](img/minggu-01-rifarizqul-break-db-terminal.png)<br><br>**Di Browser (`APP_DEBUG=true`):**<br>![Error DB Browser](img/minggu-01-rifarizqul-break-db-browser.png) | `InvalidArgumentException: Database connection [tes_database] not configured.`<br>Konfigurasi koneksi tidak ditemukan di `config/database.php`. Pada mode debug aktif (`APP_DEBUG=true`), Laravel menampilkan layar merah *Ignition* lengkap dengan jejak eksekusi kode. |
-| 4 | Ubah `APP_DEBUG=false`, lalu ulangi nomor 3 | Halaman web hanya menampilkan pesan error umum 500 tanpa memperlihatkan detail kode. | ![Error 500 Server Error](img/minggu-01-rifarizqul-break-debug-false-500.png) | **Tampilan Browser:** `500 \| SERVER ERROR`<br>Saat mode debug dinonaktifkan (`APP_DEBUG=false`), Laravel menyembunyikan seluruh pesan error mentah dan *stack trace*, lalu menggantinya dengan halaman HTTP 500 generik untuk mencegah kebocoran informasi sensitif di lingkungan produksi. |
-
-> **Catatan Pengujian 3 & 4:** Karena halaman bawaan `welcome` tidak memanggil database (*lazy database connection*), `routes/web.php` diubah sementara dari `return view('welcome')` menjadi `return DB::select('SELECT 1')` untuk memicu koneksi database di browser dan mengamati langsung perbedaan respon `APP_DEBUG=true` (layar debug) dengan `APP_DEBUG=false` (layar 500).
+| # | Yang Dirusak | Prediksi Anda sebelum mencoba | Pesan Error Sebenarnya |
+|---|--------------|-------------------------------|------------------------|
+| 1 | Ganti nama `.env` menjadi `.env.bak` | Server mendeteksi hilangnya berkas konfigurasi lokal dan server otomatis terhenti atau error. | ![Error rename .env](img/minggu-01-rifarizqul-break-env-error.png)<br>`php artisan serve exited with code 1` |
+| 2 | Kosongkan nilai `APP_KEY` di `.env` | Aplikasi menolak memproses enkripsi session/cookie dan memunculkan exception fatal. | ![Error kosongkan APP_KEY](img/minggu-01-rifarizqul-break-appkey-error.png)<br>`Illuminate\Encryption\MissingAppKeyException: No application encryption key has been specified.` |
+| 3 | Ubah `DB_DATABASE` / `DB_CONNECTION` ke nama yang tidak ada | Koneksi ke database gagal saat query/migrasi dijalankan dan menampilkan pesan exception. | **Di Terminal (`php artisan migrate:status`):**<br>![Error DB Terminal](img/minggu-01-rifarizqul-break-db-terminal.png)<br><br>**Di Browser (`APP_DEBUG=true`):**<br>![Error DB Browser](img/minggu-01-rifarizqul-break-db-browser.png)<br>`InvalidArgumentException: Database connection [tes_database] not configured.` |
+| 4 | Ubah `APP_DEBUG=false`, lalu ulangi nomor 3 | Halaman web hanya menampilkan pesan error umum 500 tanpa memperlihatkan detail kode. | ![Error 500 Server Error](img/minggu-01-rifarizqul-break-debug-false-500.png)<br>`500 \| SERVER ERROR` |
 
 ---
 

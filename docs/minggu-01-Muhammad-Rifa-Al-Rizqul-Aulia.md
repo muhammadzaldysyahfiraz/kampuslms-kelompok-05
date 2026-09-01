@@ -1,12 +1,11 @@
 # Catatan Praktikum Minggu 1
 
-**Mata Kuliah:** Pemrograman Web 
-**Nama:** Muhammad Rifa Al Rizqul Aulia
+**Nama:** Muhammad Rifa Al Rizqul Aulia  
 **NIM:** 10241050
 
 ---
 
-## READ: Bedah Instalasi Laravel 12
+## READ
 
 ### Analisis Berkas `public/index.php`
 
@@ -33,17 +32,7 @@ $app = require_once __DIR__.'/../bootstrap/app.php';
 $app->handleRequest(Request::capture());
 ```
 
-Berkas ini adalah **satu-satunya pintu masuk** bagi seluruh HTTP request. Web server (Apache/Nginx/Laragon) diarahkan agar semua URL mengarah ke berkas ini. Berikut alurnya baris per baris:
-
-| Baris | Kode | Fungsi |
-|-------|------|--------|
-| 2 | `error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED)` | Mengatur level pelaporan error PHP: tampilkan semua jenis error kecuali notice dan deprecated agar log tidak banjir pesan sepele. |
-| 3-4 | `use Illuminate\Foundation\Application` dan `use Illuminate\Http\Request` | Mendaftarkan alias class agar tidak perlu menulis namespace lengkap setiap kali dipakai. |
-| 6 | `define('LARAVEL_START', microtime(true))` | Mencatat timestamp awal dalam bentuk floating-point detik. Nilai ini dipakai framework untuk menghitung berapa lama total waktu pemrosesan sebuah request. |
-| 9-11 | `if (file_exists($maintenance ...)) { require $maintenance; }` | Memeriksa apakah ada berkas `storage/framework/maintenance.php`. Berkas ini dibuat oleh perintah `php artisan down`. Bila ada, Laravel langsung merespons dengan halaman "sedang pemeliharaan" dan menghentikan eksekusi — kode di bawahnya tidak dijalankan sama sekali. |
-| 14 | `require __DIR__.'/../vendor/autoload.php'` | Memuat **autoloader Composer**. Setelah baris ini, seluruh class dari package yang terinstal (termasuk framework Laravel sendiri) dapat dipakai tanpa perlu `require` satu per satu. |
-| 18 | `$app = require_once __DIR__.'/../bootstrap/app.php'` | Menjalankan `bootstrap/app.php` yang membangun dan mengonfigurasi instance aplikasi Laravel. Hasilnya disimpan ke variabel `$app`. |
-| 20 | `$app->handleRequest(Request::capture())` | `Request::capture()` membungkus seluruh data request yang masuk (URL, method, header, body, cookie) menjadi satu objek `Request`. Objek ini kemudian diserahkan ke `handleRequest()` yang menjalankan seluruh pipeline Laravel: middleware → routing → controller → response → kirim ke browser. |
+Berkas ini adalah satu-satunya pintu masuk seluruh HTTP request. Web server diarahkan agar semua URL menuju berkas ini, lalu ia mencatat waktu mulai request, memeriksa mode pemeliharaan, dan memuat autoloader Composer agar seluruh kelas package tersedia. Selanjutnya, `bootstrap/app.php` dijalankan untuk membangun instance aplikasi Laravel beserta konfigurasi routing, middleware, dan exception handler. Terakhir, `$app->handleRequest(Request::capture())` menangkap semua data request masuk (URL, method, header, body) lalu memprosesnya melalui Laravel hingga menghasilkan HTTP response yang dikirim balik ke browser.
 
 ---
 
@@ -98,7 +87,7 @@ Route::get('/tentang', function () {
 });
 ```
 
-Berkas ini adalah **daftar semua URL** yang dikenali aplikasi beserta tindakan yang harus diambil. Berikut alurnya baris per baris:
+Berkas ini adalah daftar semua URL yang dikenali aplikasi beserta tindakan yang harus diambil. Berikut alurnya:
 
 | Baris | Kode | Fungsi |
 |-------|------|--------|
@@ -135,7 +124,7 @@ Keluaran terminal saat menjalankan perintah `php artisan route:list`:
 
 ---
 
-## BREAK: Eksperimen Penanganan Error
+## BREAK
 
 | # | Yang Dirusak | Prediksi Anda sebelum mencoba | Pesan Error Sebenarnya |
 |---|--------------|-------------------------------|------------------------|
@@ -148,11 +137,11 @@ Keluaran terminal saat menjalankan perintah `php artisan route:list`:
 
 ## FIX: Perbaikan Proyek Cacat (Branch `w01`)
 
-*(Bagian ini ditunda sementara menunggu rilis tautan repositori `kampuslms-broken` dan instruksi dari Dosen / Asisten Dosen saat sesi praktikum)*
+*repo `kampuslms-broken` tidak ada sama sekali :(*
 
 ---
 
-## BUILD: Fondasi Proyek Kelompok
+## BUILD
 
 1. Menghubungkan repositori kelompok `https://github.com/muhammadzaldysyahfiraz/kampuslms-kelompok-05` dan menerapkan *Branch Protection Rule* pada branch `main` (wajib *Pull Request* dan minimal 1 *Approving Review*).
 2. Menjalankan Laravel 12 pada PHP 8.3/8.4 dengan basis data MySQL `kampus_db` di Laragon, serta memastikan template `.env.example` terdokumentasi tanpa mengekspos berkas rahasia `.env`.
@@ -162,14 +151,14 @@ Keluaran terminal saat menjalankan perintah `php artisan route:list`:
 
 ---
 
-## Checkpoint Refleksi Pemahaman
+## Checkpoint (CATATAN)
 
 1. Browser $\rightarrow$ Web Server $\rightarrow$ `public/index.php` $\rightarrow$ `bootstrap/app.php` $\rightarrow$ Middleware $\rightarrow$ Routing (`routes/web.php`) $\rightarrow$ Controller/Closure $\rightarrow$ Model (Database) $\rightarrow$ View (Blade) $\rightarrow$ HTTP Response $\rightarrow$ Browser.
 2. Hanya folder `public/` yang boleh diekspos ke publik agar berkas sensitif seperti `.env`, logika kode di `app/`, migrasi di `database/`, dan log di `storage/` tidak dapat diunduh langsung oleh siapa pun melalui browser.
-3. `.env` memuat nilai rahasia aktual (kredensial database, API keys) dan bersifat lokal sehingga tidak boleh di-push ke Git. `.env.example` hanyalah cetak biru template variabel tanpa nilai rahasia yang wajib di-push ke repositori.
+3. `.env` memuat nilai rahasia aktual dan bersifat lokal sehingga tidak boleh di-push ke Git. `.env.example` hanyalah cetak biru template variabel tanpa nilai rahasia yang wajib di-push ke repositori.
 4. Laravel 11 dan 12 menyederhanakan struktur folder dengan menghapus `app/Http/Kernel.php` dan memindahkan registrasi middleware ke `bootstrap/app.php`.
 5. Jika terjadi error, Laravel akan menampilkan halaman debug interaktif lengkap dengan isi variabel lingkungan, query database, password DB, dan struktur direktori server kepada pengunjung.
-6. **Bukti Commit Kontribusi Individu (`git log`):**  
+6. **Bukti Commit (`git log`):**  
    Perintah terminal: `git log -n 3`
    ```text
    commit 1ffcdecf9549cb7b1a54a3d657df1efaee2bbb95
@@ -187,4 +176,3 @@ Keluaran terminal saat menjalankan perintah `php artisan route:list`:
 
        docs: tambah catatan minggu 1 rifa, README tentang kelompok, dan buat halaman serta rute tentang
    ```
-

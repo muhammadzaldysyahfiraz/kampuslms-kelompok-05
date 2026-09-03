@@ -1,7 +1,8 @@
 # Catatan Minggu 1 Pemrograman Web
-
+---
 
 Nama: Muhammad Yuspa Ardiansyah
+
 NIM: 10241052
 ### READ
 
@@ -55,7 +56,19 @@ Setelah mengikuti instruksi praktikum, isi fungsi pada route tersebut diubah seh
 
 
 **Hasil Percobaan:**
+```php
 
+`PS C:\Users\USER\Herd\kampuslms-kelompok-05> herd php artisan route:list
+
+
+  GET|HEAD  / ........................................................................................................................................................ routes/web.php:5
+  GET|HEAD  storage/{path} ........................................................ storage.local › vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider.php:98
+  PUT       storage/{path} ................................................ storage.local.upload › vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider.php:106
+  GET|HEAD  tentang .................................................................................................................................................. routes/web.php:9
+  GET|HEAD  up ............................................................................ vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php:219
+
+                                                                                                                                                                     Showing [5] routes                                                                                   
+```
 
 Setelah menjalankan perintah `php artisan route:list` melalui terminal, Laravel menampilkan daftar route yang aktif pada aplikasi. Hasil tersebut kemudian dibandingkan dengan route yang terdapat pada `routes/web.php` dan konfigurasi di `bootstrap/app.php`.
 
@@ -71,4 +84,33 @@ Setelah menjalankan perintah `php artisan route:list` melalui terminal, Laravel 
 
 Dari hasil tersebut dapat dilihat bahwa perintah `php artisan route:list` menampilkan route yang terdaftar dalam aplikasi, baik route yang dibuat secara langsung pada `routes/web.php` maupun route yang berasal dari konfigurasi dan komponen Laravel.
 
+
+
+## BREAK
+
+| # | Yang Dirusak | Prediksi Anda sebelum mencoba | Pesan Error Sebenarnya |
+|---|--------------|-------------------------------|------------------------|
+| 1 | Mengubah nama `.env` menjadi `.env.bak` | Aplikasi diperkirakan tidak dapat membaca konfigurasi lokal sehingga kemungkinan terjadi error atau aplikasi tidak dapat berjalan normal. |![img](img-yuspa/perubahan-env.png) Aplikasi tidak dapat dijalankan karena berkas .env tidak ditemukan, sehingga konfigurasi lingkungan Laravel tidak dapat dimuat.<br>
+| 2 | Menghapus nilai `APP_KEY` di `.env` | Sistem diperkirakan gagal melakukan proses enkripsi pada session/cookie sehingga akan muncul exception.|![alt text](img-yuspa/break-app-key.png) Muncul `Illuminate\Encryption\MissingAppKeyException` dengan pesan `No application encryption key has been specified.` yang menunjukkan bahwa `APP_KEY` belum ditentukan.|
+| 3 | Mengganti `DB_DATABASE` / `DB_CONNECTION` dengan nama database yang tidak ada | Aplikasi diperkirakan tidak dapat terhubung ke database ketika melakukan query atau migrasi sehingga menghasilkan pesan error. | ![alt text](img-yuspa/break-database.png) Muncul `Internal Server Error (500) atau seperti pada gambar di atas lengkapnya` karena Laravel tidak dapat menemukan file database SQLite yang dikonfigurasi. |
+| 4 | Mengatur `APP_DEBUG=false`, kemudian mengulangi nomor 3 | Detail error ini diperkirakan tidak ditampilkan dan halaman hanya menunjukkan pesan `500 Server Error`. |![alt text](img-yuspa/app_debug_false.png) <br> Diatur ke false ya agar detail error disembunyikan. Hal ini wajib saaat produksi untuk mencegah kebocoran kredensial database dan data sensitif ke publik. Sebaliknya, true hanya dipakai saat pengembangan untuk melacak bug aja.| 
+
+---
+
+## FIX: Perbaikan Proyek Cacat (Branch `w01`)
+
+repo `kampuslms-broken` tidak ada
+
+
+## BUILD
+
+1. Menghubungkan repositori kelompok `https://github.com/muhammadzaldysyahfiraz/kampuslms-kelompok-05` dan menerapkan *Branch Protection Rule* pada branch `main` (wajib *Pull Request* dan minimal 1 *Approving Review*).
+2. Menjalankan Laravel 12 pada PHP 8.3/8.4 dengan basis data MySQL `kampus_db` di Laragon, serta memastikan template `.env.example` terdokumentasi tanpa mengekspos berkas rahasia `.env`.
+3. Menulis dokumentasi resmi proyek KampusLMS Kelompok 05 yang memuat deskripsi sistem, tabel 5 anggota (NIM, peran, akun GitHub), prasyarat sistem, dan langkah instalasi lokal.
+4. Mendaftarkan rute baru `Route::get('/tentang', ...)` pada berkas `routes/web.php` dan merancang tampilan web modern pada `resources/views/tentang.blade.php` untuk menampilkan identitas tim dan mata kuliah.
+5. Mengerjakan perubahan pada branch kerja `dev-rifa`, melakukan push ke remote, membuka Pull Request (#1), mendapatkan *approval review*, dan berhasil melakukan *merge* ke branch `main`.
+
+---
+
+---
 

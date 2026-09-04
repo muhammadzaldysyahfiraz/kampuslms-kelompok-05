@@ -103,10 +103,10 @@ Berkas ini adalah daftar semua URL yang dikenali aplikasi beserta tindakan yang 
   });
   ```
   **Tampilan Awal di Browser (sebelum diubah):**
-  ![Tampilan Awal Laravel Welcome](img/minggu-01-rifarizqul-welcome-default.png)
+  ![Tampilan Awal Laravel Welcome](img-rifa/minggu-01-rifarizqul-welcome-default.png)
 
   **Tampilan Setelah Diubah & Di-refresh:**
-  ![Tampilan Setelah Route Diubah](img/minggu-01-rifarizqul-route-diubah.png)
+  ![Tampilan Setelah Route Diubah](img-rifa/minggu-01-rifarizqul-route-diubah.png)
 
 * **Kesimpulan:** Browser langsung memuat respons baru saat halaman di-*refresh*, membuktikan bahwa alur request dari browser ke URL `/` sepenuhnya dikontrol oleh definisi rute di berkas ini — tanpa perlu restart server.
 
@@ -116,7 +116,7 @@ Berkas ini adalah daftar semua URL yang dikenali aplikasi beserta tindakan yang 
 
 Keluaran terminal saat menjalankan perintah `php artisan route:list`:
 
-![Hasil php artisan route:list](img/minggu-01-rifarizqul-route-list.png)
+![Hasil php artisan route:list](img-rifa/minggu-01-rifarizqul-route-list.png)
 
 **Pencocokan dengan isi `routes/web.php`:**
 * **`GET|HEAD /`** $\rightarrow$ Didefinisikan pada `routes/web.php` (baris ke-5) untuk menangani request root menuju halaman welcome.
@@ -128,10 +128,10 @@ Keluaran terminal saat menjalankan perintah `php artisan route:list`:
 
 | # | Yang Dirusak | Prediksi Anda sebelum mencoba | Pesan Error Sebenarnya |
 |---|--------------|-------------------------------|------------------------|
-| 1 | Ganti nama `.env` menjadi `.env.bak` | Server mendeteksi hilangnya berkas konfigurasi lokal dan server otomatis terhenti atau error. | ![Error rename .env](img/minggu-01-rifarizqul-break-env-error.png)<br>`php artisan serve exited with code 1` |
-| 2 | Kosongkan nilai `APP_KEY` di `.env` | Aplikasi menolak memproses enkripsi session/cookie dan memunculkan exception fatal. | ![Error kosongkan APP_KEY](img/minggu-01-rifarizqul-break-appkey-error.png)<br>`Illuminate\Encryption\MissingAppKeyException: No application encryption key has been specified.` |
-| 3 | Ubah `DB_DATABASE` / `DB_CONNECTION` ke nama yang tidak ada | Koneksi ke database gagal saat query/migrasi dijalankan dan menampilkan pesan exception. | **Di Terminal (`php artisan migrate:status`):**<br>![Error DB Terminal](img/minggu-01-rifarizqul-break-db-terminal.png)<br><br>**Di Browser (`APP_DEBUG=true`):**<br>![Error DB Browser](img/minggu-01-rifarizqul-break-db-browser.png)<br>`InvalidArgumentException: Database connection [tes_database] not configured.` |
-| 4 | Ubah `APP_DEBUG=false`, lalu ulangi nomor 3 | Halaman web hanya menampilkan pesan error umum 500 tanpa memperlihatkan detail kode. | ![Error 500 Server Error](img/minggu-01-rifarizqul-break-debug-false-500.png)<br>`500 \| SERVER ERROR` |
+| 1 | Ganti nama `.env` menjadi `.env.bak` | Server mendeteksi hilangnya berkas konfigurasi lokal dan server otomatis terhenti atau error. | ![Error rename .env](img-rifa/minggu-01-rifarizqul-break-env-error.png)<br>`php artisan serve exited with code 1` |
+| 2 | Kosongkan nilai `APP_KEY` di `.env` | Aplikasi menolak memproses enkripsi session/cookie dan memunculkan exception fatal. | ![Error kosongkan APP_KEY](img-rifa/minggu-01-rifarizqul-break-appkey-error.png)<br>`Illuminate\Encryption\MissingAppKeyException: No application encryption key has been specified.` |
+| 3 | Ubah `DB_DATABASE` / `DB_CONNECTION` ke nama yang tidak ada | Koneksi ke database gagal saat query/migrasi dijalankan dan menampilkan pesan exception. | **Di Terminal (`php artisan migrate:status`):**<br>![Error DB Terminal](img-rifa/minggu-01-rifarizqul-break-db-terminal.png)<br><br>**Di Browser (`APP_DEBUG=true`):**<br>![Error DB Browser](img-rifa/minggu-01-rifarizqul-break-db-browser.png)<br>`InvalidArgumentException: Database connection [tes_database] not configured.` |
+| 4 | Ubah `APP_DEBUG=false`, lalu ulangi nomor 3 | Halaman web hanya menampilkan pesan error umum 500 tanpa memperlihatkan detail kode. | ![Error 500 Server Error](img-rifa/minggu-01-rifarizqul-break-debug-false-500.png)<br>`500 \| SERVER ERROR` |
 
 ---
 

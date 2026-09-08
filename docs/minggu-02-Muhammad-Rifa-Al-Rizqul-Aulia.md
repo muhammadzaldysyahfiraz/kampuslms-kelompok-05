@@ -99,252 +99,74 @@ Pada branch `w02` di repositori latihan `kampuslms-broken`, terdapat **6 masalah
 
 ## BUILD: Kerangka KampusLMS
 
-Pada tahap BUILD Minggu 2, kelompok kami membangun kerangka dasar aplikasi KampusLMS yang mencakup sistem *layouting*, rute, kontrol logika data statis, dan antarmuka pengguna berbasis Blade.
+Implementasi kerangka modul mata kuliah pada proyek KampusLMS:
 
-### 1. Pembagian Tugas Commit Kelompok 05
-Untuk memastikan kolaborasi Git berjalan sesuai prinsip *Continuous Integration* dan setiap anggota memiliki kontribusi nyata yang terisolasi serta dapat direview, tim menyepakati pembagian tugas commit fitur BUILD sebagai berikut:
+1. **Komponen Layout Bersama (`resources/views/components/layout.blade.php`):**
+   - Menggunakan tag `<x-layout>` sebagai pembungkus utama halaman.
+   - Dilengkapi navigasi navbar yang memuat menu: **Dashboard**, **Mata Kuliah**, dan **Tentang**.
+   - Menyertakan direktif `@vite(['resources/css/app.css', 'resources/js/app.js'])`.
+   - Menggunakan variabel slot `{{ $slot }}` dan `$title`.
 
-| No | Komponen Fitur BUILD | Penanggung Jawab | Deskripsi Tanggung Jawab |
-|---|----------------------|------------------|--------------------------|
-| 1 | **Layout (`components/layout.blade.php`)** | **Muhammad Rifa Al Rizqul Aulia** *(Saya)* | Merancang master layout komponen Blade `<x-layout>`, navbar terpusat, integrasi `@vite`, slot konten, dan styling semantik. |
-| 2 | **Controller (`CourseController.php`)** | **Nova Reskianti** | Membangun method `index()` dan `show()` dengan data statis array mata kuliah. |
-| 3 | **View Index (`courses/index.blade.php`)** | **Muhammad Farin Murtadho Syafiq** | Membuat tabel responsif penyajian daftar seluruh mata kuliah. |
-| 4 | **View Detail (`courses/show.blade.php`)** | **Muhammad Yuspa Ardiansyah** | Merancang tampilan informasi lengkap spesifik satu mata kuliah. |
-| 5 | **View Error 404 (`errors/404.blade.php`)** | **Muhammad Zaldy Syah Firaz** | Mengembangkan halaman fallback penanganan rute atau entitas yang tidak ditemukan. |
+2. **Controller Mata Kuliah (`app/Http/Controllers/CourseController.php`):**
+   - Dibuat menggunakan perintah: `php artisan make:controller CourseController`.
+   - Menyediakan method `index()` untuk menampilkan seluruh daftar mata kuliah (menggunakan data statis array).
+   - Menyediakan method `show($id)` untuk menampilkan detail spesifik satu mata kuliah.
 
----
+3. **View Daftar Mata Kuliah (`resources/views/courses/index.blade.php`):**
+   - Memanfaatkan komponen `<x-layout title="Daftar Mata Kuliah">`.
+   - Menampilkan tabel responsif dengan kolom: Kode, Nama Mata Kuliah, SKS, Dosen Pengampu, dan Aksi Detail.
+   - Menghubungkan tombol detail ke rute menggunakan `route('courses.show', $course['id'])`.
 
-### 2. Implementasi Bagian Saya: Komponen Master Layout (`x-layout`)
+4. **View Detail Mata Kuliah (`resources/views/courses/show.blade.php`):**
+   - Menampilkan informasi lengkap satu mata kuliah yang dipilih berdasarkan ID/kode.
+   - Menyediakan tombol navigasi kembali ke daftar mata kuliah menggunakan helper `route('courses.index')`.
 
-Sebagai penanggung jawab komponen **Layout**, saya merancang berkas `resources/views/components/layout.blade.php` agar dapat digunakan secara seragam oleh seluruh halaman di KampusLMS.
+5. **Pendaftaran Named Routes (`routes/web.php`):**
+   - Mendaftarkan rute dengan nama resmi:
+     ```php
+     Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
+     Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.show');
+     ```
 
-#### A. Mengapa Menggunakan Komponen Blade (`<x-layout>`), Bukan `@extends`?
-Di Laravel versi modern (Laravel 11 dan 12), pendekatan **Blade Component-based layout** (`<x-layout>`) diwajibkan karena beberapa keunggulan teknis:
-1. **Lebih Bersih & Berorientasi Tag:** Menggunakan tag kustom HTML-like (`<x-layout> ... </x-layout>`) yang lebih intuitif dibanding direktif prosedural `@extends('layouts.app')` dan `@section('content') ... @endsection`.
-2. **Fleksibilitas Slot & Props:** Konten halaman diinjeksikan secara otomatis ke dalam variabel bawaan `{{ $slot }}`, sementara atribut seperti judul halaman dapat dipassing elegan sebagai atribut tag (`<x-layout title="Daftar Mata Kuliah">`).
-3. **Standarisasi Tim:** Mencegah redundansi duplikasi kode header, navigasi, dan footer di setiap halaman.
+6. **Halaman 404 Kustom (`resources/views/errors/404.blade.php`):**
+   - Dibuat untuk menangani request ke rute atau ID data mata kuliah yang tidak ditemukan, dengan tampilan yang ramah pengguna.
 
-#### B. Kode Implementasi `resources/views/components/layout.blade.php`
-
-```blade
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-
-    {{-- Pengaturan viewport agar layout responsif di berbagai ukuran layar perangkat --}}
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    {{-- Nilai title dinamis dikirim dari child view; jika tidak ada, fallback ke judul bawaan --}}
-    <title>{{ isset($title) ? $title . ' — KampusLMS' : 'KampusLMS — Sistem Pembelajaran Terpadu' }}</title>
-
-    {{-- Google Font Plus Jakarta Sans untuk tipografi antarmuka modern --}}
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-    {{-- Memuat asset bundler Vite (Tailwind CSS dan JavaScript aplikasi) --}}
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-
-<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col font-sans antialiased selection:bg-indigo-500 selection:text-white">
-
-    {{-- HEADER & NAVBAR UTAMA: Mengatur identitas brand dan navigasi sentral --}}
-    <header class="bg-white/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-50 shadow-xs">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                
-                {{-- Identitas Brand KampusLMS --}}
-                <div class="flex items-center gap-3">
-                    <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5 font-bold text-xl text-slate-900 tracking-tight group">
-                        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-sm shadow-indigo-200 group-hover:scale-105 transition-transform duration-200">
-                            {{-- Ikon Topi Akademik / Buku (SVG Semantik) --}}
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342" />
-                            </svg>
-                        </div>
-                        <div class="flex flex-col">
-                            <span class="leading-tight">Kampus<span class="text-indigo-600">LMS</span></span>
-                        </div>
-                    </a>
-                    <span class="hidden sm:inline-flex text-[11px] font-semibold uppercase tracking-wider bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full border border-indigo-200/60">
-                        Kelompok 05
-                    </span>
-                </div>
-
-                {{-- Menu Navigasi dengan Active State via Named Route --}}
-                <nav class="flex items-center gap-1.5 sm:gap-2">
-                    {{-- Navigasi ke Dashboard --}}
-                    <a href="{{ route('dashboard') }}" 
-                       class="{{ request()->routeIs('dashboard') ? 'bg-indigo-50 text-indigo-700 font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium' }} px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-sm transition-all duration-150">
-                        Dashboard
-                    </a>
-
-                    {{-- Navigasi ke Daftar Mata Kuliah --}}
-                    <a href="{{ route('courses.index') }}" 
-                       class="{{ request()->routeIs('courses.*') ? 'bg-indigo-50 text-indigo-700 font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium' }} px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-sm transition-all duration-150">
-                        Mata Kuliah
-                    </a>
-
-                    {{-- Navigasi ke Halaman Tentang --}}
-                    <a href="{{ route('tentang') }}" 
-                       class="{{ request()->routeIs('tentang') ? 'bg-indigo-50 text-indigo-700 font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium' }} px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-sm transition-all duration-150">
-                        Tentang
-                    </a>
-                </nav>
-
-                {{-- Status Semester / Badge Informasi Akademik --}}
-                <div class="hidden md:flex items-center gap-2">
-                    <span class="text-xs text-slate-500 font-medium bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200/60">
-                        Semester Ganjil 2026/2027
-                    </span>
-                </div>
-
-            </div>
-        </div>
-    </header>
-
-    {{-- KONTEN UTAMA: Menampung seluruh isi view melalui Blade Slot --}}
-    <main class="lms-main flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-        {{ $slot }}
-    </main>
-
-    {{-- FOOTER APLIKASI: Informasi hak cipta, mata kuliah, dan kampus --}}
-    <footer class="bg-white border-t border-slate-200 mt-auto py-6">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-slate-500">
-            <div>
-                <p>&copy; {{ date('Y') }} <strong>KampusLMS</strong> • Kelompok 05 (SI2514024 Pemrograman Web)</p>
-            </div>
-            <div class="flex items-center gap-4">
-                <span>Institut Teknologi Kalimantan</span>
-            </div>
-        </div>
-    </footer>
-
-</body>
-</html>
-```
-
-#### C. Fitur Kunci yang Diterapkan pada Layout:
-1. **Active Route Detection (`request()->routeIs(...)`):**
-   Navigasi secara otomatis mendeteksi rute yang sedang dibuka oleh user. Jika user berada di halaman rute `courses.*`, tautan Mata Kuliah akan otomatis memiliki styling aktif (`bg-indigo-50 text-indigo-700 font-semibold`).
-2. **Koneksi Seluruh Link Menggunakan `route()`:**
-   Tidak ada URL statis (*hardcoded*). Seluruh tautan navbar merujuk ke rute terdaftar: `route('dashboard')`, `route('courses.index')`, dan `route('tentang')`.
-3. **Peningkatan Styling Otomatis (`.lms-main` pada `app.css`):**
-   Untuk mendukung view anak yang dibuat oleh rekan kelompok (seperti tabel mata kuliah dari Farin dan detail mata kuliah dari Yuspa), saya menambahkan konfigurasi gaya dasar pada `resources/css/app.css` sehingga elemen `<h1>`, `<table>`, `<th>`, dan `<td>` otomatis tampil rapi, proporsional, dan elegan.
-
----
-
-### 3. Integrasi Kerangka Modul Lengkap Minggu 2
-Selain komponen layout, berikut adalah integrasi menyeluruh dari seluruh bagian BUILD Minggu 2:
-
-* **Controller Mata Kuliah (`app/Http/Controllers/CourseController.php`):**
-  Menyediakan method `index()` untuk mengirim array statis 3 mata kuliah (Pemrograman Web, Kecerdasan Bisnis, dan PATI) serta method `show($course)` yang dilengkapi validasi ketersediaan data via `abort_unless(isset(...), 404)`.
-* **View Daftar Mata Kuliah (`resources/views/courses/index.blade.php`):**
-  Menggunakan `<x-layout title="Daftar Mata Kuliah">` dan melakukan iterasi `@foreach ($courses as $course)` dalam tabel rapi. Tombol detail menggunakan tautan dinamis `route('courses.show', $course['id'])`.
-* **View Detail Mata Kuliah (`resources/views/courses/show.blade.php`):**
-  Menampilkan rincian nama, kode, SKS, dan dosen pengampu, serta tombol kembali ke index `route('courses.index')`.
-* **Halaman Error 404 Kustom (`resources/views/errors/404.blade.php`):**
-  Menangani rute atau ID mata kuliah yang tidak terdaftar dengan visual yang ramah pengguna menggunakan komponen `<x-layout title="Halaman Tidak Ditemukan">`.
-* **Pendaftaran Named Routes (`routes/web.php`):**
-  ```php
-  Route::get('/dashboard', function () { return view('dashboard'); })->name('dashboard');
-  Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
-  Route::get('/courses/create', [CourseController::class, 'create'])->name('courses.create');
-  Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.show');
-  Route::get('/tentang', function () { return view('tentang'); })->name('tentang');
-  ```
-  Urutan rute statis `/courses/create` diletakkan di atas rute wildcard `/courses/{course}` untuk mencegah rute saling menutupi.
+7. **Kolaborasi & Git Workflow:**
+   - Dikerjakan melalui branch kerja terpisah, diajukan melalui *Pull Request*, di-review oleh rekan kelompok, dan di-merge ke branch `main`.
 
 ---
 
 ## Checkpoint Minggu 2
 
 ### 1. Kenapa menghapus data lewat `GET` berbahaya? Beri satu skenario konkret.
-Method `GET` menurut spesifikasi HTTP (RFC 7231) didefinisikan sebagai method yang bersifat *safe* dan *idempotent*. Artinya, request `GET` hanya diperuntukkan bagi pengambilan data tanpa mengubah status (*state*) apa pun di sisi server.
-
-**Skenario konkret bahayanya:**
-Jika aksi hapus data dijalankan melalui request `GET` (misalnya URL: `/courses/5/delete`):
-- Mesin pencari seperti Googlebot atau ekstensi browser *prefetcher/accelerator* akan otomatis menyusuri dan mengirimkan request `GET` ke setiap tautan `<a>` yang ditemukan pada halaman. Akibatnya, bot tersebut akan menghapus seluruh rekaman mata kuliah di database secara otomatis tanpa disengaja.
-- Selain itu, penyerang dapat melancarkan serangan *Cross-Site Request Forgery* (CSRF) sederhana hanya dengan menyisipkan tag gambar `<img src="http://kampuslms.test/courses/5/delete">` pada forum publik atau email. Setiap pengguna yang membuka halaman tersebut otomatis mengirim request hapus data tanpa sadar. Oleh karena itu, mutasi atau penghapusan data **wajib** menggunakan method `DELETE` atau `POST` yang dilindungi token CSRF (`@csrf`).
+Method `GET` menurut spesifikasi HTTP bersifat *idempotent* dan *safe* (hanya untuk membaca data tanpa mengubah state di server). Jika penghapusan data dijalankan lewat `GET` (misal `/courses/5/delete`):
+- **Skenario konkret:** Web crawler mesin pencari (seperti Googlebot) atau ekstensi browser *accelerator* yang melakukan *link prefetching* otomatis akan mengunjungi setiap link `<a>` di halaman. Begitu link dikunjungi oleh bot, seluruh data mata kuliah di database akan terhapus otomatis tanpa disengaja oleh pengguna. Selain itu, link `GET` dapat dipicu melalui tag `<img src="/courses/5/delete">` pada serangan CSRF sederhana.
 
 ### 2. Apa yang terjadi kalau `/courses/{course}` ditulis sebelum `/courses/create`? Kenapa?
-Laravel memproses dan mengevaluasi pendaftaran rute di `routes/web.php` secara sekuensial dari atas ke bawah (*first match wins*). 
-
-Jika `/courses/{course}` diletakkan sebelum `/courses/create`:
-Ketika browser meminta halaman form pembuatan data baru dengan URL `/courses/create`, router Laravel akan mencocokkan kata `'create'` dengan parameter wildcard `{course}` pada rute pertama. Akibatnya, request tersebut dialihkan ke `CourseController@show` dengan nilai parameter `$course = 'create'`, alih-alih membuka method `create()`. Aplikasi kemudian akan memunculkan error 404 (karena mata kuliah ber-ID `'create'` tidak ada) dan pengguna tidak akan pernah bisa mengakses form penambahan mata kuliah.
+Laravel mencocokkan rute dari urutan paling atas ke bawah (*first match wins*). Jika `/courses/{course}` ditulis lebih dulu, ketika browser meminta `/courses/create`, kata `'create'` akan dianggap sebagai parameter `{course}`. Akibatnya, method `show` yang dieksekusi dan aplikasi akan mencoba mencari mata kuliah dengan ID/slug bernama `"create"`, bukan membuka halaman form pembuatan data baru.
 
 ### 3. Tunjukkan di kode Anda satu tempat yang memakai `route()`. Apa untungnya dibanding URL hardcode?
-Contoh pemakaian pada navigasi komponen layout saya (`resources/views/components/layout.blade.php`):
-```blade
-<a href="{{ route('courses.index') }}">Mata Kuliah</a>
-```
-Dan pada tombol aksi tabel di `resources/views/courses/index.blade.php`:
+Contoh pada `resources/views/courses/index.blade.php`:
 ```blade
 <a href="{{ route('courses.show', $course['id']) }}">Lihat Detail</a>
 ```
-
-**Keuntungannya dibanding URL hardcode (`/courses` atau `/courses/1`):**
-1. **Loose Coupling (Tidak Terikat Kaku):** Helper `route()` memisahkan antarmuka (tampilan URL) dari implementasi penamaan di kode. Jika suatu saat tim pengembang memutuskan mengubah struktur URL menjadi `/akademik/mata-kuliah` atau `/katalog-kelas`, kita hanya perlu mengubah 1 baris kode di `routes/web.php`.
-2. **Otomatisasi Penanganan Parameter Dinamis:** Laravel otomatis menyusun URL secara aman dan melakukan *URL-encoding* pada parameter yang dipassing.
-3. **Mencegah Tautan Patah (Broken Links):** Jika rute tidak sengaja terhapus atau salah ketik nama, Laravel langsung melempar exception saat kompilasi view (`RouteNotFoundException`), sehingga kesalahan terdeteksi seketika pada tahap pengujian lokal sebelum sistem masuk ke tahap produksi.
+**Keuntungannya:** Menghilangkan keterikatan kaku (*loose coupling*). Jika di kemudian hari struktur URL diubah dari `/courses/{course}` menjadi `/akademik/mata-kuliah/{course}`, kita hanya perlu mengubah 1 baris di `routes/web.php` tanpa perlu menyisir dan mengubah puluhan file template Blade di seluruh proyek.
 
 ### 4. Apa beda `{{ }}` dan `{!! !!}`? Peragakan XSS yang Anda buat di bagian BREAK.
-- `{{ $data }}`: Merupakan sintaks escape bawaan Blade. Sintaks ini secara otomatis membungkus nilai variabel dengan fungsi PHP `htmlspecialchars($data, ENT_QUOTES, 'UTF-8')`. Karakter-karakter khusus HTML seperti `<`, `>`, `&`, `"`, `'` akan diubah menjadi entitas HTML aman (`&lt;`, `&gt;`, dsb.), sehingga data hanya dirender sebagai teks biasa di browser.
-- `{!! $data !!}`: Merender nilai variabel secara mentah (*raw unescaped HTML*) langsung ke dalam dokumen HTML browser tanpa sanitasi apa pun.
-
-**Peragaan Eksperimen XSS di Bagian BREAK:**
-Ketika variabel `$nama` diisi dengan payload berbahaya:
-```php
-$nama = "<script>alert('XSS')</script>";
-```
-- Jika dirender dengan `{{ $nama }}`, browser akan menampilkan teks string tulisan `<script>alert('XSS')</script>` di layar secara aman tanpa eksekusi kode.
-- Jika dirender dengan `{!! $nama !!}`, browser menganggap teks tersebut sebagai tag script DOM yang sah dan langsung mengeksekusi JavaScript di sisi client, memunculkan popup dialog `alert('XSS')`. Ini membuktikan kerentanan fatal *Cross-Site Scripting* yang dapat dimanfaatkan penyerang untuk mencuri session cookie pengguna.
+- `{{ $data }}`: Menjalankan fungsi proteksi `htmlspecialchars()` secara otomatis untuk mengubah karakter berbahaya seperti `<`, `>`, `"` menjadi entitas HTML aman (`&lt;`, `&gt;`). Teks akan tampil persis sebagai tulisan di layar tanpa dieksekusi.
+- `{!! $data !!}`: Merender teks mentah (*raw output*) langsung ke dalam DOM HTML tanpa filter/escape.
+- **Peragaan XSS:** Jika `$nama = "<script>alert('XSS')</script>"`, keluaran `{{ $nama }}` hanya akan memunculkan teks biasa di layar browser. Namun keluaran `{!! $nama !!}` akan membuat browser menjalankan skrip tersebut dan memunculkan pop-up alert JavaScript secara aktif.
 
 ### 5. Apa fungsi `@vite`? Apa beda `npm run dev` dan `npm run build`?
-- **Fungsi Direktif `@vite(['resources/css/app.css', 'resources/js/app.js'])`:**
-  Direktif Blade yang bertugas mengintegrasikan asset bundler Vite ke dalam template HTML. Pada mode pengembangan, `@vite` menyuntikkan script client Vite untuk Hot Module Replacement (HMR). Pada mode produksi, `@vite` membaca berkas `public/build/manifest.json` dan memuat file CSS/JS hasil kompilasi beserta hash versinya.
-
-- **Perbedaan `npm run dev` vs `npm run build`:**
-  - `npm run dev`: Menjalankan *development server* lokal (default pada port 5173). Berkas aset tidak dikompilasi secara fisik ke disk, melainkan dilayani dari memori secara instan dengan fitur HMR. Perubahan kode CSS/JS akan langsung terrefleksi di browser tanpa perlu reload halaman.
-  - `npm run build`: Menjalankan proses kompilasi penuh untuk rilis produksi. Vite akan memproses, me-minifikasi (*minify*), membuang kode yang tidak terpakai (*tree-shaking*), dan menghasilkan berkas fisik statis di direktori `public/build/assets/` dengan penamaan file ber-hash unik (misal: `app-BFUB8l5l.css`) untuk optimasi performa dan *cache busting* di web server produksi.
+- **Fungsi `@vite`:** Direktif Blade untuk menyuntikkan script loader aset CSS dan JavaScript Vite ke dalam tag `<head>` dokumen HTML.
+- **Beda `npm run dev` vs `npm run build`:**
+  - `npm run dev`: Menjalankan *development server* lokal (biasanya di port 5173) dengan fitur *Hot Module Replacement* (HMR). Perubahan file CSS/JS langsung ter-update di browser tanpa refresh halaman.
+  - `npm run build`: Mengompilasi, me-minifikasi, dan membundel seluruh file aset menjadi berkas produksi statis di folder `public/build/` lengkap dengan manifest hash file untuk performa maksimal di server produksi.
 
 ### 6. Jelaskan mengapa data dari `Request` tidak boleh dipercaya.
-Semua data yang diterima melalui objek `Request` (baik melalui URL parameter, query string `$_GET`, payload form `$_POST`, request header, maupun cookie) berasal dari sisi pengguna (*client-side*).
-
-Client adalah lingkungan yang berada di luar kendali server. Pengguna atau penyerang dapat memanipulasi request dengan mudah:
-- Memodifikasi form HTML lewat Inspect Element browser untuk mengubah tipe input atau menghapus batasan `maxlength`/`required`.
-- Mengirimkan request HTTP palsu secara langsung menggunakan perkakas seperti cURL, Postman, atau Burp Suite tanpa melalui formulir web kita.
-- Menyisipkan nilai input berbahaya seperti tag script jahat (XSS), karakter injeksi SQL, atau field tak terduga (misal menyisipkan `role=admin` pada serangan *Mass Assignment*).
-
-Oleh karena itu, backend server harus selalu menerapkan prinsip *zero trust* terhadap data masukan: setiap data yang masuk dari `Request` **wajib** divalidasi tipe datanya, diverifikasi otorisasinya, dan disanitasi sebelum diproses lebih lanjut oleh aplikasi atau disimpan ke database.
+Semua data yang datang dari pengguna (`$request->input()`, `$request->query()`, header HTTP, cookie) berada di bawah kendali penuh client (frontend). Penyerang dapat dengan mudah memanipulasi parameter URL, mengirim form dengan nilai yang melompati batasan UI, menyuntikkan script jahat, atau memodifikasi request payload menggunakan alat seperti Burp Suite / Postman. Oleh karena itu, backend harus selalu memperlakukan input request sebagai data mentah yang tidak aman dan wajib divalidasi serta di-*sanitize*.
 
 ---
 
 ### Bukti Riwayat Git (`git log`)
-
-Keluaran terminal saat menjalankan perintah `git log -n 3` setelah melakukan commit implementasi fitur layout dan dokumentasi pada branch kerja:
-
-```text
-commit fff4c51c5a9f7115fb8fa8d999c4b0d1b61d6362
-Author: rifarizqul-itk <10241050@student.itk.ac.id>
-Date:   Wed Sep 9 07:19:28 2026 +0800
-
-    docs: lengkapi dokumentasi build minggu 2, checkpoint, dan bukti git log rifa
-
-commit ca4eb03c59bb3e3520d49aa1d76d45aca4d96efd
-Author: rifarizqul-itk <10241050@student.itk.ac.id>
-Date:   Wed Sep 9 07:18:50 2026 +0800
-
-    feat(layout): kembangkan komponen master layout blade x-layout berstandar modern
-
-commit 3c6f5b2f6300a09317a08757c7282af32b5243e8
-Merge: 2458d2e cdb27eb
-Author: Muhammad Zaldy Syah Firaz <10241054@student.itk.ac.id>
-Date:   Tue Sep 8 22:00:44 2026 +0800
-
-    Merge pull request #13 from muhammadzaldysyahfiraz/dev-yuspa
-    
-    "Selesaikan  Minggu 2"
-```
-
+*(Jalankan `git log -n 3` setelah melakukan commit pekerjaan Minggu 2 untuk menyematkan bukti commit Anda).*

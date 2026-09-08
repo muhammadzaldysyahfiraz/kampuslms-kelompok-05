@@ -12,6 +12,7 @@ class CourseController extends Controller
     {
         return [
             1 => [
+                'id' => 1,
                 'name' => 'Pemrograman Web',
                 'code' => 'SI2514024',
                 'sks' => 3,
@@ -19,6 +20,7 @@ class CourseController extends Controller
             ],
 
             2 => [
+                'id' => 2,
                 'name' => 'Basis Data',
                 'code' => 'SI2514012',
                 'sks' => 3,
@@ -26,6 +28,7 @@ class CourseController extends Controller
             ],
 
             3 => [
+                'id' => 3,
                 'name' => 'Analisis dan Perancangan Sistem',
                 'code' => 'SI2514031',
                 'sks' => 3,
@@ -41,6 +44,13 @@ class CourseController extends Controller
         $courses = $this->courses();
 
         return view('courses.index', compact('courses'));
+    }
+
+    // Menampilkan halaman tambah mata kuliah.
+    // Digunakan untuk menguji urutan route statis vs rute berparameter dinamis.
+    public function create()
+    {
+        return 'Halaman Tambah Mata Kuliah';
     }
 
     // Menampilkan detail satu mata kuliah berdasarkan ID dari URL.

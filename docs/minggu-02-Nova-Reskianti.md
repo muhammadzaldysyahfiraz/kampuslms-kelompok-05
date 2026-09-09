@@ -14,11 +14,12 @@
 
 ### 1. Baris mana di `routes/web.php` yang menangkapnya?
 
-Baris yang menangkap route /tentang adalah baris ke 9 :
+Baris yang menangkap route /tentang adalah baris ke 10 :
 ```php
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CourseController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -51,19 +52,19 @@ Halaman `/tentang` saat ini belum menggunakan layout atau komponen Blade. Hal in
 ---
 ### 5. Jalankan php artisan route:list --path=tentang. Cocok dengan analisis Anda?
 
-Berdasarkan kode pada `routes/web.php`, saya memperkirakan route `/tentang` menggunakan method `GET` dan didefinisikan pada baris 9. Karena menggunakan `Route::get()`, pada `route:list` kemungkinan akan ditampilkan sebagai `GET|HEAD`.
+Berdasarkan kode pada `routes/web.php`, saya memperkirakan route `/tentang` menggunakan method `GET` dan didefinisikan pada baris 10. Karena menggunakan `Route::get()`, pada `route:list` kemungkinan akan ditampilkan sebagai `GET|HEAD`.
 
 Hasil `php artisan route:list --path=tentang` :
 ```php
 PS D:\Nova R\Kuliah\Semeter 5\Proweb\Laravel\kampuslms> herd php artisan route:list --path=tentang
 
-  GET|HEAD       tentang ............................................................................................................................ routes/web.php:9
+  GET|HEAD       tentang .................................................................................................................. routes/web.php:10
 
-                                                                                                                                                    Showing [1] routes
+                                                                                                                                           Showing [1] routes
 ```
 Kesimpulan : 
 
-Analisa saya cocok dengan hasil `php artisan route:list --path=tentang`. Route `/tentang` menggunakan `GET|HEAD` dan berada di `routes/web.php` pada baris 9.
+Analisa saya cocok dengan hasil `herd php artisan route:list --path=tentang.` Route `/tentang` menggunakan `GET|HEAD` dan berada di `routes/web.php` pada baris 10.
 
 ---
 ## BREAK:  Delapan kerusakan 
@@ -78,3 +79,8 @@ Analisa saya cocok dengan hasil `php artisan route:list --path=tentang`. Route `
 | 6 | Hapus `@vite(...)` dari layout | Aset tidak termuat |Aset CSS/JS dari `Vite` tidak akan dimuat sehingga tampilan halaman dapat berubah atau menjadi tidak ter-styling. | ![Tampilan error 405](./img/minggu-02-break-6-nova.png)|
 | 7 | Hentikan `npm run dev` lalu muat ulang halaman | Beda dev server vs build | Development server Vite seharusnya berhenti sehingga aset yang bergantung pada Vite tidak dapat dimuat/diperbarui.| npm run dev tidak dapat dijalankan karena Vite tidak dikenali ('vite' is not recognized).|
 | 8 | Panggil `route('courses.show')` tanpa mengirim parameter | Missing required parameter |Akan terjadi error karena `route courses.show` membutuhkan parameter `{course}`. |Muncul `Missing required parameter` ... `[Missing parameter: course]` dengan `UrlGenerationException`.  ![Tampilan error 405](./img/minggu-02-break-8-nova.png)|
+
+
+## BUILD — Kerangka KampusLMS
+
+### 1. Layout x-layout dengan navbar berisi: Dashboard, Mata Kuliah, Tentang.

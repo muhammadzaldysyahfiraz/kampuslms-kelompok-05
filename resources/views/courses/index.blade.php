@@ -1,39 +1,45 @@
-{{-- Menggunakan komponen x-layout agar halaman memiliki layout yang sama. --}}
+{{-- Menggunakan x-layout agar halaman daftar menggunakan
+     struktur HTML yang sudah dibuat di layout.blade.php. --}}
 <x-layout title="Daftar Mata Kuliah">
 
     {{-- Judul halaman daftar mata kuliah. --}}
     <h1>Daftar Mata Kuliah</h1>
 
-    {{-- Tabel digunakan untuk menampilkan data mata kuliah secara terstruktur. --}}
-    <table>
-        <thead>
-            <tr>
-                <th>Kode</th>
-                <th>Nama Mata Kuliah</th>
-                <th>SKS</th>
-                <th>Dosen</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
+    {{-- Melakukan perulangan terhadap seluruh data mata kuliah
+         yang dikirim oleh CourseController@index. --}}
+    @foreach ($courses as $id => $course)
 
-        <tbody>
-            {{-- Melakukan perulangan untuk menampilkan setiap mata kuliah. --}}
-            @foreach ($courses as $course)
-                <tr>
-                    <td>{{ $course['code'] }}</td>
-                    <td>{{ $course['name'] }}</td>
-                    <td>{{ $course['sks'] }}</td>
-                    <td>{{ $course['lecturer'] }}</td>
+        <article>
 
-                    {{-- route() digunakan agar URL tidak ditulis secara hardcode. --}}
-                    <td>
-                        <a href="{{ route('courses.show', $course['id']) }}">
-                            Lihat Detail
-                        </a>
-                    </td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
+            {{-- Menampilkan nama mata kuliah.
+                 {{ }} digunakan agar output di-escape oleh Blade. --}}
+            <h2>{{ $course['name'] }}</h2>
+
+            {{-- Menampilkan kode mata kuliah. --}}
+            <p>
+                Kode: {{ $course['code'] }}
+            </p>
+
+            {{-- Menampilkan jumlah SKS. --}}
+            <p>
+                SKS: {{ $course['sks'] }}
+            </p>
+
+            {{-- Menampilkan nama dosen pengampu. --}}
+            <p>
+                Dosen: {{ $course['lecturer'] }}
+            </p>
+
+            {{-- Membuat tautan menuju halaman detail.
+                 route() digunakan agar URI tidak ditulis secara hardcode. --}}
+            <a href="{{ route('courses.show', ['course' => $id]) }}">
+                Lihat Detail
+            </a>
+
+        </article>
+
+        <hr>
+
+    @endforeach
 
 </x-layout>

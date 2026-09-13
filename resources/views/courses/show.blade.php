@@ -1,42 +1,25 @@
-{{-- Menggunakan x-layout agar halaman detail memiliki
-     struktur yang sama dengan halaman lainnya. --}}
 <x-layout title="Detail Mata Kuliah">
 
-@php
-    $nama = "<script>alert('XSS WEBSITE DI HACK')</script>";
-@endphp
+    <h1>{{ $course->name }}</h1>
 
-{{ $nama }}
+    <p>Kode: {{ $course->code }}</p>
 
-    {{-- Judul halaman detail. --}}
-    <h1>Detail Mata Kuliah</h1>
+    <p>SKS: {{ $course->sks }}</p>
 
-    {{-- Menampilkan nama mata kuliah yang dikirim
-         oleh CourseController@show. --}}
-    <h2>{{ $course['name'] }}</h2>
+    <p>Dosen: {{ $course->lecturer->name }}</p>
 
-    {{-- Menampilkan kode mata kuliah. --}}
-    <p>
-        <strong>Kode:</strong>
-        {{ $course['code'] }}
-    </p>
+    <p>Deskripsi: {{ $course->description }}</p>
 
-    {{-- Menampilkan jumlah SKS. --}}
-    <p>
-        <strong>SKS:</strong>
-        {{ $course['sks'] }}
-    </p>
+    <p>Status: {{ $course->status }}</p>
 
-    {{-- Menampilkan dosen pengampu. --}}
-    <p>
-        <strong>Dosen:</strong>
-        {{ $course['lecturer'] }}
-    </p>
+    <a href="{{ route('courses.edit', $course) }}">
+        Edit
+    </a>
 
-    {{-- Kembali ke halaman daftar mata kuliah.
-         route() digunakan agar tidak menulis URL secara hardcode. --}}
+    <br>
+
     <a href="{{ route('courses.index') }}">
-        Kembali ke Daftar Mata Kuliah
+        Kembali ke Daftar
     </a>
 
 </x-layout>

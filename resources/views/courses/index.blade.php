@@ -1,45 +1,63 @@
-{{-- Menggunakan x-layout agar halaman daftar menggunakan
-     struktur HTML yang sudah dibuat di layout.blade.php. --}}
 <x-layout title="Daftar Mata Kuliah">
 
-    {{-- Judul halaman daftar mata kuliah. --}}
     <h1>Daftar Mata Kuliah</h1>
 
-    {{-- Melakukan perulangan terhadap seluruh data mata kuliah
-         yang dikirim oleh CourseController@index. --}}
-    @foreach ($courses as $id => $course)
+    @if (session('success'))
+        <p>{{ session('success') }}</p>
+    @endif
 
-        <article>
+    <a href="{{ route('courses.create') }}">
+        Tambah Mata Kuliah
+    </a>
 
-            {{-- Menampilkan nama mata kuliah.
-                 {{ }} digunakan agar output di-escape oleh Blade. --}}
-            <h2>{{ $course['name'] }}</h2>
+    <br><br>
 
-            {{-- Menampilkan kode mata kuliah. --}}
-            <p>
-                Kode: {{ $course['code'] }}
-            </p>
+    <table>
+        <thead>
+            <tr>
+                <th>Kode</th>
+                <th>Nama</th>
+                <th>SKS</th>
+                <th>Dosen</th>
+                <th>Status</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
 
-            {{-- Menampilkan jumlah SKS. --}}
-            <p>
-                SKS: {{ $course['sks'] }}
-            </p>
+        <tbody>
+            @foreach ($courses as $course)
+                <tr>
+                    <td>{{ $course->code }}</td>
+                    <td>{{ $course->name }}</td>
+                    <td>{{ $course->sks }}</td>
+                    <td>{{ $course->lecturer->name }}</td>
+                    <td>{{ $course->status }}</td>
 
-            {{-- Menampilkan nama dosen pengampu. --}}
-            <p>
-                Dosen: {{ $course['lecturer'] }}
-            </p>
+                    <td>
+                        <a href="{{ route('courses.show', $course) }}">
+                            Lihat
+                        </a>
 
-            {{-- Membuat tautan menuju halaman detail.
-                 route() digunakan agar URI tidak ditulis secara hardcode. --}}
-            <a href="{{ route('courses.show', ['course' => $id]) }}">
-                Lihat Detail
-            </a>
+                        <a href="{{ route('courses.edit', $course) }}">
+                            Edit
+                        </a>
 
-        </article>
+                        <form
+                            action="{{ route('courses.destroy', $course) }}"
+                            method="POST"
+                            style="display:inline"
+                        >
+                            @csrf
+                            @method('DELETE')
 
-        <hr>
-
-    @endforeach
+                            <button type="submit">
+                                Hapus
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
 
 </x-layout>

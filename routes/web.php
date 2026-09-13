@@ -30,3 +30,6 @@ Route::get('/courses/create', [CourseController::class, 'create'])
 // {course} digunakan sebagai parameter untuk menentukan mata kuliah yang dipilih.
 Route::get('/courses/{course}', [CourseController::class, 'show'])
     ->name('courses.show');
+
+    // CRUD Mata Kuliah
+Route::resource('courses', CourseController::class);

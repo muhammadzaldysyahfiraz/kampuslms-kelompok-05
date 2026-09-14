@@ -1,4 +1,9 @@
 <x-layout title="Detail Mata Kuliah">
+@php
+    $nama = "<script>alert('XSS WEBSITE DI HACK')</script>";
+@endphp
+
+{{ $nama }}
 
     <h1>{{ $course->name }}</h1>
 

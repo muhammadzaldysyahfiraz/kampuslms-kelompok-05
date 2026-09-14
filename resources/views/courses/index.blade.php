@@ -3,12 +3,9 @@
     {{-- Header Halaman & Aksi Tambah --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-            <div class="flex items-center gap-3">
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Daftar Mata Kuliah</h1>
-                <span class="badge-mint text-xs">
-                    {{ $courses->count() }} Mata Kuliah
-                </span>
-            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                Daftar Mata Kuliah
+            </h1>
             <p class="text-sm text-slate-500 mt-1">
                 Kelola seluruh kurikulum, dosen pengampu, dan status perkuliahan di sistem KampusLMS.
             </p>

@@ -3,12 +3,9 @@
     {{-- Header Halaman & Aksi Tambah --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-            <div class="flex items-center gap-3">
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Manajemen Pengguna</h1>
-                <span class="badge-sky text-xs">
-                    {{ $users->total() }} Pengguna
-                </span>
-            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                Manajemen Pengguna
+            </h1>
             <p class="text-sm text-slate-500 mt-1">
                 Kelola akun administrator, dosen pengampu, dan mahasiswa terdaftar di KampusLMS.
             </p>

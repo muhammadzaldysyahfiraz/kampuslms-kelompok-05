@@ -45,12 +45,7 @@
             {{-- SECTION: My courses (Data Riil dari Database KampusLMS) --}}
             <div>
                 <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-2">
-                        <h2 class="text-base font-extrabold text-slate-900 tracking-tight">Mata Kuliah Semester Ini</h2>
-                        <span class="text-xs bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-full">
-                            {{ $totalCourses }} Terdaftar
-                        </span>
-                    </div>
+                    <h2 class="text-base font-extrabold text-slate-900 tracking-tight">Mata Kuliah Semester Ini</h2>
                     <a href="{{ route('courses.index') }}" class="btn-outline text-xs py-1.5 px-3">
                         Lihat Semua
                     </a>
@@ -301,13 +296,8 @@
             {{-- SECTION: Homeworks (Daftar Tugas Akademik Riil dari Database) --}}
             <div>
                 <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-2">
-                        <h2 class="text-base font-extrabold text-slate-900 tracking-tight">Tugas Perkuliahan</h2>
-                        <span class="text-xs bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-full">
-                            {{ $totalAssignments }} Tugas Terbit
-                        </span>
-                    </div>
-                    <span class="text-xs text-slate-400">Modul Pembelajaran & Penugasan</span>
+                    <h2 class="text-base font-extrabold text-slate-900 tracking-tight">Tugas Perkuliahan</h2>
+                    <span class="text-xs text-slate-400">Semester Ganjil 2026/2027</span>
                 </div>
 
                 <div class="space-y-3">

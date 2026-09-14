@@ -30,28 +30,29 @@
         </div>
     </div>
 
-    {{-- Hero Banner Detail Mata Kuliah --}}
-    <div class="lms-card p-6 sm:p-8 mb-8 relative overflow-hidden bg-gradient-to-r from-white via-slate-50 to-amber-50/20 border-l-4 border-l-[#FFC152]">
-        <div class="flex flex-wrap items-center gap-2.5 mb-3">
-            <span class="font-mono text-xs font-bold px-3 py-1 rounded-lg bg-slate-900 text-white">
-                {{ $course->code }}
-            </span>
-            <span class="px-3 py-1 rounded-lg bg-[#FFC152]/20 text-[#925400] text-xs font-bold border border-[#FFC152]/40">
-                {{ $course->sks }} SKS
-            </span>
+    {{-- Card Header Detail Mata Kuliah --}}
+    <div class="lms-card p-6 sm:p-8 mb-8 bg-white border border-slate-200/80">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-3">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                {{ $course->name }}
+            </h1>
 
-            @if ($course->status === 'active')
-                <span class="badge-mint">Mata Kuliah Aktif</span>
-            @elseif ($course->status === 'draft')
-                <span class="badge-amber">Status Draft</span>
-            @else
-                <span class="badge-dark">Diarsipkan</span>
-            @endif
+            <div class="flex items-center gap-2">
+                <span class="font-mono text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 text-slate-700">
+                    {{ $course->code }}
+                </span>
+                <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 text-slate-700">
+                    {{ $course->sks }} SKS
+                </span>
+                @if ($course->status === 'active')
+                    <span class="badge-mint">Aktif</span>
+                @elseif ($course->status === 'draft')
+                    <span class="badge-amber">Draft</span>
+                @else
+                    <span class="badge-dark">Diarsipkan</span>
+                @endif
+            </div>
         </div>
-
-        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-3">
-            {{ $course->name }}
-        </h1>
 
         <p class="text-slate-600 text-sm max-w-3xl leading-relaxed">
             {{ $course->description ?? 'Tidak ada deskripsi rinci untuk mata kuliah ini. Pengajar dapat memperbarui silabus dan deskripsi melalui menu edit.' }}

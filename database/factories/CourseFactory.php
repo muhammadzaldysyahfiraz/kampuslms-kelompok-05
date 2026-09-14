@@ -14,6 +14,7 @@ class CourseFactory extends Factory
     {
         return [
             'code' => 'SI' . fake()->unique()->numerify('#######'),
+
             'name' => fake()->randomElement([
                 'Pemrograman Web',
                 'Basis Data',
@@ -21,9 +22,15 @@ class CourseFactory extends Factory
                 'Sistem Informasi',
                 'Analisis dan Perancangan Sistem',
             ]),
+
             'description' => fake('id_ID')->paragraph(),
+
             'sks' => fake()->numberBetween(2, 4),
-            'lecturer_id' => User::where('role', 'dosen')->inRandomOrder()->value('id'),
+
+            'lecturer_id' => User::where('role', 'dosen')
+                ->inRandomOrder()
+                ->value('id'),
+
             'status' => 'active',
         ];
     }

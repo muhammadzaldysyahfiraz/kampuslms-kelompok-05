@@ -15,9 +15,15 @@ class GradeFactory extends Factory
     {
         return [
             'submission_id' => Submission::inRandomOrder()->value('id'),
-            'graded_by' => User::where('role', 'dosen')->inRandomOrder()->value('id'),
+
+            'graded_by' => User::where('role', 'dosen')
+                ->inRandomOrder()
+                ->value('id'),
+
             'score' => fake()->numberBetween(60, 100),
+
             'feedback' => fake('id_ID')->sentence(),
+
             'graded_at' => now(),
         ];
     }

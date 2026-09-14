@@ -19,7 +19,7 @@ class DatabaseSeeder extends Seeder
         |--------------------------------------------------------------------------
         */
 
-        User::factory()->create([
+        $admin = User::factory()->create([
             'name' => 'Admin KampusLMS',
             'email' => 'admin@kampuslms.test',
             'password' => 'password',
@@ -41,6 +41,20 @@ class DatabaseSeeder extends Seeder
 
         /*
         |--------------------------------------------------------------------------
+        | AKUN DOSEN DEMO
+        |--------------------------------------------------------------------------
+        */
+
+        $dosenDemo = $dosen->first();
+
+        $dosenDemo->update([
+            'name' => 'Dosen Demo',
+            'email' => 'dosen@kampuslms.test',
+            'nim_nip' => 'DOS001',
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
         | 3. MAHASISWA
         |--------------------------------------------------------------------------
         */
@@ -53,18 +67,12 @@ class DatabaseSeeder extends Seeder
 
         /*
         |--------------------------------------------------------------------------
-        | AKUN DEMO WAJIB
+        | AKUN MAHASISWA DEMO
         |--------------------------------------------------------------------------
         */
 
-        $dosenDemo = $dosen->first();
-        $dosenDemo->update([
-            'name' => 'Dosen Demo',
-            'email' => 'dosen@kampuslms.test',
-            'nim_nip' => 'DOS001',
-        ]);
-
         $mahasiswaDemo = $mahasiswa->first();
+
         $mahasiswaDemo->update([
             'name' => 'Mahasiswa Demo',
             'email' => 'mahasiswa@kampuslms.test',
@@ -88,9 +96,11 @@ class DatabaseSeeder extends Seeder
         */
 
         foreach ($courses as $course) {
+
             $students = $mahasiswa->random(15);
 
             foreach ($students as $student) {
+
                 $course->students()->attach($student->id, [
                     'enrolled_at' => now(),
                 ]);
@@ -99,14 +109,14 @@ class DatabaseSeeder extends Seeder
 
         /*
         |--------------------------------------------------------------------------
-        | 6. 3 TUGAS UNTUK SETIAP MK
+        | 6. 3 TUGAS PER MATA KULIAH
         |--------------------------------------------------------------------------
         */
 
         foreach ($courses as $course) {
 
             // Tugas sudah lewat deadline
-            $pastAssignment = Assignment::factory()->create([
+            Assignment::factory()->create([
                 'course_id' => $course->id,
                 'created_by' => $course->lecturer_id,
                 'title' => 'Tugas Pertemuan 1',
@@ -114,8 +124,8 @@ class DatabaseSeeder extends Seeder
                 'status' => 'published',
             ]);
 
-            // Tugas yang masih aktif
-            $activeAssignment = Assignment::factory()->create([
+            // Tugas masih aktif
+            Assignment::factory()->create([
                 'course_id' => $course->id,
                 'created_by' => $course->lecturer_id,
                 'title' => 'Tugas Pertemuan 2',
@@ -124,7 +134,7 @@ class DatabaseSeeder extends Seeder
             ]);
 
             // Tugas draft
-            $draftAssignment = Assignment::factory()->create([
+            Assignment::factory()->create([
                 'course_id' => $course->id,
                 'created_by' => $course->lecturer_id,
                 'title' => 'Tugas Akhir',
@@ -133,48 +143,14 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-/*
-|--------------------------------------------------------------------------
-| 6.5. MATERIAL UNTUK SETIAP MK
-|--------------------------------------------------------------------------
-*/
-
-foreach ($courses as $course) {
-
-    $course->materials()->createMany([
-        [
-            'uploaded_by' => $course->lecturer_id,
-            'title' => 'Materi Pertemuan 1',
-            'description' => 'Materi pembelajaran pertemuan pertama.',
-            'type' => 'link',
-            'file_path' => null,
-            'original_name' => null,
-            'file_size' => null,
-            'mime_type' => null,
-            'external_url' => 'https://example.com/materi-1',
-        ],
-        [
-            'uploaded_by' => $course->lecturer_id,
-            'title' => 'Materi Pertemuan 2',
-            'description' => 'Materi pembelajaran pertemuan kedua.',
-            'type' => 'link',
-            'file_path' => null,
-            'original_name' => null,
-            'file_size' => null,
-            'mime_type' => null,
-            'external_url' => 'https://example.com/materi-2',
-        ],
-    ]);
-}
-
-
         /*
         |--------------------------------------------------------------------------
-        | 7. MINIMAL 100 SUBMISSION
+        | 7. SUBMISSION
         |--------------------------------------------------------------------------
         |
-        | Kita membuat 25 submission per mata kuliah.
-        | 5 MK x 25 = 125 submission.
+        | 5 MK x 25 submission = 125 submission.
+        | Submission hanya berasal dari mahasiswa yang terdaftar
+        | pada mata kuliah tersebut.
         |
         */
 
@@ -182,33 +158,51 @@ foreach ($courses as $course) {
 
         foreach ($courses as $course) {
 
-            // Ambil mahasiswa yang benar-benar terdaftar
+            // Mahasiswa yang terdaftar di MK ini
             $students = $course->students()->get();
 
-            // Ambil tugas pada MK tersebut
+            // Tugas yang dimiliki MK ini
             $assignments = $course->assignments()->get();
 
-            for ($i = 0; $i < 25; $i++) {
+            $created = 0;
+
+            while ($created < 25) {
 
                 $student = $students->random();
                 $assignment = $assignments->random();
 
-                // Hindari submission ganda
-                if (
-                    Submission::where('assignment_id', $assignment->id)
-                        ->where('user_id', $student->id)
-                        ->exists()
-                ) {
-                    $i--;
+                /*
+                | Hindari submission ganda.
+                | Database juga memiliki unique:
+                | assignment_id + user_id
+                */
+
+                $exists = Submission::where('assignment_id', $assignment->id)
+                    ->where('user_id', $student->id)
+                    ->exists();
+
+                if ($exists) {
                     continue;
                 }
 
-                // Sebagian submission dibuat terlambat
+                /*
+                | Sekitar 30% submission terlambat.
+                */
+
                 $isLate = fake()->boolean(30);
 
-                $submittedAt = $isLate
-                    ? $assignment->due_at->copy()->addDays(1)
-                    : $assignment->due_at->copy()->subDays(1);
+                if ($isLate) {
+
+                    $submittedAt = $assignment->due_at
+                        ->copy()
+                        ->addDays(1);
+
+                } else {
+
+                    $submittedAt = $assignment->due_at
+                        ->copy()
+                        ->subDays(1);
+                }
 
                 $submission = Submission::factory()->create([
                     'assignment_id' => $assignment->id,
@@ -218,6 +212,8 @@ foreach ($courses as $course) {
                 ]);
 
                 $submissions->push($submission);
+
+                $created++;
             }
         }
 
@@ -227,7 +223,13 @@ foreach ($courses as $course) {
         |--------------------------------------------------------------------------
         */
 
-        $numberOfGrades = (int) floor($submissions->count() * 0.60);
+        $numberOfGrades = (int) floor(
+            $submissions->count() * 0.60
+        );
+
+        /*
+        | Ambil submission secara acak untuk diberi nilai.
+        */
 
         $submissionsToGrade = $submissions
             ->random($numberOfGrades);
@@ -236,10 +238,42 @@ foreach ($courses as $course) {
 
             Grade::factory()->create([
                 'submission_id' => $submission->id,
-                'graded_by' => $submission->assignment->course->lecturer_id,
+
+                // Nilai diberikan oleh dosen pengampu MK
+                'graded_by' => $submission
+                    ->assignment
+                    ->course
+                    ->lecturer_id,
+
                 'score' => fake()->numberBetween(60, 100),
+
                 'feedback' => fake('id_ID')->sentence(),
+
                 'graded_at' => now(),
+            ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 9. MATERIAL
+        |--------------------------------------------------------------------------
+        |
+        | Data tambahan materi untuk setiap mata kuliah.
+        |
+        */
+
+        foreach ($courses as $course) {
+
+            $course->materials()->create([
+                'uploaded_by' => $course->lecturer_id,
+                'title' => 'Materi Pertemuan 1',
+                'description' => 'Materi pembelajaran pertemuan pertama.',
+                'type' => 'file',
+                'file_path' => 'materials/materi-pertemuan-1.pdf',
+                'original_name' => 'materi-pertemuan-1.pdf',
+                'file_size' => 500000,
+                'mime_type' => 'application/pdf',
+                'external_url' => null,
             ]);
         }
     }

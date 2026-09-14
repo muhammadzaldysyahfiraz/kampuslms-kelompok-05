@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\UserController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -30,3 +31,6 @@ Route::get('/dashboard', function () {
 
 // CRUD Resourceful Mata Kuliah (index, create, store, show, edit, update, destroy)
 Route::resource('courses', CourseController::class);
+
+// CRUD Resourceful Manajemen Pengguna (F2 & M1 Deliverable)
+Route::resource('users', UserController::class);

@@ -15,16 +15,21 @@ class AssignmentFactory extends Factory
     {
         return [
             'course_id' => Course::inRandomOrder()->value('id'),
-            'created_by' => User::where('role', 'dosen')->inRandomOrder()->value('id'),
-            'title' => fake('id_ID')->randomElement([
-                'Tugas Pertemuan 1',
-                'Tugas Pertemuan 2',
-                'Tugas Akhir',
-            ]),
+
+            'created_by' => User::where('role', 'dosen')
+                ->inRandomOrder()
+                ->value('id'),
+
+            'title' => fake('id_ID')->sentence(3),
+
             'instructions' => fake('id_ID')->paragraph(),
+
             'due_at' => now()->addDays(7),
+
             'max_score' => 100,
+
             'allow_late' => true,
+
             'status' => 'published',
         ];
     }

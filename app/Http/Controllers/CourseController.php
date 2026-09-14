@@ -33,9 +33,10 @@ class CourseController extends Controller
             'description' => ['nullable', 'string'],
             'sks' => ['required', 'integer', 'min:1', 'max:6'],
             'lecturer_id' => ['required', 'exists:users,id'],
+            'status' => ['nullable', 'in:draft,active,archived'],
         ]);
 
-        $data['status'] = 'draft';
+        $data['status'] = $data['status'] ?? 'draft';
 
         Course::create($data);
 
@@ -47,7 +48,8 @@ class CourseController extends Controller
     // Menampilkan detail mata kuliah
     public function show(Course $course)
     {
-        $course->load('lecturer');
+        $course->load(['lecturer', 'materials', 'assignments']);
+        $course->loadCount('students');
 
         return view('courses.show', compact('course'));
     }
@@ -73,6 +75,7 @@ class CourseController extends Controller
             'description' => ['nullable', 'string'],
             'sks' => ['required', 'integer', 'min:1', 'max:6'],
             'lecturer_id' => ['required', 'exists:users,id'],
+            'status' => ['required', 'in:draft,active,archived'],
         ]);
 
         $course->update($data);

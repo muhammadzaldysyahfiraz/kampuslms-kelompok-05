@@ -292,7 +292,8 @@
                 <div class="avatar">Z</div>
                 <div class="member-info">
                     <h3>Muhammad Zaldy Syah Firaz</h3>
-                    <p>Backend Developer • 10241054 (@muhammadzaldysyahfiraz)</p>
+                    <p>Backend Developer • 10241054 (@muhammadzaldy
+                        syahfiraz)</p>
                 </div>
             </div>
             <div class="member-card">

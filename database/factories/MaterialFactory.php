@@ -20,22 +20,21 @@ class MaterialFactory extends Factory
                 ->inRandomOrder()
                 ->value('id'),
 
-            'title' => fake('id_ID')->randomElement([
-                'Materi Pertemuan 1',
-                'Materi Pertemuan 2',
-                'Materi Pembelajaran',
-            ]),
+            'title' => fake('id_ID')->sentence(4),
 
             'description' => fake('id_ID')->paragraph(),
 
-            'type' => 'link',
+            'type' => 'file',
 
-            'file_path' => null,
-            'original_name' => null,
-            'file_size' => null,
-            'mime_type' => null,
+            'file_path' => 'materials/' . fake()->uuid() . '.pdf',
 
-            'external_url' => 'https://example.com/materi',
+            'original_name' => 'materi.pdf',
+
+            'file_size' => fake()->numberBetween(10000, 5000000),
+
+            'mime_type' => 'application/pdf',
+
+            'external_url' => null,
         ];
     }
 }

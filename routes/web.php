@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\UserController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -33,3 +34,6 @@ Route::get('/courses/{course}', [CourseController::class, 'show'])
 
     // CRUD Mata Kuliah
 Route::resource('courses', CourseController::class);
+
+Route::resource('users', UserController::class);
+

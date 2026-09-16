@@ -21,7 +21,7 @@ return new class extends Migration
                 'admin',
                 'dosen',
                 'mahasiswa'
-            ])->index();
+            ])->default('mahasiswa')->index();
 
             $table->string('nim_nip')->nullable()->unique();
 

@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" width="100%" height="100%" fill="none">
+  <!-- Background Glow & Shapes -->
+  <circle cx="240" cy="160" r="130" fill="#F8FAFC"/>
+  <circle cx="120" cy="90" r="45" fill="#66A7F2" opacity="0.12"/>
+  <circle cx="360" cy="220" r="60" fill="#5DD299" opacity="0.15"/>
+  <circle cx="390" cy="80" r="28" fill="#FFC152" opacity="0.2"/>
+
+  <!-- Floating UI Elements -->
+  <!-- Left Card (Code / Academic Card) -->
+  <rect x="40" y="110" width="110" height="90" rx="14" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2"/>
+  <rect x="52" y="125" width="45" height="8" rx="4" fill="#66A7F2"/>
+  <rect x="52" y="142" width="75" height="6" rx="3" fill="#E2E8F0"/>
+  <rect x="52" y="156" width="60" height="6" rx="3" fill="#E2E8F0"/>
+  <circle cx="125" cy="129" r="6" fill="#5DD299"/>
+
+  <!-- Right Card (Score / Grade Badge) -->
+  <rect x="330" y="70" width="100" height="75" rx="14" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2"/>
+  <rect x="345" y="85" width="40" height="8" rx="4" fill="#FE774C"/>
+  <text x="345" y="125" font-family="JetBrains Mono, monospace" font-weight="800" font-size="22" fill="#1E1E26">A+</text>
+  <circle cx="405" cy="115" r="10" fill="#FFC152" opacity="0.3"/>
+  <path d="M405 110 L407 114 L411 115 L408 118 L409 122 L405 120 L401 122 L402 118 L399 115 L403 114 Z" fill="#925400"/>
+
+  <!-- Desk Surface Base -->
+  <rect x="100" y="240" width="280" height="10" rx="5" fill="#CBD5E1"/>
+  <rect x="130" y="250" width="220" height="4" rx="2" fill="#E2E8F0"/>
+
+  <!-- Laptop on Desk -->
+  <rect x="165" y="170" width="150" height="95" rx="8" fill="#1E1E26"/>
+  <rect x="173" y="178" width="134" height="75" rx="5" fill="#FFFFFF"/>
+  <!-- Screen Mockup UI -->
+  <rect x="180" y="185" width="40" height="6" rx="3" fill="#66A7F2"/>
+  <rect x="180" y="197" width="120" height="24" rx="4" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+  <rect x="186" y="204" width="60" height="4" rx="2" fill="#5DD299"/>
+  <rect x="186" y="212" width="40" height="3" rx="1.5" fill="#CBD5E1"/>
+  <rect x="180" y="227" width="55" height="18" rx="4" fill="#66A7F2" opacity="0.2"/>
+  <rect x="245" y="227" width="55" height="18" rx="4" fill="#5DD299" opacity="0.2"/>
+  <!-- Base of Laptop -->
+  <path d="M145 265 L335 265 L325 272 L155 272 Z" fill="#94A3B8"/>
+  <rect x="220" y="266" width="40" height="3" rx="1.5" fill="#CBD5E1"/>
+
+  <!-- Character / Student Figure -->
+  <!-- Body / Torso -->
+  <path d="M210 135 C210 120, 270 120, 270 135 L275 190 L205 190 Z" fill="#66A7F2"/>
+  <!-- Collar -->
+  <path d="M230 135 L240 148 L250 135 Z" fill="#FFFFFF"/>
+  <!-- Head & Hair -->
+  <ellipse cx="240" cy="98" rx="20" ry="24" fill="#FED7AA"/>
+  <!-- Hair (Dark Blue/Purple Navy #1E1E26) -->
+  <path d="M220 95 C220 75, 260 70, 262 90 C262 95, 258 102, 258 102 C255 90, 245 88, 235 90 C228 92, 222 98, 220 95 Z" fill="#1E1E26"/>
+  <!-- Glasses -->
+  <rect x="225" y="93" width="12" height="9" rx="3" fill="none" stroke="#1E1E26" stroke-width="2"/>
+  <rect x="243" y="93" width="12" height="9" rx="3" fill="none" stroke="#1E1E26" stroke-width="2"/>
+  <line x1="237" y1="97" x2="243" y2="97" stroke="#1E1E26" stroke-width="2"/>
+  <!-- Smile -->
+  <path d="M236 109 Q240 114 244 109" stroke="#1E1E26" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- Books Stack on Left of Desk -->
+  <rect x="115" y="215" width="42" height="9" rx="2" fill="#FFC152"/>
+  <rect x="118" y="224" width="38" height="8" rx="2" fill="#FE774C"/>
+  <rect x="112" y="232" width="46" height="8" rx="2" fill="#5DD299"/>
+
+  <!-- Plant Pot on Right of Desk -->
+  <path d="M328 225 L346 225 L342 240 L332 240 Z" fill="#FE774C"/>
+  <!-- Leaves -->
+  <path d="M337 225 Q325 210 334 205 Q337 215 337 225 Z" fill="#5DD299"/>
+  <path d="M337 225 Q348 208 342 202 Q337 214 337 225 Z" fill="#38B377"/>
+
+  <!-- Sparkles / Little Stars -->
+  <path d="M90 60 L92 66 L98 68 L92 70 L90 76 L88 70 L82 68 L88 66 Z" fill="#FFC152"/>
+  <path d="M390 170 L391 174 L395 175 L391 176 L390 180 L389 176 L385 175 L389 174 Z" fill="#5DD299"/>
+  <circle cx="280" cy="65" r="4" fill="#66A7F2" opacity="0.7"/>
+  <circle cx="160" cy="60" r="3" fill="#FE774C" opacity="0.6"/>
+</svg>

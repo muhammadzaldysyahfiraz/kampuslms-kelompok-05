@@ -12,8 +12,19 @@ Route::get('/tentang', function () {
     return view('tentang');
 })->name('tentang');
 
-// Menampilkan halaman Dashboard dengan data riil dari database KampusLMS (DESIGN.md Section 5.1 & image_013.jpg)
+// Route Role Switcher / Simulator
+Route::get('/switch-role/{role}', function ($role) {
+    $validRoles = ['mahasiswa', 'dosen', 'admin', 'all'];
+    if (in_array($role, $validRoles)) {
+        session(['active_role' => $role]);
+    }
+    return redirect()->back();
+})->name('switch-role');
+
+// Menampilkan halaman Dashboard dengan data riil dari database KampusLMS
 Route::get('/dashboard', function () {
+    $activeRole = session('active_role', 'mahasiswa');
+
     // 1. Mata Kuliah Aktif beserta relasi dosen, mahasiswa, materi, dan tugas
     $courses = \App\Models\Course::with(['lecturer', 'students', 'materials', 'assignments'])
         ->where('status', 'active')
@@ -75,15 +86,29 @@ Route::get('/dashboard', function () {
         ->orderBy('due_at', 'asc')
         ->first();
 
-    // 6. User profil demo aktif
-    $currentUser = \App\Models\User::where('role', 'mahasiswa')->first() 
-        ?? \App\Models\User::first() 
-        ?? (object)[
-            'name' => 'Muhammad Rifa Al-Rizqul',
-            'email' => '10241050@student.itk.ac.id',
-            'role' => 'mahasiswa',
-            'nim_nip' => '10241050'
-        ];
+    // 6. User profil aktif sesuai simulasi role
+    if ($activeRole === 'dosen') {
+        $currentUser = \App\Models\User::where('role', 'dosen')->first();
+    } elseif ($activeRole === 'admin') {
+        $currentUser = \App\Models\User::where('role', 'admin')->first();
+    } else {
+        $currentUser = \App\Models\User::where('role', 'mahasiswa')->first();
+    }
+
+    $currentUser = $currentUser ?? (object)[
+        'name' => 'Muhammad Rifa Al-Rizqul',
+        'email' => '10241050@student.itk.ac.id',
+        'role' => $activeRole === 'all' ? 'mahasiswa' : $activeRole,
+        'nim_nip' => '10241050'
+    ];
+
+    // Data spesifik untuk role Dosen & Admin
+    $lecturerCourses = \App\Models\Course::where('lecturer_id', $currentUser->id ?? 0)->with(['materials', 'assignments', 'students'])->get();
+    if ($lecturerCourses->isEmpty() && $activeRole === 'dosen') {
+        $lecturerCourses = \App\Models\Course::take(2)->with(['materials', 'assignments', 'students'])->get();
+    }
+
+    $recentUsers = \App\Models\User::latest()->take(4)->get();
 
     return view('dashboard', compact(
         'courses',
@@ -98,7 +123,10 @@ Route::get('/dashboard', function () {
         'homeworks',
         'upcomingSchedule',
         'urgentAssignment',
-        'currentUser'
+        'currentUser',
+        'lecturerCourses',
+        'recentUsers',
+        'activeRole'
     ));
 })->name('dashboard');
 

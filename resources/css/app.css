@@ -7,10 +7,17 @@
 @source "../**/*.vue";
 
 @theme {
-    /* Tipografi Utama */
+    /* Tipografi Utama (UI/UX Pro Max) */
     --font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-    /* Multi-Accent Colors (DESIGN.md Section 2.1) */
+    /* Multi-Accent Colors (DESIGN.md Section 2.1 & 7.1) */
+    --color-accent-amber: #FFC152;
+    --color-accent-mint: #5DD299;
+    --color-accent-sky: #66A7F2;
+    --color-accent-lilac: #F1D2F1;
+    --color-accent-coral: #FE774C;
+
     --color-lms-amber: #FFC152;
     --color-lms-mint: #5DD299;
     --color-lms-sky: #66A7F2;
@@ -21,7 +28,7 @@
     --color-brand-dark: #1E1E26;
     --color-brand-surface: #252530;
     --color-brand-border: #363644;
-    --color-brand-border-subtle: #2b2b37;
+    --color-brand-border-subtle: #2b2b38;
 
     /* Light Content Surface (DESIGN.md Section 2.2) */
     --color-canvas-light: #F8FAFC;
@@ -31,98 +38,107 @@
 }
 
 /* ==========================================================================
-   Komponen Utilitas Semantik KampusLMS (DESIGN.md Section 8.2 & Core Components)
+   Komponen Utilitas Semantik KampusLMS (Utilitarian Minimalism - Linear & Notion)
+   Protokol: /minimalist-ui (Solid Surfaces, Crisp 1px Borders, Spot Pastels)
    ========================================================================== */
 
 @layer components {
-    /* Tombol Utama (Radiant Tangerine / Coral CTA) */
+    /* Tombol Utama (Solid Off-Black Minimalist CTA) */
     .btn-primary {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
-        padding: 0.625rem 1.25rem;
-        background-color: #FE774C;
+        padding: 0.5rem 1rem;
+        background-color: #111111;
         color: #ffffff;
-        font-size: 0.875rem;
-        font-weight: 700;
-        border-radius: 0.75rem;
-        box-shadow: 0 1px 2px 0 rgba(254, 119, 76, 0.25);
-        transition: all 0.15s ease-in-out;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        border-radius: 0.5rem;
+        border: 1px solid #111111;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
         cursor: pointer;
-        border: none;
         text-decoration: none;
     }
     .btn-primary:hover {
-        background-color: #e66236;
-        box-shadow: 0 4px 12px 0 rgba(254, 119, 76, 0.35);
+        background-color: #252530;
+        border-color: #252530;
         transform: translateY(-1px);
     }
     .btn-primary:active {
         transform: scale(0.98);
     }
 
-    /* Tombol Sekunder (Soft Vibrant Azure / Sky Blue) */
+    /* Tombol Sekunder (Solid Crisp White) */
     .btn-secondary {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
         padding: 0.5rem 1rem;
-        background-color: #66A7F2;
-        color: #ffffff;
-        font-size: 0.875rem;
-        font-weight: 700;
-        border-radius: 0.75rem;
-        box-shadow: 0 1px 2px 0 rgba(102, 167, 242, 0.25);
-        transition: all 0.15s ease-in-out;
+        background-color: #ffffff;
+        color: #0F172A;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        border-radius: 0.5rem;
+        border: 1px solid #E2E8F0;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+        transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
         cursor: pointer;
-        border: none;
         text-decoration: none;
     }
     .btn-secondary:hover {
-        background-color: #4f92e0;
-        box-shadow: 0 4px 12px 0 rgba(102, 167, 242, 0.35);
+        background-color: #F8FAFC;
+        border-color: #CBD5E1;
+        color: #000000;
         transform: translateY(-1px);
     }
+    .btn-secondary:active {
+        transform: scale(0.98);
+    }
 
-    /* Tombol Dark / Command (Brand Dark) */
+    /* Tombol Dark / Command */
     .btn-dark {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
-        padding: 0.625rem 1.25rem;
+        padding: 0.5rem 1rem;
         background-color: #1E1E26;
         color: #ffffff;
-        font-size: 0.875rem;
-        font-weight: 700;
-        border-radius: 0.75rem;
-        transition: all 0.15s ease-in-out;
-        cursor: pointer;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        border-radius: 0.5rem;
         border: 1px solid #363644;
+        transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+        cursor: pointer;
         text-decoration: none;
     }
     .btn-dark:hover {
         background-color: #252530;
-        border-color: #4b4b5c;
+        border-color: #4B4B5C;
         transform: translateY(-1px);
     }
+    .btn-dark:active {
+        transform: scale(0.98);
+    }
 
-    /* Tombol Ghost / Outline */
+    /* Tombol Outline / Ghost */
     .btn-outline {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
-        padding: 0.5rem 1rem;
+        padding: 0.45rem 0.875rem;
         background-color: #ffffff;
         color: #334155;
-        font-size: 0.875rem;
+        font-size: 0.8125rem;
         font-weight: 600;
-        border-radius: 0.75rem;
+        border-radius: 0.5rem;
         border: 1px solid #E2E8F0;
-        transition: all 0.15s ease-in-out;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+        transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
         cursor: pointer;
         text-decoration: none;
     }
@@ -130,44 +146,52 @@
         background-color: #F8FAFC;
         color: #0F172A;
         border-color: #CBD5E1;
+        transform: translateY(-1px);
+    }
+    .btn-outline:active {
+        transform: scale(0.98);
     }
 
-    /* Tombol Destruktif (Danger Soft) */
+    /* Tombol Destruktif (Pale Red Danger) */
     .btn-danger-soft {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 0.375rem;
         padding: 0.4rem 0.75rem;
-        background-color: #FFF1F2;
-        color: #E11D48;
+        background-color: #FDEBEC;
+        color: #9F2F2D;
         font-size: 0.8125rem;
         font-weight: 600;
-        border-radius: 0.625rem;
-        border: 1px solid #FFE4E6;
-        transition: all 0.15s ease-in-out;
+        border-radius: 0.5rem;
+        border: 1px solid rgba(159, 47, 45, 0.2);
+        transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
         cursor: pointer;
     }
     .btn-danger-soft:hover {
-        background-color: #FFE4E6;
-        color: #BE123C;
+        background-color: #FBD5D7;
+        color: #7A1C1B;
+        border-color: rgba(159, 47, 45, 0.35);
+    }
+    .btn-danger-soft:active {
+        transform: scale(0.98);
     }
 
-    /* Kartu Kontainer Utama LMS */
+    /* Kartu Kontainer Utama LMS (Flat Bento Card dengan Crisp 1px Border) */
     .lms-card {
         background-color: #ffffff;
-        border-radius: 1rem;
-        border: 1px solid rgba(226, 232, 240, 0.9);
-        box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
-        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        border-radius: 0.875rem;
+        border: 1px solid #E2E8F0;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+        transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .lms-card-hover:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
         border-color: #CBD5E1;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.03);
     }
 
-    /* Pill Badges Aksen */
+    /* Spot Pastel Badges (Linear & Notion Minimalist Palette - WCAG 2.2 AA Compliant) */
     .badge-mint {
         display: inline-flex;
         align-items: center;
@@ -177,10 +201,10 @@
         font-size: 0.6875rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
-        background-color: rgba(93, 210, 153, 0.15);
-        color: #0d6e43;
-        border: 1px solid rgba(93, 210, 153, 0.4);
+        letter-spacing: 0.05em;
+        background-color: #EDF3EC;
+        color: #245228;
+        border: 1px solid rgba(36, 82, 40, 0.3);
     }
 
     .badge-amber {
@@ -192,10 +216,10 @@
         font-size: 0.6875rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
-        background-color: rgba(255, 193, 82, 0.2);
-        color: #925400;
-        border: 1px solid rgba(255, 193, 82, 0.5);
+        letter-spacing: 0.05em;
+        background-color: #FBF3DB;
+        color: #7E4B00;
+        border: 1px solid rgba(126, 75, 0, 0.3);
     }
 
     .badge-sky {
@@ -207,10 +231,10 @@
         font-size: 0.6875rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
-        background-color: rgba(102, 167, 242, 0.15);
-        color: #1d4ed8;
-        border: 1px solid rgba(102, 167, 242, 0.4);
+        letter-spacing: 0.05em;
+        background-color: #E1F3FE;
+        color: #17537D;
+        border: 1px solid rgba(23, 83, 125, 0.3);
     }
 
     .badge-coral {
@@ -222,10 +246,10 @@
         font-size: 0.6875rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
-        background-color: rgba(254, 119, 76, 0.15);
-        color: #c2410c;
-        border: 1px solid rgba(254, 119, 76, 0.4);
+        letter-spacing: 0.05em;
+        background-color: #FDEBEC;
+        color: #8C2220;
+        border: 1px solid rgba(140, 34, 32, 0.3);
     }
 
     .badge-lilac {
@@ -237,10 +261,10 @@
         font-size: 0.6875rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
-        background-color: rgba(241, 210, 241, 0.5);
-        color: #701a75;
-        border: 1px solid rgba(241, 210, 241, 0.9);
+        letter-spacing: 0.05em;
+        background-color: #F4EEF8;
+        color: #5C3276;
+        border: 1px solid rgba(92, 50, 118, 0.3);
     }
 
     .badge-dark {
@@ -252,52 +276,74 @@
         font-size: 0.6875rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
-        background-color: #252530;
-        color: #cbd5e1;
-        border: 1px solid #363644;
+        letter-spacing: 0.05em;
+        background-color: #F1F5F9;
+        color: #334155;
+        border: 1px solid #CBD5E1;
     }
 
-    /* Form Inputs Modern */
+    /* Form Controls Utilitarian & Accessible Focus Indicators */
     .form-input {
         width: 100%;
-        padding: 0.6875rem 1rem;
+        padding: 0.625rem 0.875rem;
         background-color: #ffffff;
-        border: 1px solid #CBD5E1;
-        border-radius: 0.75rem;
+        border: 1px solid #94A3B8;
+        border-radius: 0.5rem;
         font-size: 0.875rem;
         color: #0F172A;
-        transition: all 0.15s ease-in-out;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
         outline: none;
     }
-    .form-input:focus {
-        border-color: #66A7F2;
-        box-shadow: 0 0 0 3px rgba(102, 167, 242, 0.25);
+    .form-input:focus-visible {
+        border-color: #0F172A;
+        box-shadow: 0 0 0 2px #0F172A;
     }
     .form-input::placeholder {
-        color: #94A3B8;
+        color: #64748B;
     }
 
     .form-label {
         display: block;
-        font-size: 0.875rem;
-        font-weight: 600;
+        font-size: 0.75rem;
+        font-weight: 700;
         color: #334155;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
         margin-bottom: 0.375rem;
     }
 
-    /* Progress Bar */
+    /* Progress Bar Minimalist & Accessible */
     .progress-bar {
         width: 100%;
-        height: 0.4375rem;
-        background-color: #F1F5F9;
+        height: 0.5rem;
+        background-color: #E2E8F0;
         border-radius: 9999px;
         overflow: hidden;
     }
     .progress-bar-fill {
         height: 100%;
-        background-color: #5DD299;
+        background-color: #245228;
         border-radius: 9999px;
-        transition: width 0.4s ease-out;
+        transition: width 0.3s ease-out;
+    }
+}
+
+/* ==========================================================================
+   Aksesibilitas Global: Focus-Visible & Prefers-Reduced-Motion (WCAG 2.2 AA)
+   ========================================================================== */
+
+:focus-visible {
+    outline: 2px solid #0F172A !important;
+    outline-offset: 2px !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
 }

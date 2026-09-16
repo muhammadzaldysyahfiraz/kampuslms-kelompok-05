@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="100%" fill="none">
+  <!-- Background glow -->
+  <circle cx="200" cy="150" r="110" fill="#F1F5F9"/>
+  <circle cx="125" cy="120" r="40" fill="#E2E8F0" opacity="0.5"/>
+  <circle cx="280" cy="170" r="35" fill="#E2E8F0" opacity="0.4"/>
+
+  <!-- Accents -->
+  <circle cx="85" cy="90" r="7" fill="#66A7F2"/>
+  <path d="M310 90 L314 100 L324 104 L314 108 L310 118 L306 108 L296 104 L306 100 Z" fill="#FE774C" opacity="0.8"/>
+  <circle cx="330" cy="190" r="6" fill="#5DD299"/>
+  <circle cx="95" cy="210" r="5" fill="#FFC152"/>
+
+  <!-- Base Shelf -->
+  <path d="M70 240 L330 240" stroke="#CBD5E1" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Left Character Avatar (Small) -->
+  <circle cx="140" cy="140" r="22" fill="#E2E8F0"/>
+  <circle cx="140" cy="133" r="10" fill="#66A7F2"/>
+  <path d="M125 156 Q140 144 155 156 Z" fill="#66A7F2"/>
+
+  <!-- Right Character Avatar (Small) -->
+  <circle cx="260" cy="140" r="22" fill="#E2E8F0"/>
+  <circle cx="260" cy="133" r="10" fill="#5DD299"/>
+  <path d="M245 156 Q260 144 275 156 Z" fill="#5DD299"/>
+
+  <!-- Center Main ID Card / User Profile (Dominant) -->
+  <rect x="150" y="90" width="100" height="135" rx="14" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2"/>
+  <!-- Card Header Bar -->
+  <rect x="150" y="90" width="100" height="38" rx="14" fill="#1E1E26"/>
+  <rect x="150" y="112" width="100" height="16" fill="#1E1E26"/>
+  <!-- Lanyard clip hole -->
+  <rect x="188" y="96" width="24" height="6" rx="3" fill="#363644"/>
+
+  <!-- Center Avatar on Card -->
+  <circle cx="200" cy="142" r="22" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2"/>
+  <circle cx="200" cy="136" r="9" fill="#FE774C"/>
+  <path d="M187 156 Q200 146 213 156 Z" fill="#FE774C"/>
+
+  <!-- Badge lines on Card -->
+  <rect x="172" y="172" width="56" height="6" rx="3" fill="#1E1E26"/>
+  <rect x="180" y="184" width="40" height="4" rx="2" fill="#94A3B8"/>
+  <rect x="175" y="196" width="50" height="10" rx="5" fill="#5DD299" opacity="0.25"/>
+  <rect x="184" y="199" width="32" height="4" rx="2" fill="#0D6E43"/>
+
+  <!-- Magnifying search badge on corner -->
+  <circle cx="242" cy="195" r="18" fill="#66A7F2" stroke="#FFFFFF" stroke-width="3"/>
+  <circle cx="239" cy="192" r="7" stroke="#FFFFFF" stroke-width="2.5" fill="none"/>
+  <path d="M244 197 L251 204" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

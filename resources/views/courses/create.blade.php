@@ -3,7 +3,7 @@
     {{-- Breadcrumb Navigasi --}}
     <div class="mb-6">
         <a href="{{ route('courses.index') }}" class="btn-outline text-xs py-2 w-fit inline-flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <svg class="w-4 h-4 text-slate-600" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
             </svg>
             <span>Kembali ke Daftar Mata Kuliah</span>
@@ -17,28 +17,30 @@
             {{-- Form Header --}}
             <div class="border-b border-slate-100 pb-5 mb-6">
                 <div class="flex items-center gap-3 mb-1.5">
-                    <div class="w-8 h-8 rounded-xl bg-[#FE774C]/15 text-[#FE774C] flex items-center justify-center font-bold">
-                        ✦
+                    <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-800 flex items-center justify-center font-bold" aria-hidden="true">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
                     </div>
-                    <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+                    <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                         Tambah Mata Kuliah Baru
                     </h1>
                 </div>
-                <p class="text-xs text-slate-500">
+                <p class="text-xs text-slate-600 font-normal">
                     Masukkan detail informasi kurikulum dan tentukan dosen pengampu untuk mata kuliah ini.
                 </p>
             </div>
 
             {{-- Error Summary Alert if any --}}
             @if ($errors->any())
-                <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 mb-6">
-                    <div class="flex items-center gap-2 text-rose-700 text-xs font-bold mb-1">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <div class="p-4 rounded-lg bg-rose-50 border border-rose-200 mb-6" role="alert" aria-labelledby="form-error-summary">
+                    <div class="flex items-center gap-2 text-rose-800 text-xs font-bold mb-1">
+                        <svg class="w-4 h-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
                         </svg>
-                        <span>Terdapat beberapa kesalahan pengisian formulir:</span>
+                        <span id="form-error-summary">Terdapat beberapa kesalahan pengisian formulir:</span>
                     </div>
-                    <ul class="list-disc list-inside text-xs text-rose-600 space-y-0.5">
+                    <ul class="list-disc list-inside text-xs text-rose-800 space-y-0.5 font-normal">
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
                         @endforeach
@@ -54,7 +56,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div class="sm:col-span-2">
                         <label for="code" class="form-label">
-                            Kode Mata Kuliah <span class="text-rose-500">*</span>
+                            Kode Mata Kuliah <span class="text-rose-700" aria-hidden="true">*</span>
                         </label>
                         <input
                             type="text"
@@ -62,17 +64,22 @@
                             name="code"
                             value="{{ old('code') }}"
                             placeholder="Contoh: SI2514024"
+                            maxlength="10"
                             class="form-input font-mono uppercase {{ $errors->has('code') ? 'border-rose-400 focus:border-rose-500' : '' }}"
+                            aria-required="true"
+                            aria-invalid="{{ $errors->has('code') ? 'true' : 'false' }}"
+                            aria-describedby="code-hint @error('code') code-error @enderror"
                             required
                         >
+                        <p id="code-hint" class="text-[11px] text-slate-600 mt-1 font-normal">Maksimal 10 karakter alfanumerik (contoh: SI2514024).</p>
                         @error('code')
-                            <p class="text-xs text-rose-500 mt-1 font-medium">{{ $message }}</p>
+                            <p id="code-error" class="text-xs text-rose-700 mt-1 font-semibold" role="alert">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div>
                         <label for="sks" class="form-label">
-                            SKS <span class="text-rose-500">*</span>
+                            SKS <span class="text-rose-700" aria-hidden="true">*</span>
                         </label>
                         <input
                             type="number"
@@ -80,12 +87,17 @@
                             name="sks"
                             min="1"
                             max="6"
+                            step="1"
                             value="{{ old('sks', 3) }}"
-                            class="form-input text-center font-bold {{ $errors->has('sks') ? 'border-rose-400 focus:border-rose-500' : '' }}"
+                            class="form-input text-center font-bold font-mono {{ $errors->has('sks') ? 'border-rose-400 focus:border-rose-500' : '' }}"
+                            aria-required="true"
+                            aria-invalid="{{ $errors->has('sks') ? 'true' : 'false' }}"
+                            aria-describedby="sks-hint @error('sks') sks-error @enderror"
                             required
                         >
+                        <p id="sks-hint" class="text-[11px] text-slate-600 mt-1 font-normal text-center">Beban 1–6 SKS</p>
                         @error('sks')
-                            <p class="text-xs text-rose-500 mt-1 font-medium">{{ $message }}</p>
+                            <p id="sks-error" class="text-xs text-rose-700 mt-1 font-semibold" role="alert">{{ $message }}</p>
                         @enderror
                     </div>
                 </div>
@@ -93,7 +105,7 @@
                 {{-- Baris 2: Nama Mata Kuliah --}}
                 <div>
                     <label for="name" class="form-label">
-                        Nama Mata Kuliah <span class="text-rose-500">*</span>
+                        Nama Mata Kuliah <span class="text-rose-700" aria-hidden="true">*</span>
                     </label>
                     <input
                         type="text"
@@ -102,10 +114,14 @@
                         value="{{ old('name') }}"
                         placeholder="Contoh: Pemrograman Web Lanjut"
                         class="form-input {{ $errors->has('name') ? 'border-rose-400 focus:border-rose-500' : '' }}"
+                        aria-required="true"
+                        aria-invalid="{{ $errors->has('name') ? 'true' : 'false' }}"
+                        aria-describedby="name-hint @error('name') name-error @enderror"
                         required
                     >
+                    <p id="name-hint" class="text-[11px] text-slate-600 mt-1 font-normal">Nama resmi kurikulum mata kuliah.</p>
                     @error('name')
-                        <p class="text-xs text-rose-500 mt-1 font-medium">{{ $message }}</p>
+                        <p id="name-error" class="text-xs text-rose-700 mt-1 font-semibold" role="alert">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -113,12 +129,15 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label for="lecturer_id" class="form-label">
-                            Dosen Pengampu <span class="text-rose-500">*</span>
+                            Dosen Pengampu <span class="text-rose-700" aria-hidden="true">*</span>
                         </label>
                         <select
                             id="lecturer_id"
                             name="lecturer_id"
                             class="form-input {{ $errors->has('lecturer_id') ? 'border-rose-400 focus:border-rose-500' : '' }}"
+                            aria-required="true"
+                            aria-invalid="{{ $errors->has('lecturer_id') ? 'true' : 'false' }}"
+                            aria-describedby="lecturer_id-hint @error('lecturer_id') lecturer_id-error @enderror"
                             required
                         >
                             <option value="">-- Pilih Dosen Pengampu --</option>
@@ -131,8 +150,9 @@
                                 </option>
                             @endforeach
                         </select>
+                        <p id="lecturer_id-hint" class="text-[11px] text-slate-600 mt-1 font-normal">Dosen yang mengampu mata kuliah ini.</p>
                         @error('lecturer_id')
-                            <p class="text-xs text-rose-500 mt-1 font-medium">{{ $message }}</p>
+                            <p id="lecturer_id-error" class="text-xs text-rose-700 mt-1 font-semibold" role="alert">{{ $message }}</p>
                         @enderror
                     </div>
 
@@ -144,11 +164,13 @@
                             id="status"
                             name="status"
                             class="form-input"
+                            aria-describedby="status-hint"
                         >
                             <option value="draft" {{ old('status') === 'draft' ? 'selected' : '' }}>Draft (Belum Dibuka)</option>
                             <option value="active" {{ old('status', 'active') === 'active' ? 'selected' : '' }}>Aktif (Sedang Berjalan)</option>
                             <option value="archived" {{ old('status') === 'archived' ? 'selected' : '' }}>Diarsipkan</option>
                         </select>
+                        <p id="status-hint" class="text-[11px] text-slate-600 mt-1 font-normal">Visibilitas mata kuliah bagi mahasiswa.</p>
                     </div>
                 </div>
 
@@ -163,9 +185,12 @@
                         rows="4"
                         placeholder="Tuliskan tujuan pembelajaran, topik pokok, atau instruksi umum perkuliahan..."
                         class="form-input {{ $errors->has('description') ? 'border-rose-400 focus:border-rose-500' : '' }}"
+                        aria-invalid="{{ $errors->has('description') ? 'true' : 'false' }}"
+                        aria-describedby="description-hint @error('description') description-error @enderror"
                     >{{ old('description') }}</textarea>
+                    <p id="description-hint" class="text-[11px] text-slate-600 mt-1 font-normal">Penjelasan topik, silabus, atau deskripsi ringkas.</p>
                     @error('description')
-                        <p class="text-xs text-rose-500 mt-1 font-medium">{{ $message }}</p>
+                        <p id="description-error" class="text-xs text-rose-700 mt-1 font-semibold" role="alert">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -175,7 +200,7 @@
                         Batal
                     </a>
                     <button type="submit" class="btn-primary">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                        <svg class="w-4 h-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                         </svg>
                         <span>Simpan Mata Kuliah</span>

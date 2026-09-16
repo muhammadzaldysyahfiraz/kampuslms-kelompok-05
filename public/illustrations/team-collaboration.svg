@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 280" width="100%" height="100%" fill="none">
+  <!-- Background glow circles -->
+  <circle cx="250" cy="140" r="120" fill="#F1F5F9"/>
+  <circle cx="120" cy="90" r="45" fill="#E2E8F0" opacity="0.4"/>
+  <circle cx="380" cy="180" r="40" fill="#E2E8F0" opacity="0.4"/>
+
+  <!-- Geometric accent stars and dots -->
+  <path d="M80 60 L84 70 L94 74 L84 78 L80 88 L76 78 L66 74 L76 70 Z" fill="#66A7F2" opacity="0.8"/>
+  <circle cx="420" cy="65" r="7" fill="#FE774C"/>
+  <circle cx="440" cy="140" r="5" fill="#5DD299"/>
+  <circle cx="60" cy="160" r="6" fill="#FFC152"/>
+
+  <!-- Base desk surface -->
+  <path d="M50 240 L450 240" stroke="#CBD5E1" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Center Laptop / IDE Workstation -->
+  <!-- Laptop Screen -->
+  <rect x="180" y="110" width="140" height="95" rx="8" fill="#1E1E26" stroke="#363644" stroke-width="2"/>
+  <rect x="188" y="118" width="124" height="75" rx="4" fill="#252530"/>
+  <!-- Code Lines on Screen -->
+  <rect x="196" y="128" width="35" height="5" rx="2.5" fill="#66A7F2"/>
+  <rect x="236" y="128" width="50" height="5" rx="2.5" fill="#5DD299"/>
+  <rect x="204" y="138" width="60" height="4" rx="2" fill="#CBD5E1"/>
+  <rect x="204" y="147" width="45" height="4" rx="2" fill="#FFC152"/>
+  <rect x="212" y="156" width="70" height="4" rx="2" fill="#FE774C"/>
+  <rect x="196" y="166" width="28" height="4" rx="2" fill="#66A7F2"/>
+  <!-- Laptop Base -->
+  <path d="M160 205 L340 205 L330 215 L170 215 Z" fill="#E2E8F0"/>
+  <rect x="225" y="206" width="50" height="4" rx="2" fill="#94A3B8"/>
+
+  <!-- Left Team Member (Developer / Designer) -->
+  <circle cx="120" cy="130" r="26" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2"/>
+  <circle cx="120" cy="120" r="12" fill="#66A7F2"/>
+  <path d="M102 148 Q120 134 138 148 Z" fill="#66A7F2"/>
+  <path d="M100 155 Q120 145 140 155 L145 220 L95 220 Z" fill="#1E1E26"/>
+  <!-- Arm pointing to screen -->
+  <path d="M135 175 L180 160" stroke="#66A7F2" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Right Team Member (Architect / Tester) -->
+  <circle cx="380" cy="130" r="26" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2"/>
+  <circle cx="380" cy="120" r="12" fill="#5DD299"/>
+  <path d="M362 148 Q380 134 398 148 Z" fill="#5DD299"/>
+  <path d="M360 155 Q380 145 400 155 L405 220 L355 220 Z" fill="#252530"/>
+  <!-- Arm with coffee mug -->
+  <path d="M365 175 L330 185" stroke="#5DD299" stroke-width="6" stroke-linecap="round"/>
+  <rect x="325" y="180" width="12" height="15" rx="3" fill="#FE774C"/>
+
+  <!-- Floating Cloud / Git Branch Icon above Laptop -->
+  <rect x="220" y="65" width="60" height="30" rx="15" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.05))"/>
+  <circle cx="238" cy="80" r="4" fill="#66A7F2"/>
+  <circle cx="262" cy="80" r="4" fill="#5DD299"/>
+  <path d="M242 80 L258 80" stroke="#CBD5E1" stroke-width="2"/>
+</svg>

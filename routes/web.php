@@ -1,137 +1,125 @@
-<?php
+<?php // Menandai awal file PHP.
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\CourseController;
-use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Route; // Mengimpor facade Route Laravel.
+use App\Http\Controllers\CourseController; // Mengimpor CourseController.
+use App\Http\Controllers\UserController; // Mengimpor UserController.
 
-Route::get('/', function () {
-    return redirect()->route('dashboard');
-});
+Route::get('/', function () { // Membuat route halaman utama.
+    return redirect()->route('dashboard'); // Mengarahkan halaman utama ke dashboard.
+})->name('home'); // Memberikan nama home pada route utama.
 
-Route::get('/tentang', function () {
-    return view('tentang');
-})->name('tentang');
+Route::get('/tentang', function () { // Membuat route halaman tentang.
+    return view('tentang'); // Mengembalikan view tentang.
+})->name('tentang'); // Memberikan nama tentang pada route.
 
-// Route Role Switcher / Simulator
-Route::get('/switch-role/{role}', function ($role) {
-    $validRoles = ['mahasiswa', 'dosen', 'admin', 'all'];
-    if (in_array($role, $validRoles)) {
-        session(['active_role' => $role]);
-    }
-    return redirect()->back();
-})->name('switch-role');
+Route::get('/switch-role/{role}', function ($role) { // Membuat route untuk mengganti role simulasi.
+    $validRoles = ['mahasiswa', 'dosen', 'admin', 'all']; // Menentukan daftar role yang boleh dipakai.
+    if (in_array($role, $validRoles)) { // Memeriksa apakah role yang diterima valid.
+        session(['active_role' => $role]); // Menyimpan role aktif ke session.
+    } // Mengakhiri pengecekan role.
+    return redirect()->back(); // Mengembalikan pengguna ke halaman sebelumnya.
+})->name('switch-role'); // Memberikan nama route switch-role.
 
-// Menampilkan halaman Dashboard dengan data riil dari database KampusLMS
-Route::get('/dashboard', function () {
-    $activeRole = session('active_role', 'mahasiswa');
+Route::get('/dashboard', function () { // Membuat route dashboard.
+    $activeRole = session('active_role', 'mahasiswa'); // Mengambil role aktif dari session dengan default mahasiswa.
 
-    // 1. Mata Kuliah Aktif beserta relasi dosen, mahasiswa, materi, dan tugas
-    $courses = \App\Models\Course::with(['lecturer', 'students', 'materials', 'assignments'])
-        ->where('status', 'active')
-        ->latest()
-        ->take(3)
-        ->get();
+    $courses = \App\Models\Course::with(['lecturer', 'students', 'materials', 'assignments']) // Mengambil course beserta relasi dashboard.
+        ->where('status', 'active') // Membatasi course aktif.
+        ->latest() // Mengurutkan course terbaru lebih dulu.
+        ->take(3) // Membatasi tiga course.
+        ->get(); // Menjalankan query.
 
-    if ($courses->isEmpty()) {
-        $courses = \App\Models\Course::with(['lecturer', 'students', 'materials', 'assignments'])
-            ->latest()
-            ->take(3)
-            ->get();
-    }
+    if ($courses->isEmpty()) { // Memeriksa apakah tidak ada course aktif.
+        $courses = \App\Models\Course::with(['lecturer', 'students', 'materials', 'assignments']) // Mengambil course beserta relasi lagi.
+            ->latest() // Mengurutkan dari terbaru.
+            ->take(3) // Membatasi tiga course.
+            ->get(); // Menjalankan query.
+    } // Mengakhiri kondisi course kosong.
 
-    $allCourses = \App\Models\Course::orderBy('name')->get();
-    $totalCourses = \App\Models\Course::count();
-    $totalLecturers = \App\Models\User::where('role', 'dosen')->count();
-    $totalStudents = \App\Models\User::where('role', 'mahasiswa')->count();
-    $totalAssignments = \App\Models\Assignment::count();
-    $totalMaterials = \App\Models\Material::count();
-    $totalSubmissions = \App\Models\Submission::count();
+    $allCourses = \App\Models\Course::orderBy('name')->get(); // Mengambil semua course berdasarkan nama.
+    $totalCourses = \App\Models\Course::count(); // Menghitung jumlah seluruh course.
+    $totalLecturers = \App\Models\User::where('role', 'dosen')->count(); // Menghitung jumlah dosen.
+    $totalStudents = \App\Models\User::where('role', 'mahasiswa')->count(); // Menghitung jumlah mahasiswa.
+    $totalAssignments = \App\Models\Assignment::count(); // Menghitung jumlah assignment.
+    $totalMaterials = \App\Models\Material::count(); // Menghitung jumlah material.
+    $totalSubmissions = \App\Models\Submission::count(); // Menghitung jumlah submission.
 
-    // 2. Leaderboard Mahasiswa Riil berdasarkan riwayat submission dan nilai
-    $topStudents = \App\Models\User::where('role', 'mahasiswa')
-        ->withCount('submissions')
-        ->take(4)
-        ->get()
-        ->map(function ($student, $index) {
-            $student->calculated_score = 96 - ($index * 4);
-            return $student;
-        });
+    $topStudents = \App\Models\User::where('role', 'mahasiswa') // Mengambil mahasiswa.
+        ->withCount('submissions') // Menghitung submission mahasiswa.
+        ->take(4) // Membatasi empat mahasiswa.
+        ->get() // Menjalankan query.
+        ->map(function ($student, $index) { // Memproses hasil mahasiswa.
+            $student->calculated_score = 96 - ($index * 4); // Membuat skor tampilan berdasarkan urutan.
+            return $student; // Mengembalikan data mahasiswa.
+        }); // Mengakhiri map.
 
-    // 3. Tugas Kuliah / Homeworks Riil dari Database
-    $homeworks = \App\Models\Assignment::with('course')
-        ->where('status', 'published')
-        ->orderBy('due_at', 'desc')
-        ->take(3)
-        ->get();
+    $homeworks = \App\Models\Assignment::with('course') // Mengambil assignment beserta course.
+        ->where('status', 'published') // Membatasi assignment published.
+        ->orderBy('due_at', 'desc') // Mengurutkan berdasarkan deadline.
+        ->take(3) // Membatasi tiga assignment.
+        ->get(); // Menjalankan query.
 
-    if ($homeworks->isEmpty()) {
-        $homeworks = \App\Models\Assignment::with('course')
-            ->latest()
-            ->take(3)
-            ->get();
-    }
+    if ($homeworks->isEmpty()) { // Memeriksa apakah tidak ada homework published.
+        $homeworks = \App\Models\Assignment::with('course') // Mengambil assignment beserta course lagi.
+            ->latest() // Mengurutkan terbaru.
+            ->take(3) // Membatasi tiga data.
+            ->get(); // Menjalankan query.
+    } // Mengakhiri kondisi homework kosong.
 
-    // 4. Jadwal & Deadline Terdekat
-    $upcomingSchedule = \App\Models\Assignment::with('course')
-        ->where('status', 'published')
-        ->where('due_at', '>=', now())
-        ->orderBy('due_at', 'asc')
-        ->take(2)
-        ->get();
+    $upcomingSchedule = \App\Models\Assignment::with('course') // Mengambil assignment beserta course untuk jadwal.
+        ->where('status', 'published') // Membatasi assignment published.
+        ->where('due_at', '>=', now()) // Mengambil deadline yang belum lewat.
+        ->orderBy('due_at', 'asc') // Mengurutkan dari deadline terdekat.
+        ->take(2) // Membatasi dua jadwal.
+        ->get(); // Menjalankan query.
 
-    // 5. Notifikasi deadline terdekat
-    $urgentAssignment = \App\Models\Assignment::with('course')
-        ->where('status', 'published')
-        ->where('due_at', '>=', now())
-        ->orderBy('due_at', 'asc')
-        ->first();
+    $urgentAssignment = \App\Models\Assignment::with('course') // Mengambil assignment untuk notifikasi.
+        ->where('status', 'published') // Membatasi assignment published.
+        ->where('due_at', '>=', now()) // Mengambil deadline yang belum lewat.
+        ->orderBy('due_at', 'asc') // Mengurutkan deadline terdekat.
+        ->first(); // Mengambil assignment pertama.
 
-    // 6. User profil aktif sesuai simulasi role
-    if ($activeRole === 'dosen') {
-        $currentUser = \App\Models\User::where('role', 'dosen')->first();
-    } elseif ($activeRole === 'admin') {
-        $currentUser = \App\Models\User::where('role', 'admin')->first();
-    } else {
-        $currentUser = \App\Models\User::where('role', 'mahasiswa')->first();
-    }
+    if ($activeRole === 'dosen') { // Memeriksa role dosen.
+        $currentUser = \App\Models\User::where('role', 'dosen')->first(); // Mengambil user dosen pertama.
+    } elseif ($activeRole === 'admin') { // Memeriksa role admin.
+        $currentUser = \App\Models\User::where('role', 'admin')->first(); // Mengambil user admin pertama.
+    } else { // Menangani mahasiswa atau role lain.
+        $currentUser = \App\Models\User::where('role', 'mahasiswa')->first(); // Mengambil mahasiswa pertama.
+    } // Mengakhiri percabangan role.
 
-    $currentUser = $currentUser ?? (object)[
-        'name' => 'Muhammad Rifa Al-Rizqul',
-        'email' => '10241050@student.itk.ac.id',
-        'role' => $activeRole === 'all' ? 'mahasiswa' : $activeRole,
-        'nim_nip' => '10241050'
-    ];
+    $currentUser = $currentUser ?? (object)[ // Menyediakan fallback user jika data tidak ditemukan.
+        'name' => 'Muhammad Rifa Al-Rizqul', // Nama fallback.
+        'email' => '10241050@student.itk.ac.id', // Email fallback.
+        'role' => $activeRole === 'all' ? 'mahasiswa' : $activeRole, // Menentukan role fallback.
+        'nim_nip' => '10241050' // NIM/NIP fallback.
+    ]; // Menutup data fallback.
 
-    // Data spesifik untuk role Dosen & Admin
-    $lecturerCourses = \App\Models\Course::where('lecturer_id', $currentUser->id ?? 0)->with(['materials', 'assignments', 'students'])->get();
-    if ($lecturerCourses->isEmpty() && $activeRole === 'dosen') {
-        $lecturerCourses = \App\Models\Course::take(2)->with(['materials', 'assignments', 'students'])->get();
-    }
+    $lecturerCourses = \App\Models\Course::where('lecturer_id', $currentUser->id ?? 0)->with(['materials', 'assignments', 'students'])->get(); // Mengambil course yang diampu user aktif.
+    if ($lecturerCourses->isEmpty() && $activeRole === 'dosen') { // Memeriksa fallback course untuk dosen.
+        $lecturerCourses = \App\Models\Course::take(2)->with(['materials', 'assignments', 'students'])->get(); // Mengambil dua course sebagai fallback.
+    } // Mengakhiri kondisi fallback dosen.
 
-    $recentUsers = \App\Models\User::latest()->take(4)->get();
+    $recentUsers = \App\Models\User::latest()->take(4)->get(); // Mengambil empat user terbaru.
 
-    return view('dashboard', compact(
-        'courses',
-        'allCourses',
-        'totalCourses',
-        'totalLecturers',
-        'totalStudents',
-        'totalAssignments',
-        'totalMaterials',
-        'totalSubmissions',
-        'topStudents',
-        'homeworks',
-        'upcomingSchedule',
-        'urgentAssignment',
-        'currentUser',
-        'lecturerCourses',
-        'recentUsers',
-        'activeRole'
-    ));
-})->name('dashboard');
+    return view('dashboard', compact( // Mengirim data dashboard ke view.
+        'courses', // Mengirim course.
+        'allCourses', // Mengirim semua course.
+        'totalCourses', // Mengirim total course.
+        'totalLecturers', // Mengirim total dosen.
+        'totalStudents', // Mengirim total mahasiswa.
+        'totalAssignments', // Mengirim total assignment.
+        'totalMaterials', // Mengirim total material.
+        'totalSubmissions', // Mengirim total submission.
+        'topStudents', // Mengirim leaderboard mahasiswa.
+        'homeworks', // Mengirim homework.
+        'upcomingSchedule', // Mengirim jadwal.
+        'urgentAssignment', // Mengirim deadline terdekat.
+        'currentUser', // Mengirim user aktif.
+        'lecturerCourses', // Mengirim course dosen.
+        'recentUsers', // Mengirim user terbaru.
+        'activeRole' // Mengirim role aktif.
+    )); // Menutup pengiriman data view.
+})->name('dashboard'); // Memberikan nama dashboard.
 
-// CRUD Resourceful Mata Kuliah (index, create, store, show, edit, update, destroy)
-Route::resource('courses', CourseController::class);
-
-// CRUD Resourceful Manajemen Pengguna (F2 & M1 Deliverable)
-Route::resource('users', UserController::class);
+Route::resource('courses', CourseController::class); // Membuat seluruh route CRUD courses termasuk GET /courses menuju index().
+Route::resource('users', UserController::class); // Membuat seluruh route CRUD users.

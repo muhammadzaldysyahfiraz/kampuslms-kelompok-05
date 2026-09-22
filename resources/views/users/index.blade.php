@@ -21,36 +21,45 @@
 
     {{-- Search & Filter Controls Bar --}}
     <div class="lms-card p-3 mb-6 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-        <div class="relative flex-1">
+        <form method="GET" action="{{ route('users.index') }}" class="relative flex-1">
+            @if(request('role'))
+                <input type="hidden" name="role" value="{{ request('role') }}">
+            @endif
             <svg class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
             </svg>
             <input 
                 type="text" 
+                name="q"
+                value="{{ request('q') }}"
                 id="user-search-input" 
-                onkeyup="filterUserTable()" 
                 placeholder="Cari nama, email, atau NIM/NIP pengguna..." 
                 aria-label="Cari nama, email, atau NIM/NIP pengguna"
                 class="w-full pl-8.5 pr-12 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-slate-900 focus:bg-white transition-colors"
             >
             <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true">
-                <kbd class="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono text-slate-600 bg-white border border-slate-200 rounded">⌘K</kbd>
+                <kbd class="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono text-slate-600 bg-white border border-slate-200 rounded">↵</kbd>
             </div>
-        </div>
+        </form>
 
         <div class="flex items-center gap-1" id="role-filter-buttons" role="group" aria-label="Filter berdasarkan peran pengguna">
-            <button type="button" onclick="setRoleFilter('all')" class="role-filter-btn px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all bg-[#111111] text-white cursor-pointer" data-role="all" aria-pressed="true">
+            @php $curRole = request('role'); @endphp
+            <a href="{{ route('users.index', array_filter(['q' => request('q')])) }}" 
+               class="role-filter-btn px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all {{ empty($curRole) ? 'bg-[#111111] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">
                 Semua
-            </button>
-            <button type="button" onclick="setRoleFilter('mahasiswa')" class="role-filter-btn px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer" data-role="mahasiswa" aria-pressed="false">
+            </a>
+            <a href="{{ route('users.index', array_filter(['q' => request('q'), 'role' => 'mahasiswa'])) }}" 
+               class="role-filter-btn px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all {{ $curRole === 'mahasiswa' ? 'bg-[#111111] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">
                 Mahasiswa
-            </button>
-            <button type="button" onclick="setRoleFilter('dosen')" class="role-filter-btn px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer" data-role="dosen" aria-pressed="false">
+            </a>
+            <a href="{{ route('users.index', array_filter(['q' => request('q'), 'role' => 'dosen'])) }}" 
+               class="role-filter-btn px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all {{ $curRole === 'dosen' ? 'bg-[#111111] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">
                 Dosen
-            </button>
-            <button type="button" onclick="setRoleFilter('admin')" class="role-filter-btn px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer" data-role="admin" aria-pressed="false">
+            </a>
+            <a href="{{ route('users.index', array_filter(['q' => request('q'), 'role' => 'admin'])) }}" 
+               class="role-filter-btn px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all {{ $curRole === 'admin' ? 'bg-[#111111] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">
                 Admin
-            </button>
+            </a>
         </div>
     </div>
 

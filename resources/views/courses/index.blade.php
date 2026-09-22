@@ -33,36 +33,44 @@
 
     {{-- Search, Filter, & View Mode Switcher Bar --}}
     <div class="lms-card p-3 mb-6 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-        {{-- Live Search Input --}}
-        <div class="relative flex-1">
+        {{-- Backend Search Form with GET --}}
+        <form method="GET" action="{{ route('courses.index') }}" class="relative flex-1">
+            @if(request('status'))
+                <input type="hidden" name="status" value="{{ request('status') }}">
+            @endif
             <svg class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
             </svg>
             <input 
                 type="text" 
+                name="q"
+                value="{{ request('q') }}"
                 id="course-search-input" 
-                onkeyup="filterCourseList()" 
                 placeholder="Cari nama, kode mata kuliah, atau nama dosen pengampu..." 
                 aria-label="Cari nama, kode mata kuliah, atau nama dosen pengampu"
                 class="w-full pl-8.5 pr-12 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-500 focus:outline-none focus:border-slate-900 focus:bg-white transition-colors"
             >
             <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true">
-                <kbd class="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono text-slate-600 bg-white border border-slate-200 rounded">⌘K</kbd>
+                <kbd class="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono text-slate-600 bg-white border border-slate-200 rounded">↵</kbd>
             </div>
-        </div>
+        </form>
 
         <div class="flex items-center justify-between sm:justify-end gap-2">
-            {{-- Status Filter Chips --}}
+            {{-- Status Filter Chips (Preserving Query String) --}}
             <div class="flex items-center gap-1" id="status-filter-buttons" role="group" aria-label="Filter status mata kuliah">
-                <button type="button" onclick="setStatusFilter('all')" class="status-filter-btn px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all bg-[#111111] text-white cursor-pointer" data-status="all" aria-pressed="true">
-                    Semua ({{ $courses->count() }})
-                </button>
-                <button type="button" onclick="setStatusFilter('active')" class="status-filter-btn px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer" data-status="active" aria-pressed="false">
-                    Aktif ({{ $courses->where('status', 'active')->count() }})
-                </button>
-                <button type="button" onclick="setStatusFilter('draft')" class="status-filter-btn px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer" data-status="draft" aria-pressed="false">
-                    Draft ({{ $courses->where('status', 'draft')->count() }})
-                </button>
+                @php $curStatus = request('status'); @endphp
+                <a href="{{ route('courses.index', array_filter(['q' => request('q')])) }}" 
+                   class="status-filter-btn px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all {{ empty($curStatus) ? 'bg-[#111111] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">
+                    Semua ({{ $courses->total() }})
+                </a>
+                <a href="{{ route('courses.index', array_filter(['q' => request('q'), 'status' => 'active'])) }}" 
+                   class="status-filter-btn px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all {{ $curStatus === 'active' ? 'bg-[#111111] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">
+                    Aktif
+                </a>
+                <a href="{{ route('courses.index', array_filter(['q' => request('q'), 'status' => 'draft'])) }}" 
+                   class="status-filter-btn px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all {{ $curStatus === 'draft' ? 'bg-[#111111] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">
+                    Draft
+                </a>
             </div>
 
             {{-- View Mode Switcher (Grid vs Table) --}}
@@ -268,6 +276,11 @@
                 </table>
             </div>
         </div>
+    </div>
+
+    {{-- Pagination Links (Preserving Query String) --}}
+    <div class="mt-4 mb-6">
+        {{ $courses->links() }}
     </div>
 
     {{-- JavaScript Live Filter & View Mode Switcher --}}

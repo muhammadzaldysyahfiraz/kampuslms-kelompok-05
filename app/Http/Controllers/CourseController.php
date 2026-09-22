@@ -6,13 +6,27 @@ use App\Models\Course;
 use App\Models\User;
 use App\Http\Requests\StoreCourseRequest;
 use App\Http\Requests\UpdateCourseRequest;
+use Illuminate\Http\Request;
 
 class CourseController extends Controller
 {
-    // Menampilkan semua mata kuliah
-    public function index()
+    // Menampilkan semua mata kuliah dengan pencarian, filter, dan pagination
+    public function index(Request $request)
     {
-        $courses = Course::with('lecturer')->latest()->get();
+        $courses = Course::query()
+            ->with('lecturer')
+            ->when($request->filled('q'), function ($query) use ($request) {
+                $query->where(function ($q) use ($request) {
+                    $q->where('name', 'like', '%' . $request->q . '%')
+                      ->orWhere('code', 'like', '%' . $request->q . '%');
+                });
+            })
+            ->when($request->filled('status'), function ($query) use ($request) {
+                $query->where('status', $request->status);
+            })
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
 
         return view('courses.index', compact('courses'));
     }

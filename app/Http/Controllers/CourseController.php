@@ -4,7 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Course;
 use App\Models\User;
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreCourseRequest;
+use App\Http\Requests\UpdateCourseRequest;
 
 class CourseController extends Controller
 {
@@ -25,18 +26,9 @@ class CourseController extends Controller
     }
 
     // Menyimpan mata kuliah baru
-    public function store(Request $request)
+    public function store(StoreCourseRequest $request)
     {
-        $data = $request->validate([
-            'code' => ['required', 'string', 'unique:courses,code'],
-            'name' => ['required', 'string'],
-            'description' => ['nullable', 'string'],
-            'sks' => ['required', 'integer', 'min:1', 'max:6'],
-            'lecturer_id' => ['required', 'exists:users,id'],
-            'status' => ['nullable', 'in:draft,active,archived'],
-        ]);
-
-        $data['status'] = $data['status'] ?? 'draft';
+        $data = $request->validated();
 
         Course::create($data);
 
@@ -63,22 +55,9 @@ class CourseController extends Controller
     }
 
     // Memperbarui mata kuliah
-    public function update(Request $request, Course $course)
+    public function update(UpdateCourseRequest $request, Course $course)
     {
-        $data = $request->validate([
-            'code' => [
-                'required',
-                'string',
-                'unique:courses,code,' . $course->id,
-            ],
-            'name' => ['required', 'string'],
-            'description' => ['nullable', 'string'],
-            'sks' => ['required', 'integer', 'min:1', 'max:6'],
-            'lecturer_id' => ['required', 'exists:users,id'],
-            'status' => ['required', 'in:draft,active,archived'],
-        ]);
-
-        $course->update($data);
+        $course->update($request->validated());
 
         return redirect()
             ->route('courses.show', $course)

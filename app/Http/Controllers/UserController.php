@@ -3,17 +3,31 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\UpdateUserRequest;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
     /**
-     * Menampilkan daftar semua pengguna.
+     * Menampilkan daftar semua pengguna dengan pencarian, filter role, dan pagination.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::latest()->paginate(10);
+        $users = User::query()
+            ->when($request->filled('q'), function ($query) use ($request) {
+                $query->where(function ($q) use ($request) {
+                    $q->where('name', 'like', '%' . $request->q . '%')
+                      ->orWhere('email', 'like', '%' . $request->q . '%')
+                      ->orWhere('nim_nip', 'like', '%' . $request->q . '%');
+                });
+            })
+            ->when($request->filled('role'), function ($query) use ($request) {
+                $query->where('role', $request->role);
+            })
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
 
         return view('users.index', compact('users'));
     }
@@ -29,48 +43,18 @@ class UserController extends Controller
     /**
      * Menyimpan pengguna baru ke database.
      */
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+        $validated = $request->validated();
 
-            'email' => [
-                'required',
-                'email',
-                'max:255',
-                'unique:users,email',
-            ],
-
-            'password' => [
-                'required',
-                'string',
-                'min:8',
-            ],
-
-            'role' => [
-                'required',
-                Rule::in(['admin', 'dosen', 'mahasiswa']),
-            ],
-
-            'nim_nip' => [
-                'nullable',
-                'string',
-                'max:255',
-                'unique:users,nim_nip',
-            ],
-        ]);
-
-        // Hanya data yang ada di $fillable yang dimasukkan lewat mass assignment.
         $user = new User();
-
         $user->name = $validated['name'];
         $user->email = $validated['email'];
         $user->password = $validated['password'];
         $user->nim_nip = $validated['nim_nip'] ?? null;
 
-        // role sengaja diisi secara eksplisit karena tidak ada di $fillable.
+        // role diisi secara eksplisit karena sengaja tidak ada di $fillable.
         $user->role = $validated['role'];
-
         $user->save();
 
         return redirect()
@@ -97,36 +81,9 @@ class UserController extends Controller
     /**
      * Memperbarui data pengguna.
      */
-    public function update(Request $request, User $user)
+    public function update(UpdateUserRequest $request, User $user)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-
-            'email' => [
-                'required',
-                'email',
-                'max:255',
-                Rule::unique('users', 'email')->ignore($user->id),
-            ],
-
-            'password' => [
-                'nullable',
-                'string',
-                'min:8',
-            ],
-
-            'role' => [
-                'required',
-                Rule::in(['admin', 'dosen', 'mahasiswa']),
-            ],
-
-            'nim_nip' => [
-                'nullable',
-                'string',
-                'max:255',
-                Rule::unique('users', 'nim_nip')->ignore($user->id),
-            ],
-        ]);
+        $validated = $request->validated();
 
         $user->name = $validated['name'];
         $user->email = $validated['email'];

@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreUserRequest extends FormRequest
+class UpdateUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -21,10 +21,10 @@ class StoreUserRequest extends FormRequest
                 'required',
                 'email',
                 'max:255',
-                'unique:users,email',
+                Rule::unique('users', 'email')->ignore($this->user),
             ],
             'password' => [
-                'required',
+                'nullable',
                 'string',
                 'min:8',
             ],
@@ -36,7 +36,7 @@ class StoreUserRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:255',
-                'unique:users,nim_nip',
+                Rule::unique('users', 'nim_nip')->ignore($this->user),
             ],
         ];
     }
@@ -51,10 +51,9 @@ class StoreUserRequest extends FormRequest
             'email.required' => 'Alamat email wajib diisi.',
             'email.email' => 'Format alamat email tidak valid.',
             'email.max' => 'Alamat email maksimal 255 karakter.',
-            'email.unique' => 'Alamat email ini sudah terdaftar di sistem.',
+            'email.unique' => 'Alamat email ini sudah digunakan oleh pengguna lain.',
 
-            'password.required' => 'Password wajib diisi.',
-            'password.min' => 'Password minimal terdiri dari 8 karakter.',
+            'password.min' => 'Password minimal terdiri dari 8 karakter jika diubah.',
 
             'role.required' => 'Peran (role) pengguna wajib dipilih.',
             'role.in' => 'Peran pengguna harus salah satu dari: admin, dosen, atau mahasiswa.',

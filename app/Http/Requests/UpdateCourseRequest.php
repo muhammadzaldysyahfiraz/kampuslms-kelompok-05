@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreUserRequest extends FormRequest
+class UpdateCourseRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -16,51 +16,44 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => [
-                'required',
-                'email',
-                'max:255',
-                'unique:users,email',
-            ],
-            'password' => [
+            'code' => [
                 'required',
                 'string',
-                'min:8',
+                'max:20',
+                Rule::unique('courses', 'code')->ignore($this->course),
             ],
-            'role' => [
-                'required',
-                Rule::in(['admin', 'dosen', 'mahasiswa']),
-            ],
-            'nim_nip' => [
-                'nullable',
-                'string',
-                'max:255',
-                'unique:users,nim_nip',
-            ],
+
+            'name' => ['required', 'string', 'max:150'],
+            'description' => ['nullable', 'string'],
+            'sks' => ['required', 'integer', 'between:1,6'],
+            'lecturer_id' => ['required', 'exists:users,id'],
+            'status' => ['required', 'in:draft,active,archived'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'name.required' => 'Nama lengkap pengguna wajib diisi.',
-            'name.string' => 'Nama lengkap harus berupa teks.',
-            'name.max' => 'Nama lengkap maksimal 255 karakter.',
+            'code.required' => 'Kode mata kuliah wajib diisi.',
+            'code.string' => 'Kode mata kuliah harus berupa teks.',
+            'code.max' => 'Kode mata kuliah maksimal 20 karakter.',
+            'code.unique' => 'Kode mata kuliah ini sudah digunakan oleh mata kuliah lain.',
 
-            'email.required' => 'Alamat email wajib diisi.',
-            'email.email' => 'Format alamat email tidak valid.',
-            'email.max' => 'Alamat email maksimal 255 karakter.',
-            'email.unique' => 'Alamat email ini sudah terdaftar di sistem.',
+            'name.required' => 'Nama mata kuliah wajib diisi.',
+            'name.string' => 'Nama mata kuliah harus berupa teks.',
+            'name.max' => 'Nama mata kuliah maksimal 150 karakter.',
 
-            'password.required' => 'Password wajib diisi.',
-            'password.min' => 'Password minimal terdiri dari 8 karakter.',
+            'description.string' => 'Deskripsi mata kuliah harus berupa teks.',
 
-            'role.required' => 'Peran (role) pengguna wajib dipilih.',
-            'role.in' => 'Peran pengguna harus salah satu dari: admin, dosen, atau mahasiswa.',
+            'sks.required' => 'SKS wajib diisi.',
+            'sks.integer' => 'SKS harus berupa angka bulat.',
+            'sks.between' => 'SKS harus antara 1 sampai 6.',
 
-            'nim_nip.unique' => 'NIM atau NIP ini sudah digunakan oleh pengguna lain.',
-            'nim_nip.max' => 'NIM atau NIP maksimal 255 karakter.',
+            'lecturer_id.required' => 'Dosen wajib dipilih.',
+            'lecturer_id.exists' => 'Dosen yang dipilih tidak ditemukan.',
+
+            'status.required' => 'Status mata kuliah wajib dipilih.',
+            'status.in' => 'Status hanya boleh draft, active, atau archived.',
         ];
     }
 }

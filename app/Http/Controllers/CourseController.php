@@ -6,10 +6,27 @@ use App\Models\Course; // Mengimpor model Course untuk mengakses tabel courses.
 use App\Models\User; // Mengimpor model User untuk mengambil data dosen.
 use App\Http\Requests\StoreCourseRequest; // Mengimpor Form Request untuk validasi saat menambah course.
 use App\Http\Requests\UpdateCourseRequest; // Mengimpor Form Request untuk validasi saat mengedit course.
-use Illuminate\Http\Request; // Mengimpor Request untuk membaca query string pencarian dan filter.
+use Illuminate\Http\Request; // Mengimpor Request untuk membaca query string dan user yang sedang login.
 
 class CourseController extends Controller // Membuat controller untuk mengelola mata kuliah.
 {
+    // Memeriksa apakah pengguna berhak mengelola mata kuliah tertentu.
+    private function authorizeCourseManager(Request $request, Course $course): void
+    {
+        $user = $request->user(); // Mengambil data pengguna yang sedang login.
+
+        abort_unless($user, 401); // Menghentikan request dengan status 401 jika pengguna belum login.
+
+        abort_unless( // Memastikan pengguna memiliki hak akses untuk mengelola course.
+            $user->role === 'admin' // Admin diperbolehkan mengelola semua course.
+                || ( // Memeriksa ketentuan khusus untuk dosen.
+                    $user->role === 'dosen' // Pengguna harus memiliki role dosen.
+                    && (int) $course->lecturer_id === (int) $user->id // Dosen hanya boleh mengelola course yang diampunya.
+                ),
+            403 // Mengembalikan status 403 jika pengguna tidak memiliki hak akses.
+        );
+    } // Menutup method authorizeCourseManager.
+
     // Menampilkan daftar mata kuliah dengan pencarian, filter, dan pagination.
     public function index(Request $request) // Menerima request agar parameter q dan status dari URL bisa dibaca.
     {
@@ -59,6 +76,11 @@ class CourseController extends Controller // Membuat controller untuk mengelola 
     {
         $data = $request->validated(); // Mengambil hanya field yang lolos aturan validasi.
 
+        // Dosen hanya boleh membuat course atas namanya sendiri.
+        if ($request->user()->role === 'dosen') {
+            $data['lecturer_id'] = $request->user()->id;
+        }
+
         Course::create($data); // Menyimpan data tervalidasi ke tabel courses.
 
         return redirect() // Membuat response redirect setelah data berhasil disimpan.
@@ -67,17 +89,28 @@ class CourseController extends Controller // Membuat controller untuk mengelola 
     } // Menutup method store.
 
     // Menampilkan detail mata kuliah.
-    public function show(Course $course) // Menerima course melalui route model binding.
+    public function show(Request $request, Course $course) // Menerima course melalui route model binding.
     {
+        $user = $request->user();
+        abort_unless($user, 401);
+
+        // Pada area dosen, detail dibatasi ke course yang diampu dosen login.
+        if ($request->routeIs('dosen.courses.*')) {
+            abort_unless((int) $course->lecturer_id === (int) $user->id, 403);
+        }
+
         $course->load(['lecturer', 'materials', 'assignments']); // Memuat relasi lecturer, materials, dan assignments untuk halaman detail.
         $course->loadCount('students'); // Menghitung jumlah mahasiswa yang terdaftar pada course.
 
-        return view('courses.show', compact('course')); // Mengirim data course ke halaman detail.
+        $activeRole = auth()->user()->role; // Menggunakan role akun terautentikasi, bukan session switch-role.
+        return view('courses.show', compact('course', 'activeRole')); // Mengirim data course dan role ke halaman detail.
     } // Menutup method show.
 
     // Menampilkan form edit.
-    public function edit(Course $course) // Menerima course yang akan diedit melalui route model binding.
+    public function edit(Request $request, Course $course) // Menerima request dan course melalui route model binding.
     {
+        $this->authorizeCourseManager($request, $course); // Memastikan hanya admin atau dosen pengampu yang dapat mengedit course.
+
         $lecturers = User::where('role', 'dosen')->get(); // Mengambil daftar user yang berperan sebagai dosen.
 
         return view('courses.edit', compact('course', 'lecturers')); // Mengirim course dan daftar dosen ke halaman edit.
@@ -86,7 +119,15 @@ class CourseController extends Controller // Membuat controller untuk mengelola 
     // Memperbarui mata kuliah.
     public function update(UpdateCourseRequest $request, Course $course) // Menerima request tervalidasi dan course yang akan diperbarui.
     {
-        $course->update($request->validated()); // Memperbarui course hanya menggunakan data yang sudah lolos validasi.
+        $this->authorizeCourseManager($request, $course); // Memastikan hanya admin atau dosen pengampu yang dapat memperbarui course.
+
+        $data = $request->validated(); // Mengambil hanya field yang lolos validasi.
+        // Dosen pengampu tidak boleh memindahkan course ke dosen lain.
+        if ($request->user()->role === 'dosen') {
+            $data['lecturer_id'] = $request->user()->id;
+        }
+
+        $course->update($data); // Memperbarui course hanya menggunakan data yang sudah lolos validasi.
 
         return redirect() // Membuat response redirect setelah update selesai.
             ->route('courses.show', $course) // Mengarahkan pengguna ke halaman detail course.
@@ -94,8 +135,10 @@ class CourseController extends Controller // Membuat controller untuk mengelola 
     } // Menutup method update.
 
     // Menghapus mata kuliah.
-    public function destroy(Course $course) // Menerima course yang akan dihapus melalui route model binding.
+    public function destroy(Request $request, Course $course) // Menerima request dan course yang akan dihapus melalui route model binding.
     {
+        $this->authorizeCourseManager($request, $course); // Memastikan hanya admin atau dosen pengampu yang dapat menghapus course.
+
         $course->delete(); // Menghapus course dari database.
 
         return redirect() // Membuat response redirect setelah penghapusan.

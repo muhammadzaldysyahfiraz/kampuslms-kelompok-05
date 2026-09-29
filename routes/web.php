@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route; // Mengimpor facade Route Laravel.
 use App\Http\Controllers\CourseController; // Mengimpor CourseController.
 use App\Http\Controllers\UserController; // Mengimpor UserController.
+use App\Http\Controllers\SubmissionController; // Mengimpor SubmissionController untuk route submission.
 
 Route::get('/', function () { // Membuat route halaman utama.
     return redirect()->route('dashboard'); // Mengarahkan halaman utama ke dashboard.
@@ -120,6 +121,9 @@ Route::get('/dashboard', function () { // Membuat route dashboard.
         'activeRole' // Mengirim role aktif.
     )); // Menutup pengiriman data view.
 })->name('dashboard'); // Memberikan nama dashboard.
+
+Route::get('/submissions/{submission}', [SubmissionController::class, 'show'])
+    ->name('submissions.show');
 
 Route::resource('courses', CourseController::class); // Membuat seluruh route CRUD courses termasuk GET /courses menuju index().
 Route::resource('users', UserController::class); // Membuat seluruh route CRUD users.

@@ -26,9 +26,6 @@
                         Tambah Mata Kuliah Baru
                     </h1>
                 </div>
-                <p class="text-xs text-slate-600 font-normal">
-                    Masukkan detail informasi kurikulum dan tentukan dosen pengampu untuk mata kuliah ini.
-                </p>
             </div>
 
             {{-- Error Summary Alert if any --}}
@@ -116,10 +113,9 @@
                         class="form-input {{ $errors->has('name') ? 'border-rose-400 focus:border-rose-500' : '' }}"
                         aria-required="true"
                         aria-invalid="{{ $errors->has('name') ? 'true' : 'false' }}"
-                        aria-describedby="name-hint @error('name') name-error @enderror"
+                        @error('name') aria-describedby="name-error" @enderror
                         required
                     >
-                    <p id="name-hint" class="text-[11px] text-slate-600 mt-1 font-normal">Nama resmi kurikulum mata kuliah.</p>
                     @error('name')
                         <p id="name-error" class="text-xs text-rose-700 mt-1 font-semibold" role="alert">{{ $message }}</p>
                     @enderror
@@ -137,7 +133,7 @@
                             class="form-input {{ $errors->has('lecturer_id') ? 'border-rose-400 focus:border-rose-500' : '' }}"
                             aria-required="true"
                             aria-invalid="{{ $errors->has('lecturer_id') ? 'true' : 'false' }}"
-                            aria-describedby="lecturer_id-hint @error('lecturer_id') lecturer_id-error @enderror"
+                            @error('lecturer_id') aria-describedby="lecturer_id-error" @enderror
                             required
                         >
                             <option value="">-- Pilih Dosen Pengampu --</option>
@@ -150,7 +146,6 @@
                                 </option>
                             @endforeach
                         </select>
-                        <p id="lecturer_id-hint" class="text-[11px] text-slate-600 mt-1 font-normal">Dosen yang mengampu mata kuliah ini.</p>
                         @error('lecturer_id')
                             <p id="lecturer_id-error" class="text-xs text-rose-700 mt-1 font-semibold" role="alert">{{ $message }}</p>
                         @enderror
@@ -164,13 +159,11 @@
                             id="status"
                             name="status"
                             class="form-input"
-                            aria-describedby="status-hint"
                         >
                             <option value="draft" {{ old('status') === 'draft' ? 'selected' : '' }}>Draft (Belum Dibuka)</option>
                             <option value="active" {{ old('status', 'active') === 'active' ? 'selected' : '' }}>Aktif (Sedang Berjalan)</option>
                             <option value="archived" {{ old('status') === 'archived' ? 'selected' : '' }}>Diarsipkan</option>
                         </select>
-                        <p id="status-hint" class="text-[11px] text-slate-600 mt-1 font-normal">Visibilitas mata kuliah bagi mahasiswa.</p>
                     </div>
                 </div>
 
@@ -186,9 +179,8 @@
                         placeholder="Tuliskan tujuan pembelajaran, topik pokok, atau instruksi umum perkuliahan..."
                         class="form-input {{ $errors->has('description') ? 'border-rose-400 focus:border-rose-500' : '' }}"
                         aria-invalid="{{ $errors->has('description') ? 'true' : 'false' }}"
-                        aria-describedby="description-hint @error('description') description-error @enderror"
+                        @error('description') aria-describedby="description-error" @enderror
                     >{{ old('description') }}</textarea>
-                    <p id="description-hint" class="text-[11px] text-slate-600 mt-1 font-normal">Penjelasan topik, silabus, atau deskripsi ringkas.</p>
                     @error('description')
                         <p id="description-error" class="text-xs text-rose-700 mt-1 font-semibold" role="alert">{{ $message }}</p>
                     @enderror

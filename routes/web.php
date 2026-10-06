@@ -3,6 +3,10 @@
 use Illuminate\Support\Facades\Route; // Mengimpor facade Route Laravel.
 use App\Http\Controllers\CourseController; // Mengimpor CourseController.
 use App\Http\Controllers\UserController; // Mengimpor UserController.
+use App\Http\Controllers\SubmissionController; // Mengimpor SubmissionController untuk route submission.
+use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\GradeController;
+use App\Http\Controllers\NotificationController;
 
 Route::get('/', function () { // Membuat route halaman utama.
     return redirect()->route('dashboard'); // Mengarahkan halaman utama ke dashboard.
@@ -12,13 +16,29 @@ Route::get('/tentang', function () { // Membuat route halaman tentang.
     return view('tentang'); // Mengembalikan view tentang.
 })->name('tentang'); // Memberikan nama tentang pada route.
 
-Route::get('/switch-role/{role}', function ($role) { // Membuat route untuk mengganti role simulasi.
-    $validRoles = ['mahasiswa', 'dosen', 'admin', 'all']; // Menentukan daftar role yang boleh dipakai.
-    if (in_array($role, $validRoles)) { // Memeriksa apakah role yang diterima valid.
-        session(['active_role' => $role]); // Menyimpan role aktif ke session.
-    } // Mengakhiri pengecekan role.
-    return redirect()->back(); // Mengembalikan pengguna ke halaman sebelumnya.
-})->name('switch-role'); // Memberikan nama route switch-role.
+// Simulasi login lokal untuk praktikum. Jangan gunakan di produksi.
+Route::get('/switch-role/{role}', function (string $role) {
+    abort_unless(app()->environment('local'), 404);
+
+    $validRoles = ['mahasiswa', 'dosen', 'admin', 'all'];
+    abort_unless(in_array($role, $validRoles, true), 404);
+
+    $loginRole = $role === 'all' ? 'admin' : $role;
+    $user = \App\Models\User::where('role', $loginRole)->first();
+    abort_unless($user, 404, 'Akun untuk role tersebut belum tersedia di database.');
+
+    \Illuminate\Support\Facades\Auth::login($user);
+    request()->session()->regenerate();
+    session(['active_role' => $role]);
+
+    return redirect()->route('dashboard');
+})->name('switch-role');
+
+// Placeholder bernama agar middleware auth tidak melempar Route [login] not defined.
+// Login sungguhan akan dibuat pada materi autentikasi.
+Route::get('/login', function () {
+    return response('Autentikasi login belum tersedia. Gunakan switch-role hanya untuk simulasi lokal.', 401);
+})->name('login');
 
 Route::get('/dashboard', function () { // Membuat route dashboard.
     $activeRole = session('active_role', 'mahasiswa'); // Mengambil role aktif dari session dengan default mahasiswa.
@@ -121,5 +141,119 @@ Route::get('/dashboard', function () { // Membuat route dashboard.
     )); // Menutup pengiriman data view.
 })->name('dashboard'); // Memberikan nama dashboard.
 
-Route::resource('courses', CourseController::class); // Membuat seluruh route CRUD courses termasuk GET /courses menuju index().
-Route::resource('users', UserController::class); // Membuat seluruh route CRUD users.
+// Seluruh route di bawah ini membutuhkan pengguna yang sudah terautentikasi.
+Route::middleware('auth')->group(function () {
+    // Dashboard umum, dengan role tampilan yang dipilih pada simulasi lokal.
+    // Daftar/detail course umum tetap memakai nama route lama agar tautan dashboard stabil.
+    Route::resource('courses', CourseController::class)
+        ->only(['index', 'show']);
+
+    // Kompatibilitas URI lama untuk course management. Akses tetap dibatasi role
+    // dan kepemilikan objek diperiksa lagi di CourseController.
+    Route::middleware('role:admin,dosen')->group(function () {
+        Route::resource('courses', CourseController::class)
+            ->except(['index', 'show']);
+    });
+
+    // Kompatibilitas route pengguna lama; tetap hanya admin yang dapat mengakses.
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('users', UserController::class);
+    });
+
+    // AREA ADMIN: pengelolaan pengguna dan seluruh course.
+    Route::prefix('admin')->name('admin.')
+        ->middleware('role:admin')->group(function () {
+            Route::resource('users', UserController::class);
+            Route::resource('courses', CourseController::class);
+            Route::get('courses/{course}/enrollments', [EnrollmentController::class, 'index'])
+                ->name('courses.enrollments.index');
+            Route::get('submissions', [SubmissionController::class, 'index'])->name('submissions.index');
+            Route::get('submissions/{submission}', [SubmissionController::class, 'show'])->name('submissions.show');
+            Route::get('grades', [GradeController::class, 'indexAdmin'])->name('grades.index');
+            Route::get('grades/{grade}', [GradeController::class, 'show'])->name('grades.show');
+            Route::resource('notifications', NotificationController::class)->only(['index', 'show', 'destroy']);
+            Route::patch('notifications/{notification}/read', [NotificationController::class, 'read'])
+                ->name('notifications.read');
+
+            Route::scopeBindings()->group(function () {
+                Route::resource('courses.materials', \App\Http\Controllers\MaterialController::class)
+                    ->shallow();
+                Route::resource('courses.assignments', \App\Http\Controllers\AssignmentController::class)
+                    ->shallow();
+            });
+        });
+
+    // AREA DOSEN: course yang dikelola dibatasi lagi berdasarkan lecturer_id
+    // di CourseController; nested resources menggunakan scoped model binding.
+    Route::prefix('dosen')->name('dosen.')
+        ->middleware('role:dosen')->group(function () {
+            Route::resource('courses', CourseController::class);
+            Route::get('courses/{course}/enrollments', [EnrollmentController::class, 'index'])
+                ->name('courses.enrollments.index');
+            Route::get('courses/{course}/grades', [GradeController::class, 'indexForCourse'])
+                ->name('courses.grades.index');
+            Route::get('submissions', [SubmissionController::class, 'index'])->name('submissions.index');
+            Route::get('submissions/{submission}', [SubmissionController::class, 'show'])->name('submissions.show');
+            Route::post('submissions/{submission}/grade', [GradeController::class, 'store'])
+                ->name('submissions.grade.store');
+            Route::get('grades/{grade}', [GradeController::class, 'show'])->name('grades.show');
+            Route::match(['put', 'patch'], 'grades/{grade}', [GradeController::class, 'update'])
+                ->name('grades.update');
+            Route::delete('grades/{grade}', [GradeController::class, 'destroy'])->name('grades.destroy');
+            Route::resource('notifications', NotificationController::class)->only(['index', 'show', 'destroy']);
+            Route::patch('notifications/{notification}/read', [NotificationController::class, 'read'])
+                ->name('notifications.read');
+
+            Route::scopeBindings()->group(function () {
+                Route::resource('courses.materials', \App\Http\Controllers\MaterialController::class)
+                    ->shallow();
+                Route::resource('courses.assignments', \App\Http\Controllers\AssignmentController::class)
+                    ->shallow();
+            });
+        });
+
+    // AREA MAHASISWA: hanya daftar/detail course dan materi/tugas.
+    Route::prefix('mahasiswa')->name('mahasiswa.')
+        ->middleware('role:mahasiswa')->group(function () {
+            Route::resource('courses', CourseController::class)
+                ->only(['index', 'show']);
+            Route::post('courses/{course}/enrollments', [EnrollmentController::class, 'store'])
+                ->name('courses.enrollments.store');
+            Route::delete('courses/{course}/enrollments', [EnrollmentController::class, 'destroy'])
+                ->name('courses.enrollments.destroy');
+            Route::get('submissions', [SubmissionController::class, 'index'])->name('submissions.index');
+            Route::get('submissions/{submission}', [SubmissionController::class, 'show'])->name('submissions.show');
+            Route::get('grades', [GradeController::class, 'indexMine'])->name('grades.index');
+            Route::get('grades/{grade}', [GradeController::class, 'show'])->name('grades.show');
+            Route::resource('notifications', NotificationController::class)->only(['index', 'show', 'destroy']);
+            Route::patch('notifications/{notification}/read', [NotificationController::class, 'read'])
+                ->name('notifications.read');
+
+            Route::scopeBindings()->group(function () {
+                Route::resource('courses.materials', \App\Http\Controllers\MaterialController::class)
+                    ->only(['index', 'show'])->shallow();
+                Route::resource('courses.assignments', \App\Http\Controllers\AssignmentController::class)
+                    ->only(['index', 'show'])->shallow();
+            });
+        });
+
+    // Route nested eksplisit untuk memperagakan scopeBindings() pada URL
+    // /courses/{course}/assignments/{assignment} dan materi.
+    Route::scopeBindings()->group(function () {
+        Route::get('/courses/{course}/assignments/{assignment}', [
+            \App\Http\Controllers\AssignmentController::class, 'showNested',
+        ])->middleware('role:admin,dosen,mahasiswa')
+            ->name('courses.assignments.scoped-show');
+
+        Route::get('/courses/{course}/materials/{material}', [
+            \App\Http\Controllers\MaterialController::class, 'showNested',
+        ])->middleware('role:admin,dosen,mahasiswa')
+            ->name('courses.materials.scoped-show');
+    });
+
+    // Submission detail: mahasiswa pemilik, dosen pengampu, atau admin.
+    Route::get('/submissions/{submission}', [
+        SubmissionController::class, 'show',
+    ])->middleware('role:mahasiswa,dosen,admin')
+        ->name('submissions.show');
+});

@@ -49,4 +49,15 @@ class Course extends Model
     {
         return $this->hasMany(Assignment::class);
     }
+
+    // TODO minggu 7: dipindah ke CoursePolicy
+    public function isAccessibleBy(User $user): bool
+    {
+        return match ($user->role) {
+            'admin'     => true,
+            'dosen'     => $this->lecturer_id === $user->id,
+            'mahasiswa' => $this->students()->whereKey($user->id)->exists(),
+            default     => false,
+        };
+    }
 }

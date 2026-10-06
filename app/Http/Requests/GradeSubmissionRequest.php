@@ -2,28 +2,42 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class GradeSubmissionRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return false;
+        $user       = $this->user();
+        $submission = $this->route('submission');
+
+        // TODO minggu 7: dipindah ke SubmissionPolicy
+        return $user->role === 'dosen'
+            && $submission->assignment->course->lecturer_id === $user->id;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    protected function failedAuthorization(): void
+    {
+        abort(403, 'Anda tidak memiliki akses ke sumber daya ini.');
+    }
+
     public function rules(): array
     {
+        $maxScore = $this->route('submission')->assignment->max_score;
+
         return [
-            //
+            'score'    => ['required', 'numeric', 'min:0', "max:{$maxScore}"],
+            'feedback' => ['nullable', 'string', 'max:2000'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        $maxScore = $this->route('submission')->assignment->max_score;
+
+        return [
+            'score.max' => "Nilai tidak boleh melebihi nilai maksimum tugas ({$maxScore}).",
+            'score.min' => 'Nilai tidak boleh negatif.',
         ];
     }
 }

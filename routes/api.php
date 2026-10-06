@@ -4,9 +4,10 @@ use App\Http\Controllers\Api\AssignmentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CourseController;
 use App\Http\Controllers\Api\MaterialController;
+use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\SubmissionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\SubmissionController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -22,13 +23,18 @@ Route::prefix('v1')->group(function () {
 
         Route::get('/courses', [CourseController::class, 'index']);
         Route::get('/courses/{id}', [CourseController::class, 'show']);
-
         Route::get('/courses/{course}/materials', [MaterialController::class, 'index']);
         Route::get('/courses/{course}/assignments', [AssignmentController::class, 'index']);
 
         Route::post('/assignments', [AssignmentController::class, 'store']);
         Route::match(['put', 'patch'], '/assignments/{assignment}', [AssignmentController::class, 'update']);
         Route::delete('/assignments/{assignment}', [AssignmentController::class, 'destroy']);
+
         Route::get('/assignments/{assignment}/submissions', [SubmissionController::class, 'index']);
+        Route::post('/assignments/{assignment}/submissions', [SubmissionController::class, 'store']);
+        Route::put('/submissions/{submission}/grade', [SubmissionController::class, 'grade']);
+
+        Route::get('/notifications', [NotificationController::class, 'index']);
+        Route::post('/notifications/{id}/read', [NotificationController::class, 'read']);
     });
 });

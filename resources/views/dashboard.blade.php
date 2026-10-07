@@ -21,8 +21,6 @@
                             <span class="badge-coral text-[11px] py-0.5 px-2 font-normal">Panel Admin</span>
                         @elseif ($activeRole === 'dosen')
                             <span class="badge-sky text-[11px] py-0.5 px-2 font-normal">Panel Dosen</span>
-                        @elseif ($activeRole === 'all')
-                            <span class="badge-amber text-[11px] py-0.5 px-2 font-normal">Mode Evaluasi</span>
                         @else
                             <span class="badge-mint text-[11px] py-0.5 px-2 font-normal">Portal Mahasiswa</span>
                         @endif
@@ -64,8 +62,6 @@
                                 Selamat datang, {{ $currentUser->name ?? 'Bapak/Ibu Dosen' }}
                             @elseif ($activeRole === 'admin')
                                 Selamat datang, Administrator {{ $currentUser->name ?? '' }}
-                            @elseif ($activeRole === 'all')
-                                Mode Evaluasi Praktikum (All Features)
                             @else
                                 Selamat datang, {{ $currentUser->name ?? 'Mahasiswa' }}
                             @endif
@@ -75,8 +71,6 @@
                                 Kelola silabus materi perkuliahan, terbitkan penugasan baru, dan pantau pengumpulan tugas mahasiswa secara terpadu.
                             @elseif ($activeRole === 'admin')
                                 Pantau master data sistem KampusLMS, kelola akun pengguna, dan administrasi kurikulum program studi.
-                            @elseif ($activeRole === 'all')
-                                Seluruh modul praktikum aktif: CRUD Mata Kuliah, Manajemen Pengguna, dan pratinjau semua fitur antarmuka.
                             @else
                                 Pantau kurikulum perkuliahan semester ini, cek materi bahan ajar, dan selesaikan seluruh penugasan akademik tepat waktu.
                             @endif
@@ -104,16 +98,6 @@
                             </a>
                             <a href="{{ route('courses.create') }}" class="btn-outline text-xs py-2">
                                 <span>+ Mata Kuliah</span>
-                            </a>
-                        @elseif ($activeRole === 'all')
-                            <a href="{{ route('courses.create') }}" class="btn-primary text-xs py-2">
-                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                </svg>
-                                <span>Tambah MK</span>
-                            </a>
-                            <a href="{{ route('users.index') }}" class="btn-outline text-xs py-2">
-                                <span>Kelola Pengguna</span>
                             </a>
                         @else
                             <a href="{{ route('courses.index') }}" class="btn-primary text-xs py-2">
@@ -193,7 +177,7 @@
                         <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">
                             @if ($activeRole === 'dosen')
                                 Mata Kuliah yang Diampu
-                            @elseif ($activeRole === 'admin' || $activeRole === 'all')
+                            @elseif ($activeRole === 'admin')
                                 Katalog Mata Kuliah KampusLMS
                             @else
                                 Mata Kuliah Semester Ini

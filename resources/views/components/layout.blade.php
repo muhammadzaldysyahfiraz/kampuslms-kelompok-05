@@ -51,7 +51,7 @@
                        class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors {{ request()->routeIs('courses.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-50' }}">
                         {{ $activeRole === 'dosen' ? 'Mata Kuliah Diampu' : 'Mata Kuliah' }}
                     </a>
-                    @if ($activeRole === 'admin' || $activeRole === 'all')
+                    @if ($activeRole === 'admin')
                         <a href="{{ route('users.index') }}" 
                            class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors {{ request()->routeIs('users.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-50' }}">
                             Pengguna
@@ -83,8 +83,6 @@
                             <span class="badge-coral text-[11px] py-0.5 px-2">🛡️ Admin</span>
                         @elseif ($activeRole === 'dosen')
                             <span class="badge-sky text-[11px] py-0.5 px-2">👨‍🏫 Dosen</span>
-                        @elseif ($activeRole === 'all')
-                            <span class="badge-amber text-[11px] py-0.5 px-2">🧪 Evaluasi (All)</span>
                         @else
                             <span class="badge-mint text-[11px] py-0.5 px-2">🎓 Mahasiswa</span>
                         @endif
@@ -150,23 +148,6 @@
                                 <span class="text-rose-700 text-xs font-bold" aria-hidden="true">✓</span>
                             @endif
                         </a>
-
-                        <div class="border-t border-slate-100 my-1"></div>
-
-                        <a href="{{ route('switch-role', 'all') }}" 
-                           class="flex items-center justify-between px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors {{ $activeRole === 'all' ? 'text-amber-800 bg-amber-50/60 font-bold' : 'text-slate-700' }}"
-                           role="menuitem">
-                            <div class="flex items-center gap-2">
-                                <span>🧪</span>
-                                <div>
-                                    <p class="text-slate-900">Mode Evaluasi Praktikum</p>
-                                    <p class="text-[10px] text-slate-600 font-normal">Tampilkan semua tombol CRUD</p>
-                                </div>
-                            </div>
-                            @if ($activeRole === 'all')
-                                <span class="text-amber-700 text-xs font-bold" aria-hidden="true">✓</span>
-                            @endif
-                        </a>
                     </div>
                 </div>
 
@@ -203,7 +184,7 @@
             <a href="{{ route('courses.index') }}" class="block px-3 py-2 rounded-md text-xs font-semibold {{ request()->routeIs('courses.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
                 {{ $activeRole === 'dosen' ? 'Mata Kuliah Diampu' : 'Mata Kuliah' }}
             </a>
-            @if ($activeRole === 'admin' || $activeRole === 'all')
+            @if ($activeRole === 'admin')
                 <a href="{{ route('users.index') }}" class="block px-3 py-2 rounded-md text-xs font-semibold {{ request()->routeIs('users.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
                     Pengguna
                 </a>

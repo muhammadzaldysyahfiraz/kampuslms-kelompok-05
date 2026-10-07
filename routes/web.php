@@ -20,11 +20,10 @@ Route::get('/tentang', function () { // Membuat route halaman tentang.
 Route::get('/switch-role/{role}', function (string $role) {
     abort_unless(app()->environment('local'), 404);
 
-    $validRoles = ['mahasiswa', 'dosen', 'admin', 'all'];
+    $validRoles = ['mahasiswa', 'dosen', 'admin'];
     abort_unless(in_array($role, $validRoles, true), 404);
 
-    $loginRole = $role === 'all' ? 'admin' : $role;
-    $user = \App\Models\User::where('role', $loginRole)->first();
+    $user = \App\Models\User::where('role', $role)->first();
     abort_unless($user, 404, 'Akun untuk role tersebut belum tersedia di database.');
 
     \Illuminate\Support\Facades\Auth::login($user);
@@ -110,7 +109,7 @@ Route::get('/dashboard', function () { // Membuat route dashboard.
     $currentUser = $currentUser ?? (object)[ // Menyediakan fallback user jika data tidak ditemukan.
         'name' => 'Muhammad Rifa Al-Rizqul', // Nama fallback.
         'email' => '10241050@student.itk.ac.id', // Email fallback.
-        'role' => $activeRole === 'all' ? 'mahasiswa' : $activeRole, // Menentukan role fallback.
+        'role' => $activeRole, // Menentukan role fallback.
         'nim_nip' => '10241050' // NIM/NIP fallback.
     ]; // Menutup data fallback.
 

@@ -1,6 +1,7 @@
 <?php // Menandai awal file PHP.
 
 use Illuminate\Support\Facades\Route; // Mengimpor facade Route Laravel.
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CourseController; // Mengimpor CourseController.
 use App\Http\Controllers\UserController; // Mengimpor UserController.
 use App\Http\Controllers\SubmissionController; // Mengimpor SubmissionController untuk route submission.
@@ -16,15 +17,21 @@ Route::get('/tentang', function () { // Membuat route halaman tentang.
     return view('tentang'); // Mengembalikan view tentang.
 })->name('tentang'); // Memberikan nama tentang pada route.
 
-// Simulasi login lokal untuk praktikum. Jangan gunakan di produksi.
+// Autentikasi Pengguna Sesi Web (Pekan 07)
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+});
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+
+// Simulasi login cepat lokal untuk praktikum (lingkungan dev).
 Route::get('/switch-role/{role}', function (string $role) {
     abort_unless(app()->environment('local'), 404);
 
-    $validRoles = ['mahasiswa', 'dosen', 'admin', 'all'];
+    $validRoles = ['mahasiswa', 'dosen', 'admin'];
     abort_unless(in_array($role, $validRoles, true), 404);
 
-    $loginRole = $role === 'all' ? 'admin' : $role;
-    $user = \App\Models\User::where('role', $loginRole)->first();
+    $user = \App\Models\User::where('role', $role)->first();
     abort_unless($user, 404, 'Akun untuk role tersebut belum tersedia di database.');
 
     \Illuminate\Support\Facades\Auth::login($user);
@@ -33,12 +40,6 @@ Route::get('/switch-role/{role}', function (string $role) {
 
     return redirect()->route('dashboard');
 })->name('switch-role');
-
-// Placeholder bernama agar middleware auth tidak melempar Route [login] not defined.
-// Login sungguhan akan dibuat pada materi autentikasi.
-Route::get('/login', function () {
-    return response('Autentikasi login belum tersedia. Gunakan switch-role hanya untuk simulasi lokal.', 401);
-})->name('login');
 
 Route::get('/dashboard', function () { // Membuat route dashboard.
     $activeRole = session('active_role', 'mahasiswa'); // Mengambil role aktif dari session dengan default mahasiswa.
@@ -110,7 +111,7 @@ Route::get('/dashboard', function () { // Membuat route dashboard.
     $currentUser = $currentUser ?? (object)[ // Menyediakan fallback user jika data tidak ditemukan.
         'name' => 'Muhammad Rifa Al-Rizqul', // Nama fallback.
         'email' => '10241050@student.itk.ac.id', // Email fallback.
-        'role' => $activeRole === 'all' ? 'mahasiswa' : $activeRole, // Menentukan role fallback.
+        'role' => $activeRole, // Menentukan role fallback.
         'nim_nip' => '10241050' // NIM/NIP fallback.
     ]; // Menutup data fallback.
 

@@ -51,7 +51,7 @@
                        class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors {{ request()->routeIs('courses.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-50' }}">
                         {{ $activeRole === 'dosen' ? 'Mata Kuliah Diampu' : 'Mata Kuliah' }}
                     </a>
-                    @if ($activeRole === 'admin' || $activeRole === 'all')
+                    @if ($activeRole === 'admin')
                         <a href="{{ route('users.index') }}" 
                            class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors {{ request()->routeIs('users.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-50' }}">
                             Pengguna
@@ -83,8 +83,6 @@
                             <span class="badge-coral text-[11px] py-0.5 px-2">🛡️ Admin</span>
                         @elseif ($activeRole === 'dosen')
                             <span class="badge-sky text-[11px] py-0.5 px-2">👨‍🏫 Dosen</span>
-                        @elseif ($activeRole === 'all')
-                            <span class="badge-amber text-[11px] py-0.5 px-2">🧪 Evaluasi (All)</span>
                         @else
                             <span class="badge-mint text-[11px] py-0.5 px-2">🎓 Mahasiswa</span>
                         @endif
@@ -150,40 +148,46 @@
                                 <span class="text-rose-700 text-xs font-bold" aria-hidden="true">✓</span>
                             @endif
                         </a>
+                    </div>
+                </div>
 
-                        <div class="border-t border-slate-100 my-1"></div>
+                {{-- User Avatar Pill & Auth Action --}}
+                @auth
+                    <div class="hidden sm:flex items-center gap-2 pl-3 border-l border-slate-200">
+                        <div class="w-7 h-7 rounded-lg bg-slate-900 text-white font-bold text-[11px] flex items-center justify-center font-mono flex-shrink-0" aria-hidden="true">
+                            {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
+                        </div>
+                        <div class="min-w-0 max-w-[130px]">
+                            <p class="text-xs font-bold text-slate-900 truncate leading-tight">
+                                {{ auth()->user()->name }}
+                            </p>
+                            <p class="text-[10px] text-slate-600 font-mono capitalize truncate">
+                                {{ auth()->user()->role }}
+                            </p>
+                        </div>
 
-                        <a href="{{ route('switch-role', 'all') }}" 
-                           class="flex items-center justify-between px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors {{ $activeRole === 'all' ? 'text-amber-800 bg-amber-50/60 font-bold' : 'text-slate-700' }}"
-                           role="menuitem">
-                            <div class="flex items-center gap-2">
-                                <span>🧪</span>
-                                <div>
-                                    <p class="text-slate-900">Mode Evaluasi Praktikum</p>
-                                    <p class="text-[10px] text-slate-600 font-normal">Tampilkan semua tombol CRUD</p>
-                                </div>
-                            </div>
-                            @if ($activeRole === 'all')
-                                <span class="text-amber-700 text-xs font-bold" aria-hidden="true">✓</span>
-                            @endif
+                        {{-- Tombol Logout --}}
+                        <form action="{{ route('logout') }}" method="POST" class="inline ml-1">
+                            @csrf
+                            <button 
+                                type="submit" 
+                                title="Keluar dari akun (Logout)" 
+                                class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                aria-label="Keluar"
+                            >
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
+                @else
+                    <div class="hidden sm:flex items-center gap-2 pl-3 border-l border-slate-200">
+                        <a href="{{ route('login') }}" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-colors">
+                            Masuk
                         </a>
                     </div>
-                </div>
-
-                {{-- User Avatar Pill (Simulated User) --}}
-                <div class="hidden sm:flex items-center gap-2 pl-2 border-l border-slate-200">
-                    <div class="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200 text-slate-900 font-bold text-[11px] flex items-center justify-center font-mono flex-shrink-0" aria-hidden="true">
-                        {{ strtoupper(substr($activeUser->name ?? 'User', 0, 2)) }}
-                    </div>
-                    <div class="min-w-0 max-w-[130px]">
-                        <p class="text-xs font-bold text-slate-900 truncate leading-tight">
-                            {{ $activeUser->name ?? 'User' }}
-                        </p>
-                        <p class="text-[10px] text-slate-600 font-mono capitalize truncate">
-                            {{ $activeUser->role ?? $activeRole }}
-                        </p>
-                    </div>
-                </div>
+                @endauth
 
                 {{-- Mobile Hamburger Button --}}
                 <button type="button" id="mobile-nav-toggle" onclick="toggleMobileNav()" class="md:hidden p-2 rounded-md text-slate-700 hover:text-slate-950 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 cursor-pointer" aria-expanded="false" aria-controls="mobile-nav-drawer" aria-label="Buka menu navigasi">
@@ -203,7 +207,7 @@
             <a href="{{ route('courses.index') }}" class="block px-3 py-2 rounded-md text-xs font-semibold {{ request()->routeIs('courses.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
                 {{ $activeRole === 'dosen' ? 'Mata Kuliah Diampu' : 'Mata Kuliah' }}
             </a>
-            @if ($activeRole === 'admin' || $activeRole === 'all')
+            @if ($activeRole === 'admin')
                 <a href="{{ route('users.index') }}" class="block px-3 py-2 rounded-md text-xs font-semibold {{ request()->routeIs('users.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
                     Pengguna
                 </a>
@@ -211,6 +215,24 @@
             <a href="{{ route('tentang') }}" class="block px-3 py-2 rounded-md text-xs font-semibold {{ request()->routeIs('tentang') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
                 Tentang Kelompok
             </a>
+
+            @auth
+                <div class="pt-2 mt-2 border-t border-slate-100 flex items-center justify-between px-3">
+                    <span class="text-xs text-slate-600 truncate">{{ auth()->user()->name }} ({{ auth()->user()->role }})</span>
+                    <form action="{{ route('logout') }}" method="POST" class="inline">
+                        @csrf
+                        <button type="submit" class="text-xs text-rose-600 hover:text-rose-700 font-semibold cursor-pointer">
+                            Keluar
+                        </button>
+                    </form>
+                </div>
+            @else
+                <div class="pt-2 mt-2 border-t border-slate-100 px-3">
+                    <a href="{{ route('login') }}" class="block text-center py-2 rounded-lg bg-slate-900 text-white text-xs font-semibold">
+                        Masuk
+                    </a>
+                </div>
+            @endauth
         </nav>
     </header>
 

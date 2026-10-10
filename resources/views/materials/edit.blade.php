@@ -17,7 +17,7 @@
             <span class="font-normal text-slate-600">— {{ $material->title }}</span>
         </h1>
 
-        <form action="{{ route('dosen.courses.materials.update', [$material->course, $material]) }}" method="POST">
+        <form action="{{ route('materials.update', $material) }}" method="POST">
             @csrf
             @method('PUT')
 
@@ -51,8 +51,8 @@
                     <label class="block text-sm font-semibold text-slate-800 mb-1.5">
                         Tipe Materi <span class="text-rose-600">*</span>
                     </label>
-                    <div class="grid grid-cols-3 gap-3">
-                        @foreach (['text', 'link', 'document'] as $option)
+                    <div class="grid grid-cols-2 gap-3">
+                        @foreach (['link', 'file'] as $option)
                             @php
                                 $checked = old('type', $material->type) === $option;
                             @endphp

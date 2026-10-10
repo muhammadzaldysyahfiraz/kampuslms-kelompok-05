@@ -16,7 +16,7 @@
             Buat Materi untuk {{ $course->name }}
         </h1>
 
-        <form action="{{ route('dosen.courses.materials.store', [$course, 'material' => null]) }}" method="POST">
+        <form action="{{ route('courses.materials.store', $course) }}" method="POST">
             @csrf
 
             <div class="space-y-5">
@@ -50,14 +50,14 @@
                     <label class="block text-sm font-semibold text-slate-800 mb-1.5">
                         Tipe Materi <span class="text-rose-600">*</span>
                     </label>
-                    <div class="grid grid-cols-3 gap-3">
-                        @foreach (['text', 'link', 'document'] as $option)
-                            <label class="relative cursor-pointer rounded-lg border-2 border-slate-200 bg-white px-3.5 py-2.5 text-center transition-all hover:border-slate-300 {{ old('type') === $option ? 'border-sky-600 bg-sky-50/70' : '' }}">
+                    <div class="grid grid-cols-2 gap-3">
+                        @foreach (['link', 'file'] as $option)
+                            <label class="relative cursor-pointer rounded-lg border-2 border-slate-200 bg-white px-3.5 py-2.5 text-center transition-all hover:border-slate-300 {{ old('type', 'link') === $option ? 'border-sky-600 bg-sky-50/70' : '' }}">
                                 <input
                                     type="radio"
                                     name="type"
                                     value="{{ $option }}"
-                                    {{ old('type') === $option ? 'checked' : '' }}
+                                    {{ old('type', 'link') === $option ? 'checked' : '' }}
                                     class="sr-only"
                                 />
                                 <span class="text-sm font-semibold text-slate-800">

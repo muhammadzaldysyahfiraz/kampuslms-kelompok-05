@@ -17,7 +17,7 @@
             <span class="font-normal text-slate-600">— {{ $assignment->title }}</span>
         </h1>
 
-        <form action="{{ route('dosen.courses.assignments.update', [$assignment->course, $assignment]) }}" method="POST">
+        <form action="{{ route('assignments.update', $assignment) }}" method="POST">
             @csrf
             @method('PUT')
 

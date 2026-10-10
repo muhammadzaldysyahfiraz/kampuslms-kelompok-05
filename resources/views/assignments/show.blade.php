@@ -15,7 +15,7 @@
         @can('update', $assignment)
             <div class="flex items-center gap-2">
                 <a
-                    href="{{ route('dosen.courses.assignments.edit', [$assignment->course, $assignment]) }}"
+                    href="{{ route('assignments.edit', $assignment) }}"
                     class="btn-secondary text-xs inline-flex items-center gap-2"
                 >
                     <svg class="w-4 h-4 text-slate-700" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -200,7 +200,7 @@
 
                         <div class="flex flex-wrap items-center gap-3">
                             <a
-                                href="{{ route('dosen.courses.assignments.scoped-show', [$assignment->course, 'assignment' => $assignment]) }}"
+                                href="{{ route('courses.assignments.scoped-show', [$assignment->course, $assignment]) }}"
                                 class="btn-primary text-xs inline-flex items-center gap-2"
                             >
                                 <svg class="w-4 h-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">

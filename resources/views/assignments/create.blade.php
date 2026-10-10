@@ -16,7 +16,7 @@
             Buat Tugas untuk {{ $course->name }}
         </h1>
 
-        <form action="{{ route('dosen.courses.assignments.store', [$course, 'assignment' => null]) }}" method="POST">
+        <form action="{{ route('courses.assignments.store', $course) }}" method="POST">
             @csrf
 
             <div class="space-y-5">

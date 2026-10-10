@@ -142,19 +142,58 @@ Route::get('/dashboard', function () { // Membuat route dashboard.
     )); // Menutup pengiriman data view.
 })->name('dashboard'); // Memberikan nama dashboard.
 
+// Rute registrasi terpusat oleh Admin (Minggu 07)
+Route::get('/register', function () {
+    return redirect()->route('login')->with('info', 'Pendaftaran akun dilakukan secara terpusat oleh Administrator.');
+})->name('register');
+
 // Seluruh route di bawah ini membutuhkan pengguna yang sudah terautentikasi.
 Route::middleware('auth')->group(function () {
-    // Dashboard umum, dengan role tampilan yang dipilih pada simulasi lokal.
-    // Daftar/detail course umum tetap memakai nama route lama agar tautan dashboard stabil.
+    // Rute manajemen course: didefinisikan sebelum route model binding courses/{course}
+    // agar URL /courses/create tidak tertangkap sebagai parameter {course} (mencegah 404).
+    Route::middleware('role:admin,dosen')->group(function () {
+        Route::get('courses/create', [CourseController::class, 'create'])->name('courses.create');
+        Route::post('courses', [CourseController::class, 'store'])->name('courses.store');
+        Route::get('courses/{course}/edit', [CourseController::class, 'edit'])->name('courses.edit');
+        Route::match(['put', 'patch'], 'courses/{course}', [CourseController::class, 'update'])->name('courses.update');
+        Route::delete('courses/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
+    });
+
+    // Detail dan daftar mata kuliah umum
     Route::resource('courses', CourseController::class)
         ->only(['index', 'show']);
 
-    // Kompatibilitas URI lama untuk course management. Akses tetap dibatasi role
-    // dan kepemilikan objek diperiksa lagi di CourseController.
+    // Routes untuk Penugasan (Assignments) - Web
     Route::middleware('role:admin,dosen')->group(function () {
-        Route::resource('courses', CourseController::class)
-            ->except(['index', 'show']);
+        Route::get('/courses/{course}/assignments/create', [\App\Http\Controllers\AssignmentController::class, 'create'])
+            ->name('courses.assignments.create');
+        Route::post('/courses/{course}/assignments', [\App\Http\Controllers\AssignmentController::class, 'store'])
+            ->name('courses.assignments.store');
+        Route::get('/assignments/{assignment}/edit', [\App\Http\Controllers\AssignmentController::class, 'edit'])
+            ->name('assignments.edit');
+        Route::match(['put', 'patch'], '/assignments/{assignment}', [\App\Http\Controllers\AssignmentController::class, 'update'])
+            ->name('assignments.update');
+        Route::delete('/assignments/{assignment}', [\App\Http\Controllers\AssignmentController::class, 'destroy'])
+            ->name('assignments.destroy');
     });
+    Route::get('/assignments/{assignment}', [\App\Http\Controllers\AssignmentController::class, 'show'])
+        ->name('assignments.show');
+
+    // Routes untuk Materi Perkuliahan (Materials) - Web
+    Route::middleware('role:admin,dosen')->group(function () {
+        Route::get('/courses/{course}/materials/create', [\App\Http\Controllers\MaterialController::class, 'create'])
+            ->name('courses.materials.create');
+        Route::post('/courses/{course}/materials', [\App\Http\Controllers\MaterialController::class, 'store'])
+            ->name('courses.materials.store');
+        Route::get('/materials/{material}/edit', [\App\Http\Controllers\MaterialController::class, 'edit'])
+            ->name('materials.edit');
+        Route::match(['put', 'patch'], '/materials/{material}', [\App\Http\Controllers\MaterialController::class, 'update'])
+            ->name('materials.update');
+        Route::delete('/materials/{material}', [\App\Http\Controllers\MaterialController::class, 'destroy'])
+            ->name('materials.destroy');
+    });
+    Route::get('/materials/{material}', [\App\Http\Controllers\MaterialController::class, 'show'])
+        ->name('materials.show');
 
     // Kompatibilitas route pengguna lama; tetap hanya admin yang dapat mengakses.
     Route::middleware('role:admin')->group(function () {

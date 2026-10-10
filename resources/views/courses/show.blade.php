@@ -85,12 +85,22 @@
                             <p class="text-xs text-slate-600 font-normal">Bahan ajar dan referensi materi perkuliahan</p>
                         </div>
                     </div>
-                    <span class="badge-sky text-[11px]">
-                        {{ $course->materials->count() }} Materi
-                    </span>
-                </div>
+                    <div class="flex items-center gap-2.5">
+                        <span class="badge-sky text-[11px]">
+                            {{ $course->materials->count() }} Materi
+                        </span>
 
-                @if ($course->materials->count() > 0)
+                        @can('update', $course)
+                            <a href="{{ route('dosen.courses.materials.create', $course) }}"
+                               class="inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50/70 text-sky-800 text-xs font-semibold px-3 py-1.5 hover:bg-sky-100 transition-colors">
+                                <svg class="w-4 h-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                </svg>
+                                Tambah Materi
+                            </a>
+                        @endcan
+                    </div>
+                </div>
                     <div class="divide-y divide-slate-100">
                         @foreach ($course->materials as $material)
                             <div class="py-3.5 flex items-start justify-between gap-4">
@@ -138,12 +148,22 @@
                             <p class="text-xs text-slate-600 font-normal">Penugasan dan tenggat waktu pengumpulan tugas</p>
                         </div>
                     </div>
-                    <span class="badge-amber text-[11px]">
-                        {{ $course->assignments->count() }} Tugas
-                    </span>
-                </div>
+                    <div class="flex items-center gap-2.5">
+                        <span class="badge-amber text-[11px]">
+                            {{ $course->assignments->count() }} Tugas
+                        </span>
 
-                @if ($course->assignments->count() > 0)
+                        @can('update', $course)
+                            <a href="{{ route('dosen.courses.assignments.create', $course) }}"
+                               class="inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50/70 text-sky-800 text-xs font-semibold px-3 py-1.5 hover:bg-sky-100 transition-colors">
+                                <svg class="w-4 h-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                </svg>
+                                Tambah Tugas
+                            </a>
+                        @endcan
+                    </div>
+                </div>
                     <div class="divide-y divide-slate-100">
                         @foreach ($course->assignments as $assignment)
                             <div class="py-3.5 flex items-start justify-between gap-4">

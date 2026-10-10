@@ -91,7 +91,7 @@
                         </span>
 
                         @can('update', $course)
-                            <a href="{{ route('dosen.courses.materials.create', $course) }}"
+                            <a href="{{ route('courses.materials.create', $course) }}"
                                class="inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50/70 text-sky-800 text-xs font-semibold px-3 py-1.5 hover:bg-sky-100 transition-colors">
                                 <svg class="w-4 h-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -101,13 +101,22 @@
                         @endcan
                     </div>
                 </div>
+
+                @if ($course->materials->count() > 0)
                     <div class="divide-y divide-slate-100">
                         @foreach ($course->materials as $material)
                             <div class="py-3.5 flex items-start justify-between gap-4">
-                                <div>
-                                    <h3 class="text-sm font-semibold text-slate-900 hover:text-slate-950 transition-colors">
-                                        {{ $material->title }}
-                                    </h3>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center gap-2">
+                                        <a href="{{ route('courses.materials.scoped-show', [$course, $material]) }}" class="text-sm font-semibold text-slate-900 hover:text-sky-700 transition-colors">
+                                            {{ $material->title }}
+                                        </a>
+                                        @can('update', $course)
+                                            <a href="{{ route('materials.edit', $material) }}" class="text-xs text-slate-500 hover:text-slate-800 font-medium ml-1">
+                                                (Edit)
+                                            </a>
+                                        @endcan
+                                    </div>
                                     <p class="text-xs text-slate-600 mt-0.5 font-normal leading-relaxed">
                                         {{ $material->description ?? 'Tidak ada keterangan materi.' }}
                                     </p>
@@ -121,7 +130,7 @@
                                         </a>
                                     @endif
                                 </div>
-                                <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 uppercase font-mono border border-slate-200">
+                                <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 uppercase font-mono border border-slate-200 shrink-0">
                                     {{ $material->type }}
                                 </span>
                             </div>
@@ -154,7 +163,7 @@
                         </span>
 
                         @can('update', $course)
-                            <a href="{{ route('dosen.courses.assignments.create', $course) }}"
+                            <a href="{{ route('courses.assignments.create', $course) }}"
                                class="inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50/70 text-sky-800 text-xs font-semibold px-3 py-1.5 hover:bg-sky-100 transition-colors">
                                 <svg class="w-4 h-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -164,17 +173,24 @@
                         @endcan
                     </div>
                 </div>
+
+                @if ($course->assignments->count() > 0)
                     <div class="divide-y divide-slate-100">
                         @foreach ($course->assignments as $assignment)
                             <div class="py-3.5 flex items-start justify-between gap-4">
-                                <div>
+                                <div class="min-w-0 flex-1">
                                     <div class="flex items-center gap-2">
-                                        <h3 class="text-sm font-semibold text-slate-900">
+                                        <a href="{{ route('courses.assignments.scoped-show', [$course, $assignment]) }}" class="text-sm font-semibold text-slate-900 hover:text-sky-700 transition-colors">
                                             {{ $assignment->title }}
-                                        </h3>
+                                        </a>
                                         <span class="text-[11px] font-bold px-2 py-0.5 rounded {{ $assignment->status === 'published' ? 'badge-mint' : 'badge-dark' }}">
                                             {{ ucfirst($assignment->status) }}
                                         </span>
+                                        @can('update', $course)
+                                            <a href="{{ route('assignments.edit', $assignment) }}" class="text-xs text-slate-500 hover:text-slate-800 font-medium ml-1">
+                                                (Edit)
+                                            </a>
+                                        @endcan
                                     </div>
                                     <p class="text-xs text-slate-600 mt-1 font-normal">
                                         Tenggat: <strong class="text-slate-800 font-mono">{{ $assignment->due_at->format('d M Y, H:i') }}</strong>

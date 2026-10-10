@@ -16,7 +16,6 @@ class AssignmentController extends Controller
     {
         $user = $request->user();
 
-        // TODO minggu 7: dipindah ke CoursePolicy
         abort_unless(
             $course->isAccessibleBy($user),
             403,
@@ -39,23 +38,20 @@ class AssignmentController extends Controller
 
     public function store(StoreAssignmentRequest $request)
     {
-        $user   = $request->user();
+        $user = $request->user();
         $course = Course::findOrFail($request->validated('course_id'));
 
-        // TODO minggu 7: dipindah ke AssignmentPolicy
-        abort_unless(
-            $user->role === 'dosen' && $course->lecturer_id === $user->id,
-            403,
-            'Anda tidak memiliki akses ke sumber daya ini.'
-        );
-
         $assignment = new Assignment($request->safe()->only([
-            'title', 'instructions', 'due_at', 'max_score', 'allow_late',
+            'title',
+            'instructions',
+            'due_at',
+            'max_score',
+            'allow_late',
         ]));
 
-        $assignment->course_id  = $course->id;
+        $assignment->course_id = $course->id;
         $assignment->created_by = $user->id;
-        $assignment->status     = $request->validated('status') ?? 'draft';
+        $assignment->status = $request->validated('status') ?? 'draft';
         $assignment->save();
 
         return (new AssignmentResource($assignment))
@@ -65,10 +61,8 @@ class AssignmentController extends Controller
 
     public function update(UpdateAssignmentRequest $request, Assignment $assignment)
     {
-        // Kepemilikan sudah dicek di UpdateAssignmentRequest::authorize().
         $data = $request->validated();
 
-        // status tidak fillable, jadi diisi terpisah dari field lainnya.
         $assignment->fill(collect($data)->except('status')->all());
 
         if (array_key_exists('status', $data)) {
@@ -84,7 +78,6 @@ class AssignmentController extends Controller
     {
         $user = $request->user();
 
-        // TODO minggu 7: dipindah ke AssignmentPolicy
         abort_unless(
             $user->role === 'dosen' && $assignment->course->lecturer_id === $user->id,
             403,

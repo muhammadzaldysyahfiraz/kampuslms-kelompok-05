@@ -17,13 +17,16 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        // Seragamkan format error validasi API sesuai kontrak (Bagian 5).
+        $exceptions->shouldRenderJsonWhen(function (Request $request, \Throwable $e) {
+            return $request->is('api/*') || $request->expectsJson();
+        });
+
         $exceptions->render(function (ValidationException $e, Request $request) {
             if ($request->is('api/*')) {
                 return response()->json([
                     'message' => 'Data yang diberikan tidak valid.',
-                    'errors'  => $e->errors(),
-                ], $e->status);
+                    'errors' => $e->errors(),
+                ], 422);
             }
         });
     })

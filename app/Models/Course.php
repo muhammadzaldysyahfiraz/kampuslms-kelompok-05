@@ -50,6 +50,18 @@ class Course extends Model
         return $this->hasMany(Assignment::class);
     }
 
+    // Mengecek apakah user adalah dosen pengampu mata kuliah
+    public function isTaughtBy(User $user): bool
+    {
+        return $this->lecturer_id === $user->id;
+    }
+
+    // Mengecek apakah user terdaftar sebagai mahasiswa mata kuliah
+    public function hasStudent(User $user): bool
+    {
+        return $this->students()->whereKey($user->id)->exists();
+    }
+
     // TODO minggu 7: dipindah ke CoursePolicy
     public function isAccessibleBy(User $user): bool
     {

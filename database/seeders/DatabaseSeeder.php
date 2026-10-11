@@ -142,29 +142,16 @@ class DatabaseSeeder extends Seeder
         |--------------------------------------------------------------------------
         */
 
-<<<<<<< HEAD
-        foreach ($courses as $index => $course) {
-            $students = $mahasiswa->random(15);
-=======
         foreach ($courses as $course) {
-
             // Mahasiswa demo selalu terdaftar; 14 peserta lain dipilih acak.
             $students = $mahasiswa
                 ->reject(fn (User $student) => $student->is($mahasiswaDemo))
                 ->random(14)
                 ->push($mahasiswaDemo);
->>>>>>> origin/main
 
             foreach ($students as $student) {
                 $course->students()->syncWithoutDetaching([
                     $student->id => ['enrolled_at' => now()],
-                ]);
-            }
-
-            // Pastikan Mahasiswa Demo selalu terdaftar di Course 1 & 2
-            if ($index === 0 || $index === 1) {
-                $course->students()->syncWithoutDetaching([
-                    $mahasiswaDemo->id => ['enrolled_at' => now()],
                 ]);
             }
         }

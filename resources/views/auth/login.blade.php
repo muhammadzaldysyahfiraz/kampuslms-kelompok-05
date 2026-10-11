@@ -32,10 +32,10 @@
         </div>
 
         <h1 class="mt-6 text-center text-2xl font-bold tracking-tight text-slate-900">
-            Masuk ke Akun Anda
+            Masuk ke akun Anda
         </h1>
         <p class="mt-1 text-center text-xs text-slate-600">
-            Sistem Pembelajaran Terpadu — Semester Ganjil 2026/2027
+            Sistem pembelajaran terpadu <span aria-hidden="true">·</span> Semester Ganjil 2026/2027
         </p>
     </div>
 
@@ -70,8 +70,8 @@
 
                 {{-- Input Email --}}
                 <div>
-                    <label for="email" class="block text-xs font-semibold text-slate-700">
-                        Alamat Email
+                    <label for="email" class="form-label">
+                        Alamat email
                     </label>
                     <div class="mt-1.5 relative">
                         <input 
@@ -90,8 +90,8 @@
                 {{-- Input Password --}}
                 <div>
                     <div class="flex items-center justify-between">
-                        <label for="password" class="block text-xs font-semibold text-slate-700">
-                            Kata Sandi
+                        <label for="password" class="form-label">
+                            Kata sandi
                         </label>
                         <span class="text-[11px] text-slate-500 font-mono">Min. 8 karakter</span>
                     </div>
@@ -125,9 +125,9 @@
                 <div>
                     <button 
                         type="submit" 
-                        class="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-xl shadow-xs text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 transition-all cursor-pointer"
+                        class="btn-primary w-full min-h-10"
                     >
-                        Masuk ke Sistem
+                        Masuk ke sistem
                     </button>
                 </div>
             </form>
@@ -135,47 +135,56 @@
             {{-- 1-Click Demo Credentials Card --}}
             <div class="mt-8 pt-6 border-t border-slate-100">
                 <div class="flex items-center justify-between mb-3">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                        ⚡ Akun Demo Pengujian (1-Klik)
+                    <span class="meta-label">
+                        Akun demo pengujian
                     </span>
-                    <span class="text-[10px] text-slate-400 font-mono">Password: password</span>
+                    <span class="text-[10px] text-slate-500 font-mono">Password: password</span>
                 </div>
 
                 <div class="grid grid-cols-3 gap-2">
                     <button 
                         type="button" 
                         onclick="fillDemo('admin@kampuslms.test', 'password')"
-                        class="px-2 py-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700 text-slate-700 text-[11px] font-medium text-center transition-colors cursor-pointer"
+                        aria-label="Isi kredensial akun demo Administrator"
+                        class="flex flex-col items-center justify-center gap-1 min-h-16 px-2 py-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300 text-slate-700 text-[11px] font-medium text-center transition-colors cursor-pointer"
                     >
-                        <div class="font-bold">🛡️ Admin</div>
-                        <div class="text-[9px] text-slate-500 truncate">admin@...</div>
+                        <svg class="w-4 h-4 text-slate-600" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+                        </svg>
+                        <span class="font-semibold text-slate-900 leading-tight">Admin</span>
+                        <span class="text-[9px] text-slate-500 font-mono truncate max-w-full">admin@kampuslms.test</span>
                     </button>
 
                     <button 
                         type="button" 
                         onclick="fillDemo('dosen@kampuslms.test', 'password')"
-                        class="px-2 py-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-sky-50 hover:border-sky-200 hover:text-sky-700 text-slate-700 text-[11px] font-medium text-center transition-colors cursor-pointer"
+                        aria-label="Isi kredensial akun demo Dosen"
+                        class="flex flex-col items-center justify-center gap-1 min-h-16 px-2 py-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300 text-slate-700 text-[11px] font-medium text-center transition-colors cursor-pointer"
                     >
-                        <div class="font-bold">👨‍🏫 Dosen</div>
-                        <div class="text-[9px] text-slate-500 truncate">dosen@...</div>
+                        <svg class="w-4 h-4 text-slate-600" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                        </svg>
+                        <span class="font-semibold text-slate-900 leading-tight">Dosen</span>
+                        <span class="text-[9px] text-slate-500 font-mono truncate max-w-full">dosen@kampuslms.test</span>
                     </button>
 
                     <button 
                         type="button" 
                         onclick="fillDemo('mahasiswa@kampuslms.test', 'password')"
-                        class="px-2 py-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700 text-slate-700 text-[11px] font-medium text-center transition-colors cursor-pointer"
+                        aria-label="Isi kredensial akun demo Mahasiswa"
+                        class="flex flex-col items-center justify-center gap-1 min-h-16 px-2 py-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300 text-slate-700 text-[11px] font-medium text-center transition-colors cursor-pointer"
                     >
-                        <div class="font-bold">🎓 Mahasiswa</div>
-                        <div class="text-[9px] text-slate-500 truncate">mhs@...</div>
+                        <svg class="w-4 h-4 text-slate-600" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
+                        </svg>
+                        <span class="font-semibold text-slate-900 leading-tight">Mahasiswa</span>
+                        <span class="text-[9px] text-slate-500 font-mono truncate max-w-full">mahasiswa@kampuslms.test</span>
                     </button>
                 </div>
             </div>
 
         </div>
 
-        <p class="mt-6 text-center text-[11px] text-slate-500">
-            Terproteksi dengan CSRF Token & Pembatasan Laju (Rate Limiting).
-        </p>
     </div>
 
     <script>

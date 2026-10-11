@@ -44,7 +44,7 @@
         <div class="lg:col-span-2 space-y-6">
             <div class="lms-card p-6 sm:p-7">
                 <div class="flex items-center gap-2 mb-3">
-                    <span class="text-[11px] font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 border border-slate-200 uppercase font-mono">
+                    <span class="text-[11px] font-semibold px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 border border-slate-200 font-mono">
                         Tipe: {{ $material->type }}
                     </span>
                     <span class="text-xs text-slate-500 font-mono">
@@ -61,8 +61,8 @@
                 </p>
 
                 <div class="border-t border-slate-100 pt-5 space-y-4">
-                    <h2 class="text-xs font-bold text-slate-600 uppercase tracking-wider">
-                        Deskripsi & Rincian Pembahasan
+                    <h2 class="section-title">
+                        Deskripsi & rincian pembahasan
                     </h2>
                     <div class="rounded-lg border border-slate-200 bg-slate-50/70 p-4 text-sm text-slate-800 leading-relaxed whitespace-pre-line">
                         {{ $material->description ?: 'Tidak ada deskripsi materi.' }}
@@ -90,8 +90,8 @@
         {{-- Kolom Samping: Info Perkuliahan & Pengunggah --}}
         <div class="space-y-6">
             <div class="lms-card p-6">
-                <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-4">
-                    Informasi Bahan Ajar
+                <h3 class="section-title mb-4">
+                    Informasi bahan ajar
                 </h3>
 
                 <dl class="space-y-3 text-xs">

@@ -77,7 +77,7 @@ class GradeController extends Controller
         return response()->json(['grade' => $grade->load(['submission.assignment.course', 'submission.student', 'grader'])]);
     }
 
-    public function store(Request $request, Submission $submission): JsonResponse
+    public function store(Request $request, Submission $submission)
     {
         $this->ensureGrader($request, $submission);
         $data = $request->validate([
@@ -93,7 +93,11 @@ class GradeController extends Controller
         $grade->graded_at = now();
         $grade->save();
 
-        return response()->json(['grade' => $grade], 201);
+        if ($request->wantsJson()) {
+            return response()->json(['grade' => $grade], 201);
+        }
+
+        return redirect()->back()->with('success', 'Nilai dan umpan balik tugas berhasil disimpan.');
     }
 
     public function update(Request $request, Grade $grade): JsonResponse

@@ -15,15 +15,8 @@
             {{-- Header: Judul & Search Input --}}
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                        <span>Dashboard Perkuliahan</span>
-                        @if ($activeRole === 'admin')
-                            <span class="badge-coral text-[11px] py-0.5 px-2 font-normal">Panel Admin</span>
-                        @elseif ($activeRole === 'dosen')
-                            <span class="badge-sky text-[11px] py-0.5 px-2 font-normal">Panel Dosen</span>
-                        @else
-                            <span class="badge-mint text-[11px] py-0.5 px-2 font-normal">Portal Mahasiswa</span>
-                        @endif
+                    <h1 class="text-2xl font-bold text-slate-900 tracking-tight">
+                        Dashboard Perkuliahan
                     </h1>
                     <p class="text-xs text-slate-600 mt-0.5">
                         Semester Ganjil 2026/2027
@@ -113,8 +106,8 @@
                     </div>
                 </div>
 
-                {{-- Clean Horizontal Fast Metric Counters (Tailored by Role) --}}
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 text-xs">
+                {{-- Satu sumber kebenaran metrik: baris KPI tunggal per peran --}}
+                <div class="grid grid-cols-2 {{ $activeRole === 'dosen' ? 'sm:grid-cols-5' : 'sm:grid-cols-4' }} gap-4 pt-4 text-xs">
                     @if ($activeRole === 'dosen')
                         <div>
                             <span class="text-slate-600 block font-medium text-xs">Mata Kuliah Diampu</span>
@@ -132,6 +125,10 @@
                             <span class="text-slate-600 block font-medium text-xs">Mahasiswa Terdaftar</span>
                             <span class="text-base font-bold font-mono text-slate-900 mt-0.5 block">{{ $totalStudents }} Orang</span>
                         </div>
+                        <div>
+                            <span class="text-slate-600 block font-medium text-xs">Modul Materi</span>
+                            <span class="text-base font-bold font-mono text-slate-900 mt-0.5 block">{{ $totalMaterials }} Materi</span>
+                        </div>
                     @elseif ($activeRole === 'admin')
                         <div>
                             <span class="text-slate-600 block font-medium text-xs">Total Pengguna</span>
@@ -146,8 +143,8 @@
                             <span class="text-base font-bold font-mono text-slate-900 mt-0.5 block">{{ $totalMaterials }} Materi</span>
                         </div>
                         <div>
-                            <span class="text-slate-600 block font-medium text-xs">Status Sistem</span>
-                            <span class="text-base font-bold font-mono text-emerald-800 mt-0.5 block">Normal (100%)</span>
+                            <span class="text-slate-600 block font-medium text-xs">Tugas Terbit</span>
+                            <span class="text-base font-bold font-mono text-slate-900 mt-0.5 block">{{ $totalAssignments }} Tugas</span>
                         </div>
                     @else
                         <div>
@@ -172,30 +169,20 @@
 
             {{-- SECTION: Mata Kuliah --}}
             <div>
-                <div class="flex items-center justify-between mb-3">
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-3">
                     <div class="flex items-center gap-2">
-                        <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                        <h2 class="section-title">
                             @if ($activeRole === 'dosen')
-                                Mata Kuliah yang Diampu
+                                Mata kuliah yang diampu
                             @elseif ($activeRole === 'admin')
-                                Katalog Mata Kuliah KampusLMS
+                                Katalog mata kuliah KampusLMS
                             @else
-                                Mata Kuliah Semester Ini
+                                Mata kuliah semester ini
                             @endif
                         </h2>
-                        <span class="text-xs text-slate-600 font-mono font-semibold">({{ $courses->count() }})</span>
                     </div>
 
-                    <div class="flex items-center gap-3">
-                        @if ($activeRole !== 'mahasiswa')
-                            <a href="{{ route('courses.create') }}" class="text-xs font-semibold text-slate-700 hover:text-slate-950 transition-colors inline-flex items-center gap-1">
-                                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                </svg>
-                                <span>Tambah MK</span>
-                            </a>
-                            <span class="text-slate-300" aria-hidden="true">•</span>
-                        @endif
+                    <div class="flex items-center gap-4">
                         <a href="{{ route('courses.index') }}" class="text-xs font-semibold text-slate-700 hover:text-slate-950 transition-colors inline-flex items-center gap-1">
                             <span>Lihat Semua</span>
                             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
@@ -209,10 +196,8 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         @foreach($courses as $course)
                             @php
-                                $studentCount = $course->students ? $course->students->count() : 0;
                                 $materialCount = $course->materials ? $course->materials->count() : 0;
                                 $assignmentCount = $course->assignments ? $course->assignments->count() : 0;
-                                $progressPercent = min(100, max(25, ($materialCount * 25) + ($assignmentCount * 15)));
                             @endphp
 
                             {{-- Clean Minimalist Course Bento Card --}}
@@ -236,15 +221,18 @@
                                     </p>
                                 </div>
 
-                                {{-- Progress Divider --}}
-                                <div class="pt-3 border-t border-slate-100">
-                                    <div class="flex items-center justify-between text-xs text-slate-600 mb-1.5 font-mono font-medium">
-                                        <span>{{ $materialCount }} materi • {{ $assignmentCount }} tugas</span>
-                                        <span class="text-slate-900 font-bold">{{ $progressPercent }}%</span>
-                                    </div>
-                                    <div class="progress-bar" role="progressbar" aria-valuenow="{{ $progressPercent }}" aria-valuemin="0" aria-valuemax="100" aria-label="Kemajuan materi dan tugas {{ $course->name }}">
-                                        <div class="progress-bar-fill" style="width: {{ $progressPercent }}%"></div>
-                                    </div>
+                                {{-- Footer: Jumlah materi & tugas sebenarnya (tanpa metrik dekoratif) --}}
+                                <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-3 text-xs">
+                                    <span class="text-slate-600 font-mono">
+                                        {{ $materialCount }} materi <span aria-hidden="true">·</span> {{ $assignmentCount }} tugas
+                                    </span>
+                                    @if ($course->status === 'active')
+                                        <span class="status status-active"><span class="status-dot" aria-hidden="true"></span>Aktif</span>
+                                    @elseif ($course->status === 'draft')
+                                        <span class="status status-draft"><span class="status-dot" aria-hidden="true"></span>Draft</span>
+                                    @else
+                                        <span class="status status-archived"><span class="status-dot" aria-hidden="true"></span>Diarsipkan</span>
+                                    @endif
                                 </div>
                             </a>
                         @endforeach
@@ -262,63 +250,185 @@
             </div>
 
             {{-- SECTION: 2 Kolom Adaptif (Tugas Perkuliahan & Modul Sekunder) --}}
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div class="grid grid-cols-1 {{ $activeRole === 'mahasiswa' ? '' : 'lg:grid-cols-2' }} gap-5">
                 
-                {{-- Modul 1: Tugas Perkuliahan --}}
+                {{-- Modul 1: Actionable Task Module (Role-Tailored: Mahasiswa / Dosen / Admin) --}}
                 <div class="lms-card p-5">
-                    <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
-                        <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                            @if ($activeRole === 'dosen')
-                                Penugasan yang Sedang Berjalan
-                            @elseif ($activeRole === 'admin')
-                                Log Penugasan Sistem
-                            @else
-                                Tugas & Evaluasi Perkuliahan
-                            @endif
-                        </h2>
-                        <span class="text-xs font-mono text-slate-600 font-medium">{{ $homeworks->count() }} Tugas</span>
-                    </div>
-
-                    <div class="divide-y divide-slate-100">
-                        @forelse($homeworks as $hw)
-                            @php
-                                $isDuePassed = $hw->due_at && \Carbon\Carbon::parse($hw->due_at)->isPast();
-                            @endphp
-                            <div class="py-2.5 flex items-center justify-between gap-3 group">
-                                <div class="min-w-0">
-                                    <h3 class="text-xs font-bold text-slate-900 group-hover:text-slate-700 transition-colors truncate">
-                                        {{ $hw->title }}
-                                    </h3>
-                                    <p class="text-xs text-slate-600 mt-0.5">
-                                        <span class="text-slate-800 font-medium">{{ $hw->course->name ?? 'Mata Kuliah' }}</span>
-                                        <span aria-hidden="true">•</span>
-                                        <span>{{ $hw->due_at ? \Carbon\Carbon::parse($hw->due_at)->format('d M, H:i') : 'Fleksibel' }}</span>
-                                    </p>
-                                </div>
-
-                                <div class="flex-shrink-0">
-                                    @if($isDuePassed)
-                                        <span class="badge-coral">Lewat Tenggat</span>
-                                    @else
-                                        <span class="text-slate-600 text-xs font-mono font-medium">Tersedia</span>
-                                    @endif
-                                </div>
+                    @if ($activeRole === 'dosen')
+                        {{-- DOSEN: Antrean Pemeriksaan & Penilaian Tugas Mahasiswa --}}
+                        <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+                            <div>
+                                <h2 class="section-title">Antrean penilaian tugas</h2>
                             </div>
-                        @empty
-                            <div class="py-4 text-center text-slate-600 text-xs">
-                                Tidak ada penugasan aktif saat ini.
+                            <a href="{{ route('dosen.submissions.index') }}" class="text-xs font-semibold text-slate-700 hover:text-slate-950 flex items-center gap-1">
+                                Semua submission →
+                            </a>
+                        </div>
+
+                        <div class="divide-y divide-slate-100">
+                            @forelse($pendingSubmissions as $sub)
+                                @php
+                                    $isGraded = (bool) $sub->grade;
+                                @endphp
+                                <div class="py-2.5 flex items-center justify-between gap-3 group">
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-2">
+                                            <h3 class="text-xs font-bold text-slate-900 group-hover:text-slate-700 transition-colors truncate">
+                                                {{ $sub->student->name ?? 'Mahasiswa' }}
+                                            </h3>
+                                            @if($sub->is_late)
+                                                <span class="text-[10px] font-mono text-rose-600 bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">Terlambat</span>
+                                            @endif
+                                        </div>
+                                        <p class="text-xs text-slate-600 mt-0.5 truncate">
+                                            <span class="font-medium text-slate-800">{{ $sub->assignment->title ?? 'Tugas' }}</span>
+                                            <span aria-hidden="true">•</span>
+                                            <span class="text-slate-500">{{ $sub->assignment->course->code ?? 'MK' }}</span>
+                                        </p>
+                                    </div>
+
+                                    <div class="flex items-center gap-2 flex-shrink-0">
+                                        @if($isGraded)
+                                            <span class="status status-ontime">
+                                                <span class="status-dot" aria-hidden="true"></span>Nilai: {{ number_format($sub->grade->score, 0) }}
+                                            </span>
+                                        @else
+                                            <span class="status status-draft">
+                                                <span class="status-dot" aria-hidden="true"></span>Perlu dinilai
+                                            </span>
+                                        @endif
+                                        <a href="{{ route('submissions.show', $sub->id) }}" class="text-[11px] font-semibold text-slate-700 hover:text-slate-950 px-2 py-1 bg-slate-50 hover:bg-slate-100 rounded border border-slate-200 transition-colors">
+                                            {{ $isGraded ? 'Lihat' : 'Nilai' }}
+                                        </a>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="py-6 text-center text-slate-500 text-xs">
+                                    <svg class="w-8 h-8 mx-auto text-slate-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Belum ada pengumpulan tugas baru yang menunggu penilaian.
+                                </div>
+                            @endforelse
+                        </div>
+
+                    @elseif ($activeRole === 'admin')
+                        {{-- ADMIN: Rekap Pengumpulan & Log Penugasan Sistem --}}
+                        <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+                            <div>
+                                <h2 class="section-title">Log aktivitas penugasan sistem</h2>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Pantauan progres evaluasi perkuliahan lintas kelas</p>
                             </div>
-                        @endforelse
-                    </div>
+                            <a href="{{ route('admin.submissions.index') }}" class="text-xs font-semibold text-slate-700 hover:text-slate-950 flex items-center gap-1">
+                                Semua log →
+                            </a>
+                        </div>
+
+                        <div class="divide-y divide-slate-100">
+                            @forelse($systemAssignments as $hw)
+                                <div class="py-2.5 flex items-center justify-between gap-3 group">
+                                    <div class="min-w-0">
+                                        <h3 class="text-xs font-bold text-slate-900 group-hover:text-slate-700 transition-colors truncate">
+                                            {{ $hw->title }}
+                                        </h3>
+                                        <p class="text-xs text-slate-600 mt-0.5">
+                                            <span class="text-slate-800 font-medium">{{ $hw->course->name ?? 'Mata Kuliah' }}</span>
+                                            <span aria-hidden="true">•</span>
+                                            <span class="font-mono text-slate-500">{{ $hw->submissions_count }} mahasiswa mengumpulkan</span>
+                                        </p>
+                                    </div>
+
+                                    <div class="flex-shrink-0">
+                                        <a href="{{ route('assignments.show', $hw->id) }}" class="text-[11px] font-semibold text-slate-700 hover:text-slate-950 px-2.5 py-1 bg-slate-50 hover:bg-slate-100 rounded border border-slate-200 transition-colors">
+                                            Detail
+                                        </a>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="py-6 text-center text-slate-500 text-xs">
+                                    Tidak ada log penugasan sistem.
+                                </div>
+                            @endforelse
+                        </div>
+
+                    @else
+                        {{-- MAHASISWA: Status Pengumpulan Tugas Mandiri (Action-Oriented) --}}
+                        <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+                            <div>
+                                <h2 class="section-title">Status pengerjaan tugas saya</h2>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Pantau status submit dan nilai setiap tugas</p>
+                            </div>
+                            <a href="{{ route('mahasiswa.submissions.index') }}" class="text-xs font-semibold text-slate-700 hover:text-slate-950 flex items-center gap-1">
+                                Riwayat saya →
+                            </a>
+                        </div>
+
+                        <div class="divide-y divide-slate-100">
+                            @forelse($studentTasks as $hw)
+                                @php
+                                    $userSub = $hw->submissions->first();
+                                    $isSubmitted = !is_null($userSub);
+                                    $hasGrade = $isSubmitted && !is_null($userSub->grade);
+                                    $isDuePassed = $hw->due_at && \Carbon\Carbon::parse($hw->due_at)->isPast();
+                                @endphp
+                                <div class="py-2.5 flex items-center justify-between gap-3 group">
+                                    <div class="min-w-0">
+                                        <h3 class="text-xs font-bold text-slate-900 group-hover:text-slate-700 transition-colors truncate">
+                                            {{ $hw->title }}
+                                        </h3>
+                                        <p class="text-xs text-slate-600 mt-0.5">
+                                            <span class="text-slate-800 font-medium">{{ $hw->course->name ?? 'Mata Kuliah' }}</span>
+                                            <span aria-hidden="true">•</span>
+                                            <span class="font-mono text-slate-500">Tenggat: {{ $hw->due_at ? \Carbon\Carbon::parse($hw->due_at)->format('d M, H:i') : 'Fleksibel' }}</span>
+                                        </p>
+                                    </div>
+
+                                    <div class="flex items-center gap-2 flex-shrink-0">
+                                        @if($hasGrade)
+                                            <span class="status status-ontime">
+                                                <span class="status-dot" aria-hidden="true"></span>Nilai: {{ number_format($userSub->grade->score, 0) }}
+                                            </span>
+                                        @elseif($isSubmitted)
+                                            <span class="status status-ontime">
+                                                <span class="status-dot" aria-hidden="true"></span>Dikumpulkan
+                                            </span>
+                                        @elseif($isDuePassed)
+                                            <span class="status status-late">
+                                                <span class="status-dot" aria-hidden="true"></span>Lewat tenggat
+                                            </span>
+                                        @else
+                                            <span class="status status-draft">
+                                                <span class="status-dot" aria-hidden="true"></span>Belum kirim
+                                            </span>
+                                        @endif
+
+                                        @if($isSubmitted)
+                                            <a href="{{ route('submissions.show', $userSub->id) }}" class="text-[11px] font-semibold text-slate-700 hover:text-slate-950 px-2 py-1 bg-slate-50 hover:bg-slate-100 rounded border border-slate-200 transition-colors">
+                                                Bukti
+                                            </a>
+                                        @else
+                                            <a href="{{ route('assignments.show', $hw->id) }}" class="text-[11px] font-semibold text-emerald-700 hover:text-emerald-900 px-2 py-1 bg-emerald-50 hover:bg-emerald-100 rounded border border-emerald-200 transition-colors">
+                                                Kumpul
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="py-6 text-center text-slate-500 text-xs">
+                                    Tidak ada penugasan aktif yang perlu dikerjakan saat ini.
+                                </div>
+                            @endforelse
+                        </div>
+                    @endif
                 </div>
 
                 {{-- Modul 2: Peringkat Nilai Mahasiswa ATAU Daftar Pengguna Terbaru (Role Tailored) --}}
                 @if ($activeRole === 'admin')
                     <div class="lms-card p-5">
                         <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
-                            <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Pengguna Terdaftar</h2>
+                            <h2 class="section-title">Pengguna terdaftar</h2>
                             <a href="{{ route('users.index') }}" class="text-xs font-semibold text-slate-700 hover:text-slate-950">
-                                Kelola Direktori
+                                Kelola direktori
                             </a>
                         </div>
 
@@ -336,11 +446,11 @@
                                     </div>
                                     <div class="flex-shrink-0">
                                         @if($u->role === 'dosen')
-                                            <span class="badge-sky text-[10px]">Dosen</span>
+                                            <span class="status status-dosen"><span class="status-dot" aria-hidden="true"></span>Dosen</span>
                                         @elseif($u->role === 'admin')
-                                            <span class="badge-coral text-[10px]">Admin</span>
+                                            <span class="status status-admin"><span class="status-dot" aria-hidden="true"></span>Admin</span>
                                         @else
-                                            <span class="badge-mint text-[10px]">Mahasiswa</span>
+                                            <span class="status status-mahasiswa"><span class="status-dot" aria-hidden="true"></span>Mahasiswa</span>
                                         @endif
                                     </div>
                                 </div>
@@ -351,12 +461,10 @@
                             @endforelse
                         </div>
                     </div>
-                @else
+                @elseif ($activeRole === 'dosen')
                     <div class="lms-card p-5">
                         <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
-                            <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                                {{ $activeRole === 'dosen' ? 'Performa Mahasiswa' : 'Peringkat Mahasiswa' }}
-                            </h2>
+                            <h2 class="section-title">Performa mahasiswa</h2>
                             <span class="text-xs font-mono text-slate-600 font-medium">Top 4</span>
                         </div>
 
@@ -369,11 +477,11 @@
                                         </span>
                                         <div class="min-w-0">
                                             <span class="font-semibold text-slate-900 block truncate">{{ $student->name }}</span>
-                                            <span class="text-xs text-slate-600 font-mono">{{ $student->nim_nip ?? '102410XX' }}</span>
+                                            <span class="text-xs text-slate-600 font-mono">{{ $student->nim_nip ?? '—' }}</span>
                                         </div>
                                     </div>
                                     <div class="text-right flex-shrink-0 font-mono font-bold text-slate-900">
-                                        {{ $student->calculated_score }} pts
+                                        {{ $student->submissions_count }} pengumpulan
                                     </div>
                                 </div>
                             @empty
@@ -397,20 +505,24 @@
             {{-- MODUL 1: Jadwal & Deadline Terdekat --}}
             <div class="lms-card p-5">
                 <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
-                    <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Jadwal Mendatang</h2>
+                    <div>
+                        <h2 class="section-title">Jadwal mendatang</h2>
+                    </div>
                     <span class="text-xs font-mono text-slate-600 font-medium">{{ date('d M Y') }}</span>
                 </div>
 
                 <div class="space-y-3">
                     @forelse($upcomingSchedule as $item)
-                        <div class="flex items-start gap-2.5 text-xs">
+                        <div class="flex items-start gap-2.5 text-xs group">
                             <div class="w-5 h-5 rounded bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0 mt-0.5" aria-hidden="true">
                                 <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                                 </svg>
                             </div>
                             <div class="min-w-0 flex-1">
-                                <p class="font-semibold text-slate-900 truncate">{{ $item->title }}</p>
+                                <a href="{{ route('assignments.show', $item->id) }}" class="font-semibold text-slate-900 group-hover:text-slate-700 truncate block transition-colors">
+                                    {{ $item->title }}
+                                </a>
                                 <p class="text-xs text-slate-600 font-mono">{{ $item->course->code ?? 'MK' }} • {{ \Carbon\Carbon::parse($item->due_at)->format('H:i, d M') }}</p>
                             </div>
                         </div>
@@ -423,42 +535,25 @@
 
                 @if($urgentAssignment)
                     <div class="mt-4 p-3 rounded-lg bg-slate-900 text-white text-xs">
-                        <p class="text-[11px] font-mono text-amber-300 font-semibold uppercase tracking-wide">Tenggat Terdekat</p>
-                        <p class="font-semibold text-white truncate mt-0.5">{{ $urgentAssignment->title }}</p>
+                        <div class="flex items-center justify-between">
+                            <p class="text-[11px] font-mono text-amber-300 font-semibold">Tenggat terdekat</p>
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" aria-hidden="true"></span>
+                        </div>
+                        <p class="font-semibold text-white truncate mt-1">{{ $urgentAssignment->title }}</p>
                         <p class="text-xs text-slate-300 font-mono mt-0.5">
-                            {{ \Carbon\Carbon::parse($urgentAssignment->due_at)->diffForHumans() }}
+                            {{ \Carbon\Carbon::parse($urgentAssignment->due_at)->locale('id')->diffForHumans() }}
                         </p>
+                        <div class="mt-2.5 pt-2 border-t border-slate-800">
+                            <a href="{{ route('assignments.show', $urgentAssignment->id) }}" class="text-[11px] text-amber-300 hover:text-white font-medium flex items-center gap-1 transition-colors">
+                                Buka rincian tugas →
+                            </a>
+                        </div>
                     </div>
                 @endif
             </div>
 
-            {{-- MODUL 2: Ringkasan Sistem (Hanya tampil di role Dosen, Admin, & Mode Evaluasi) --}}
-            @if ($activeRole !== 'mahasiswa')
-                <div class="lms-card p-5 text-xs">
-                    <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
-                        <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Ringkasan Sistem</h2>
-                    </div>
-
-                    <div class="space-y-2.5">
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-600">Materi Terbit</span>
-                            <span class="font-mono font-bold text-slate-900">{{ $totalMaterials }} Modul</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-600">Tugas Terbit</span>
-                            <span class="font-mono font-bold text-slate-900">{{ $totalAssignments }} Tugas</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-600">Mahasiswa</span>
-                            <span class="font-mono font-bold text-slate-900">{{ $totalStudents }} Akun</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-600">Dosen Pengampu</span>
-                            <span class="font-mono font-bold text-slate-900">{{ $totalLecturers }} Orang</span>
-                        </div>
-                    </div>
-                </div>
-            @endif
+            {{-- MODUL 2: Catatan bahwa ringkasan angka hanya muncul sekali di KPI utama
+                 (Axiom 3: satu sumber kebenaran metrik per viewport). --}}
 
         </div>
 

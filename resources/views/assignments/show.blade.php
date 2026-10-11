@@ -62,8 +62,8 @@
 
                 <div class="border-t border-slate-100 pt-4 space-y-4">
                     <div>
-                        <h2 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
-                            Instruksi Pengerjaan
+                        <h2 class="section-title mb-2">
+                            Instruksi pengerjaan
                         </h2>
                         <div class="rounded-lg border border-slate-200 bg-slate-50/70 px-4 py-3.5 text-sm text-slate-700 leading-relaxed">
                             @if ($assignment->instructions)
@@ -142,19 +142,17 @@
 
                             <div class="flex-shrink-0">
                                 @if (!$submission)
-                                    @can('create', \App\Models\Submission::class)
-                                        <form action="{{ route('dosen.courses.assignments.scoped-show', [$assignment->course, 'assignment' => $assignment]) }}" method="POST" class="inline">
-                                            @csrf
-                                            <button
-                                                type="submit"
-                                                class="btn-primary text-xs inline-flex items-center gap-2"
-                                            >
-                                                <svg class="w-4 h-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-                                                </svg>
-                                                Kumpulkan Tugas
-                                            </button>
-                                        </form>
+                                    @can('create', [\App\Models\Submission::class, $assignment])
+                                        <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-100 text-slate-700 text-xs font-medium">
+                                            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <span>Unggah berkas dibuka pada Milestone 3</span>
+                                        </div>
+                                    @else
+                                        <span class="text-xs text-rose-600 font-medium">
+                                            Anda tidak terdaftar di kelas ini
+                                        </span>
                                     @endcan
                                 @else
                                     <a
@@ -223,8 +221,8 @@
         {{-- Samping: metadata tugas --}}
         <div class="space-y-6">
             <div class="lms-card p-6">
-                <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-4">
-                    Info Tugas
+                <h3 class="section-title mb-4">
+                    Info tugas
                 </h3>
 
                 <dl class="space-y-3 text-sm">
@@ -243,8 +241,8 @@
                     <div class="flex justify-between gap-4">
                         <dt class="text-slate-600 font-normal">Status</dt>
                         <dd class="text-right">
-                            <span class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-100 text-slate-800 text-[11px] font-semibold px-2 py-0.5 uppercase">
-                                {{ ucfirst($assignment->status ?? 'draft') }}
+                            <span class="status {{ ($assignment->status ?? 'draft') === 'published' ? 'status-active' : 'status-draft' }}">
+                                <span class="status-dot" aria-hidden="true"></span>{{ ucfirst($assignment->status ?? 'draft') }}
                             </span>
                         </dd>
                     </div>

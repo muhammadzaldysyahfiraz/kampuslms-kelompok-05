@@ -24,10 +24,10 @@ class SubmissionPolicy
         };
     }
 
-    public function create(User $user, Assignment $assignment): bool
+    public function create(User $user, ?Assignment $assignment = null): bool
     {
         return $user->role === 'mahasiswa'
-            && $assignment->course->hasStudent($user);
+            && (! $assignment || $assignment->course->hasStudent($user));
     }
 
     // Keputusan kelompok (di luar matriks): admin dan dosen pemilik boleh mengubah/menghapus.

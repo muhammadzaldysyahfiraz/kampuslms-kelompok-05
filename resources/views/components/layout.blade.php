@@ -44,126 +44,45 @@
                 {{-- Horizontal Nav Links (Filtered by Role) --}}
                 <nav class="hidden md:flex items-center gap-1" aria-label="Navigasi Utama">
                     <a href="{{ route('dashboard') }}" 
+                       aria-current="{{ request()->routeIs('dashboard') ? 'page' : 'false' }}"
                        class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors {{ request()->routeIs('dashboard') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-50' }}">
                         Dashboard
                     </a>
                     <a href="{{ route('courses.index') }}" 
+                       aria-current="{{ request()->routeIs('courses.*') ? 'page' : 'false' }}"
                        class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors {{ request()->routeIs('courses.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-50' }}">
                         {{ $activeRole === 'dosen' ? 'Mata Kuliah Diampu' : 'Mata Kuliah' }}
                     </a>
                     @if ($activeRole === 'admin')
                         <a href="{{ route('users.index') }}" 
+                           aria-current="{{ request()->routeIs('users.*') ? 'page' : 'false' }}"
                            class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors {{ request()->routeIs('users.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-50' }}">
                             Pengguna
                         </a>
                     @endif
                     <a href="{{ route('tentang') }}" 
+                       aria-current="{{ request()->routeIs('tentang') ? 'page' : 'false' }}"
                        class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors {{ request()->routeIs('tentang') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-50' }}">
                         Tentang Kelompok
                     </a>
                 </nav>
             </div>
 
-            {{-- Right Context: Interactive Role Switcher & Profile Pill --}}
+            {{-- Right Context: Profile Pill & Auth Action --}}
             <div class="flex items-center gap-3">
-                
-                {{-- Role Switcher Dropdown --}}
-                <div class="relative" id="role-switcher-container">
-                    <button 
-                        type="button" 
-                        onclick="toggleRoleDropdown()" 
-                        id="role-switcher-btn"
-                        class="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 text-xs font-semibold text-slate-800 transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900"
-                        aria-haspopup="true"
-                        aria-expanded="false"
-                        aria-label="Ganti simulasi peran pengguna"
-                    >
-                        <span class="text-[10px] text-slate-600 font-normal hidden lg:inline">Mode Tampilan:</span>
-                        @if ($activeRole === 'admin')
-                            <span class="badge-coral text-[11px] py-0.5 px-2">🛡️ Admin</span>
-                        @elseif ($activeRole === 'dosen')
-                            <span class="badge-sky text-[11px] py-0.5 px-2">👨‍🏫 Dosen</span>
-                        @else
-                            <span class="badge-mint text-[11px] py-0.5 px-2">🎓 Mahasiswa</span>
-                        @endif
-                        <svg class="w-3.5 h-3.5 text-slate-500 transition-transform" id="role-chevron" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                        </svg>
-                    </button>
-
-                    {{-- Dropdown Menu --}}
-                    <div 
-                        id="role-dropdown-menu" 
-                        class="hidden absolute right-0 mt-2 w-64 rounded-xl bg-white border border-slate-200 shadow-lg py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100"
-                        role="menu"
-                        aria-orientation="vertical"
-                        aria-labelledby="role-switcher-btn"
-                    >
-                        <div class="px-3 py-2 border-b border-slate-100 text-[11px]">
-                            <p class="font-bold text-slate-900">Simulasi Hak Akses (Role)</p>
-                            <p class="text-slate-600 font-normal mt-0.5">Ubah perspektif antarmuka pengguna LMS.</p>
-                        </div>
-
-                        <a href="{{ route('switch-role', 'mahasiswa') }}" 
-                           class="flex items-center justify-between px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors {{ $activeRole === 'mahasiswa' ? 'text-emerald-800 bg-emerald-50/60 font-bold' : 'text-slate-700' }}"
-                           role="menuitem">
-                            <div class="flex items-center gap-2">
-                                <span>🎓</span>
-                                <div>
-                                    <p class="text-slate-900">Mahasiswa</p>
-                                    <p class="text-[10px] text-slate-600 font-normal">Fokus belajar & tugas kuliah</p>
-                                </div>
-                            </div>
-                            @if ($activeRole === 'mahasiswa')
-                                <span class="text-emerald-700 text-xs font-bold" aria-hidden="true">✓</span>
-                            @endif
-                        </a>
-
-                        <a href="{{ route('switch-role', 'dosen') }}" 
-                           class="flex items-center justify-between px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors {{ $activeRole === 'dosen' ? 'text-sky-800 bg-sky-50/60 font-bold' : 'text-slate-700' }}"
-                           role="menuitem">
-                            <div class="flex items-center gap-2">
-                                <span>👨‍🏫</span>
-                                <div>
-                                    <p class="text-slate-900">Dosen Pengampu</p>
-                                    <p class="text-[10px] text-slate-600 font-normal">Kelola materi, kelas, & nilai</p>
-                                </div>
-                            </div>
-                            @if ($activeRole === 'dosen')
-                                <span class="text-sky-700 text-xs font-bold" aria-hidden="true">✓</span>
-                            @endif
-                        </a>
-
-                        <a href="{{ route('switch-role', 'admin') }}" 
-                           class="flex items-center justify-between px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors {{ $activeRole === 'admin' ? 'text-rose-800 bg-rose-50/60 font-bold' : 'text-slate-700' }}"
-                           role="menuitem">
-                            <div class="flex items-center gap-2">
-                                <span>🛡️</span>
-                                <div>
-                                    <p class="text-slate-900">Administrator</p>
-                                    <p class="text-[10px] text-slate-600 font-normal">Kelola pengguna & kurikulum MK</p>
-                                </div>
-                            </div>
-                            @if ($activeRole === 'admin')
-                                <span class="text-rose-700 text-xs font-bold" aria-hidden="true">✓</span>
-                            @endif
-                        </a>
-                    </div>
-                </div>
-
-                {{-- User Avatar Pill & Auth Action --}}
                 @auth
-                    <div class="hidden sm:flex items-center gap-2 pl-3 border-l border-slate-200">
+                    <div class="flex items-center gap-2.5">
                         <div class="w-7 h-7 rounded-lg bg-slate-900 text-white font-bold text-[11px] flex items-center justify-center font-mono flex-shrink-0" aria-hidden="true">
                             {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
                         </div>
-                        <div class="min-w-0 max-w-[130px]">
+                        <div class="hidden sm:block min-w-0 max-w-[140px]">
                             <p class="text-xs font-bold text-slate-900 truncate leading-tight">
                                 {{ auth()->user()->name }}
                             </p>
-                            <p class="text-[10px] text-slate-600 font-mono capitalize truncate">
-                                {{ auth()->user()->role }}
-                            </p>
+                            <span class="status status-{{ auth()->user()->role }} text-[10px] py-0 px-1.5 mt-0.5">
+                                <span class="status-dot" aria-hidden="true"></span>
+                                {{ ucfirst(auth()->user()->role) }}
+                            </span>
                         </div>
 
                         {{-- Tombol Logout --}}
@@ -172,25 +91,26 @@
                             <button 
                                 type="submit" 
                                 title="Keluar dari akun (Logout)" 
-                                class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                                aria-label="Keluar"
+                                class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700 text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
+                                aria-label="Keluar dari akun"
                             >
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
                                 </svg>
+                                <span class="hidden sm:inline">Keluar</span>
                             </button>
                         </form>
                     </div>
                 @else
-                    <div class="hidden sm:flex items-center gap-2 pl-3 border-l border-slate-200">
-                        <a href="{{ route('login') }}" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-colors">
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('login') }}" class="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-colors">
                             Masuk
                         </a>
                     </div>
                 @endauth
 
                 {{-- Mobile Hamburger Button --}}
-                <button type="button" id="mobile-nav-toggle" onclick="toggleMobileNav()" class="md:hidden p-2 rounded-md text-slate-700 hover:text-slate-950 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 cursor-pointer" aria-expanded="false" aria-controls="mobile-nav-drawer" aria-label="Buka menu navigasi">
+                <button type="button" id="mobile-nav-toggle" onclick="toggleMobileNav()" class="md:hidden inline-flex items-center justify-center w-11 h-11 -mr-2 rounded-lg text-slate-700 hover:text-slate-950 hover:bg-slate-100 cursor-pointer" aria-expanded="false" aria-controls="mobile-nav-drawer" aria-label="Buka menu navigasi">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
                     </svg>
@@ -199,20 +119,20 @@
 
         </div>
 
-        {{-- Mobile Nav Menu (Filtered by Role) --}}
+        {{-- Mobile Nav Menu (Filtered by Role, 44px touch targets) --}}
         <nav id="mobile-nav-drawer" class="hidden md:hidden border-t border-slate-200 bg-white px-4 py-3 space-y-1" aria-label="Navigasi Mobile">
-            <a href="{{ route('dashboard') }}" class="block px-3 py-2 rounded-md text-xs font-semibold {{ request()->routeIs('dashboard') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
+            <a href="{{ route('dashboard') }}" aria-current="{{ request()->routeIs('dashboard') ? 'page' : 'false' }}" class="flex items-center min-h-11 px-3 rounded-lg text-xs font-semibold {{ request()->routeIs('dashboard') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
                 Dashboard
             </a>
-            <a href="{{ route('courses.index') }}" class="block px-3 py-2 rounded-md text-xs font-semibold {{ request()->routeIs('courses.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
+            <a href="{{ route('courses.index') }}" aria-current="{{ request()->routeIs('courses.*') ? 'page' : 'false' }}" class="flex items-center min-h-11 px-3 rounded-lg text-xs font-semibold {{ request()->routeIs('courses.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
                 {{ $activeRole === 'dosen' ? 'Mata Kuliah Diampu' : 'Mata Kuliah' }}
             </a>
             @if ($activeRole === 'admin')
-                <a href="{{ route('users.index') }}" class="block px-3 py-2 rounded-md text-xs font-semibold {{ request()->routeIs('users.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
+                <a href="{{ route('users.index') }}" aria-current="{{ request()->routeIs('users.*') ? 'page' : 'false' }}" class="flex items-center min-h-11 px-3 rounded-lg text-xs font-semibold {{ request()->routeIs('users.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
                     Pengguna
                 </a>
             @endif
-            <a href="{{ route('tentang') }}" class="block px-3 py-2 rounded-md text-xs font-semibold {{ request()->routeIs('tentang') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
+            <a href="{{ route('tentang') }}" aria-current="{{ request()->routeIs('tentang') ? 'page' : 'false' }}" class="flex items-center min-h-11 px-3 rounded-lg text-xs font-semibold {{ request()->routeIs('tentang') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
                 Tentang Kelompok
             </a>
 
@@ -221,14 +141,14 @@
                     <span class="text-xs text-slate-600 truncate">{{ auth()->user()->name }} ({{ auth()->user()->role }})</span>
                     <form action="{{ route('logout') }}" method="POST" class="inline">
                         @csrf
-                        <button type="submit" class="text-xs text-rose-600 hover:text-rose-700 font-semibold cursor-pointer">
+                        <button type="submit" class="inline-flex items-center min-h-11 px-2 text-xs text-rose-600 hover:text-rose-700 font-semibold cursor-pointer">
                             Keluar
                         </button>
                     </form>
                 </div>
             @else
                 <div class="pt-2 mt-2 border-t border-slate-100 px-3">
-                    <a href="{{ route('login') }}" class="block text-center py-2 rounded-lg bg-slate-900 text-white text-xs font-semibold">
+                    <a href="{{ route('login') }}" class="flex items-center justify-center min-h-11 rounded-lg bg-slate-900 text-white text-xs font-semibold">
                         Masuk
                     </a>
                 </div>
@@ -292,31 +212,7 @@
 
     {{-- Global Script: Navigasi, Keyboard Shortcuts, & Auto-dismiss Flash --}}
     <script>
-        function toggleRoleDropdown() {
-            const menu = document.getElementById('role-dropdown-menu');
-            const btn = document.getElementById('role-switcher-btn');
-            const chevron = document.getElementById('role-chevron');
-            if (menu && btn) {
-                const isHidden = menu.classList.toggle('hidden');
-                btn.setAttribute('aria-expanded', !isHidden);
-                if (chevron) {
-                    chevron.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
-                }
-            }
-        }
 
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            const container = document.getElementById('role-switcher-container');
-            const menu = document.getElementById('role-dropdown-menu');
-            const btn = document.getElementById('role-switcher-btn');
-            const chevron = document.getElementById('role-chevron');
-            if (container && !container.contains(e.target) && menu && !menu.classList.contains('hidden')) {
-                menu.classList.add('hidden');
-                btn?.setAttribute('aria-expanded', 'false');
-                if (chevron) chevron.style.transform = 'rotate(0deg)';
-            }
-        });
 
         function toggleMobileNav() {
             const drawer = document.getElementById('mobile-nav-drawer');

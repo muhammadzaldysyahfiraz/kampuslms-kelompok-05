@@ -33,7 +33,12 @@
             </div>
         @else
             <div class="flex items-center gap-2">
-                <span class="badge-mint text-xs py-1.5 px-3 font-semibold">🎓 Mahasiswa Terdaftar</span>
+                <span class="status status-mahasiswa">
+                    <svg class="w-4 h-4 flex-shrink-0" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
+                    </svg>
+                    Mahasiswa terdaftar
+                </span>
             </div>
         @endif
     </div>
@@ -53,11 +58,11 @@
                     {{ $course->sks }} SKS
                 </span>
                 @if ($course->status === 'active')
-                    <span class="badge-mint text-[11px]">Aktif</span>
+                    <span class="status status-active"><span class="status-dot" aria-hidden="true"></span>Aktif</span>
                 @elseif ($course->status === 'draft')
-                    <span class="badge-amber text-[11px]">Draft</span>
+                    <span class="status status-draft"><span class="status-dot" aria-hidden="true"></span>Draft</span>
                 @else
-                    <span class="badge-dark text-[11px]">Diarsipkan</span>
+                    <span class="status status-archived"><span class="status-dot" aria-hidden="true"></span>Diarsipkan</span>
                 @endif
             </div>
         </div>
@@ -132,7 +137,7 @@
                                         </a>
                                     @endif
                                 </div>
-                                <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 uppercase font-mono border border-slate-200 shrink-0">
+                                <span class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-mono border border-slate-200 shrink-0">
                                     {{ $material->type }}
                                 </span>
                             </div>
@@ -185,8 +190,8 @@
                                         <a href="{{ route('assignments.show', $assignment) }}" class="text-sm font-semibold text-slate-900 hover:text-sky-700 transition-colors">
                                             {{ $assignment->title }}
                                         </a>
-                                        <span class="text-[11px] font-bold px-2 py-0.5 rounded {{ $assignment->status === 'published' ? 'badge-mint' : 'badge-dark' }}">
-                                            {{ ucfirst($assignment->status) }}
+                                        <span class="status {{ $assignment->status === 'published' ? 'status-active' : 'status-archived' }}">
+                                            <span class="status-dot" aria-hidden="true"></span>{{ ucfirst($assignment->status) }}
                                         </span>
                                         @can('update', $assignment)
                                             <a href="{{ route('assignments.edit', $assignment) }}" class="text-xs text-slate-500 hover:text-slate-800 font-medium ml-1">
@@ -217,8 +222,8 @@
             <div class="lms-card p-6">
                 {{-- Dosen Pengampu --}}
                 <div class="pb-5 border-b border-slate-100">
-                    <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3.5">
-                        Dosen Pengampu
+                    <h3 class="section-title mb-3.5">
+                        Dosen pengampu
                     </h3>
 
                     @if ($course->lecturer)
@@ -248,7 +253,7 @@
                 {{-- Peserta Perkuliahan --}}
                 <div class="py-5 border-b border-slate-100">
                     <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Peserta Kuliah</span>
+                        <span class="section-title">Peserta kuliah</span>
                         <span class="text-xs font-bold text-slate-900 font-mono">
                             {{ $course->students_count ?? ($course->students ? $course->students->count() : 0) }} / 30
                         </span>
@@ -256,7 +261,7 @@
 
                     @php
                         $stdCount = $course->students_count ?? ($course->students ? $course->students->count() : 0);
-                        $enrollPct = min(100, max(15, ($stdCount / 30) * 100));
+                        $enrollPct = min(100, round(($stdCount / 30) * 100));
                     @endphp
 
                     <div 
@@ -267,12 +272,8 @@
                         aria-valuemax="30"
                         aria-label="Kapasitas mahasiswa terdaftar pada mata kuliah ini"
                     >
-                        <div class="h-full bg-slate-900 rounded-full transition-all duration-500" style="width: {{ $enrollPct }}%"></div>
+                        <div class="h-full bg-slate-900 rounded-full" style="width: {{ $enrollPct }}%; transition: width 300ms cubic-bezier(0.23, 1, 0.32, 1);"></div>
                     </div>
-
-                    <p class="text-[11px] text-slate-600 font-normal">
-                        Kapasitas kelas reguler aktif (maksimal 30 mahasiswa).
-                    </p>
                 </div>
 
                 {{-- Metadata Sistem --}}

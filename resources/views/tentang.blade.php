@@ -3,8 +3,8 @@
     {{-- Hero Banner dengan Profil Tim --}}
     <div class="lms-card p-6 sm:p-7 mb-6 flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden">
         <div class="max-w-xl">
-            <span class="text-[11px] font-mono font-medium text-slate-600 uppercase tracking-wide block mb-1">
-                SI2514024 • Pemrograman Web
+            <span class="text-[11px] font-mono font-medium text-slate-600 block mb-1">
+                SI2514024 <span aria-hidden="true">·</span> Pemrograman Web
             </span>
             <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-1.5">
                 Tentang Kelompok 05
@@ -32,7 +32,7 @@
                         </svg>
                     </div>
                     <div>
-                        <span class="text-[10px] text-slate-600 block font-semibold uppercase tracking-wider">Mata Kuliah</span>
+                        <span class="meta-label block">Mata kuliah</span>
                         <span class="text-xs font-bold text-slate-900">Pemrograman Web</span>
                     </div>
                 </div>
@@ -47,7 +47,7 @@
                         </svg>
                     </div>
                     <div>
-                        <span class="text-[10px] text-slate-600 block font-semibold uppercase tracking-wider">Kelompok</span>
+                        <span class="meta-label block">Kelompok</span>
                         <span class="text-xs font-bold text-slate-900">Kelompok 05</span>
                     </div>
                 </div>
@@ -62,7 +62,7 @@
                         </svg>
                     </div>
                     <div>
-                        <span class="text-[10px] text-slate-600 block font-semibold uppercase tracking-wider">Teknologi</span>
+                        <span class="meta-label block">Teknologi</span>
                         <span class="text-xs font-bold text-slate-900">Laravel 12 & Tailwind</span>
                     </div>
                 </div>
@@ -77,7 +77,7 @@
                         </svg>
                     </div>
                     <div>
-                        <span class="text-[10px] text-slate-600 block font-semibold uppercase tracking-wider">Institusi</span>
+                        <span class="meta-label block">Institusi</span>
                         <span class="text-xs font-bold text-slate-900">ITK Balikpapan</span>
                     </div>
                 </div>
@@ -88,7 +88,7 @@
         {{-- Bento Grid 2: Anggota Kelompok Card List --}}
         <div>
             <div class="flex items-center justify-between mb-3">
-                <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Daftar Pengembang Tim</h2>
+                <h2 class="section-title">Daftar pengembang tim</h2>
                 <span class="text-xs text-slate-600 font-mono">5 Mahasiswa</span>
             </div>
 
@@ -152,13 +152,13 @@
 
                             <div class="space-y-1 py-2 text-xs font-normal text-slate-700">
                                 <div class="flex justify-between">
-                                    <span class="text-slate-600">NIM:</span>
+                                    <span class="text-slate-600">NIM</span>
                                     <span class="font-mono font-semibold text-slate-900">{{ $m['nim'] }}</span>
                                 </div>
                                 <div class="flex justify-between items-center">
-                                    <span class="text-slate-600">GitHub:</span>
+                                    <span class="text-slate-600">GitHub</span>
                                     <a href="https://github.com/{{ $m['github'] }}" target="_blank" rel="noopener noreferrer" class="font-mono font-semibold text-slate-800 hover:text-slate-950 hover:underline inline-flex items-center gap-1 focus:outline-none focus:underline" aria-label="Profil GitHub {{ $m['name'] }} (buka di tab baru)">
-                                        <span>@ {{ $m['github'] }}</span>
+                                        <span>{{ '@' . $m['github'] }}</span>
                                         <span class="sr-only">(buka profil di tab baru)</span>
                                         <svg class="w-3 h-3 text-slate-500" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 19.5 15-15m0 0H8.25m11.25 0v11.25" />
@@ -169,7 +169,7 @@
                         </div>
 
                         <div class="pt-3 border-t border-slate-100 mt-2 flex items-center justify-between text-[11px] text-slate-600 font-normal">
-                            <span>Mahasiswa Aktif ITK</span>
+                            <span>Mahasiswa aktif ITK</span>
                             <span class="text-emerald-800 font-semibold flex items-center gap-1">
                                 <svg class="w-3.5 h-3.5 text-emerald-700" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />

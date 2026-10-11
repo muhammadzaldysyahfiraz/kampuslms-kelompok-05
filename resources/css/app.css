@@ -38,265 +38,316 @@
 }
 
 /* ==========================================================================
+   Design Tokens: Ritme Spasial 8pt, Geometri Sudut, & Kurva Gerak
+   ========================================================================== */
+:root {
+    /* Hairline 1px untuk semua kontainer */
+    --hairline: 1px solid #E2E8F0;
+    --hairline-hover: 1px solid #CBD5E1;
+
+    /* Geometri: radius turunan mengikuti rumus R_inner = R_outer - Padding */
+    --radius-xs: 0.375rem; /* 6px  */
+    --radius-sm: 0.5rem;   /* 8px  */
+    --radius-md: 0.75rem;  /* 12px */
+    --radius-lg: 0.875rem; /* 14px */
+    --radius-xl: 1rem;     /* 16px */
+
+    /* Gerak: punchy ease-out, tidak pernah ease-in */
+    --ease-out-snappy: cubic-bezier(0.23, 1, 0.32, 1);
+    --dur-fast: 120ms;
+    --dur-base: 140ms;
+    --dur-overlay: 200ms;
+
+    /* Sistem Umpan Balik 8-State */
+    --focus-ring: 2px solid #0F172A;
+}
+
+/* ==========================================================================
    Komponen Utilitas Semantik KampusLMS (Utilitarian Minimalism - Linear & Notion)
-   Protokol: /minimalist-ui (Solid Surfaces, Crisp 1px Borders, Spot Pastels)
+   Protokol: /anti-slop-design (Solid Surfaces, Crisp 1px Borders, Spot Pastels)
    ========================================================================== */
 
 @layer components {
-    /* Tombol Utama (Solid Off-Black Minimalist CTA) */
-    .btn-primary {
+    /* ------------------------------------------------------------------
+       Primitif Tombol: 8-State Feedback (default, hover, focus-visible,
+       active, disabled, loading, error, success) dengan transisi < 200ms
+       ------------------------------------------------------------------ */
+    .btn-primary,
+    .btn-secondary,
+    .btn-dark,
+    .btn-outline,
+    .btn-danger-soft {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
         padding: 0.5rem 1rem;
-        background-color: #111111;
-        color: #ffffff;
         font-size: 0.8125rem;
         font-weight: 600;
-        border-radius: 0.5rem;
-        border: 1px solid #111111;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+        line-height: 1.25rem;
+        border-radius: var(--radius-sm);
         cursor: pointer;
         text-decoration: none;
+        user-select: none;
+        transition-property: background-color, border-color, color, box-shadow, transform;
+        transition-duration: var(--dur-base);
+        transition-timing-function: var(--ease-out-snappy);
+    }
+
+    /* State 1-2: Default & Hover (hanya perubahan warna/border, tanpa lift yang goyah) */
+    .btn-primary {
+        background-color: #111111;
+        color: #ffffff;
+        border: 1px solid #111111;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     }
     .btn-primary:hover {
         background-color: #252530;
         border-color: #252530;
-        transform: translateY(-1px);
-    }
-    .btn-primary:active {
-        transform: scale(0.98);
     }
 
-    /* Tombol Sekunder (Solid Crisp White) */
     .btn-secondary {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
         background-color: #ffffff;
         color: #0F172A;
-        font-size: 0.8125rem;
-        font-weight: 600;
-        border-radius: 0.5rem;
-        border: 1px solid #E2E8F0;
+        border: var(--hairline);
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
-        transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
-        cursor: pointer;
-        text-decoration: none;
     }
     .btn-secondary:hover {
         background-color: #F8FAFC;
         border-color: #CBD5E1;
         color: #000000;
-        transform: translateY(-1px);
-    }
-    .btn-secondary:active {
-        transform: scale(0.98);
     }
 
-    /* Tombol Dark / Command */
     .btn-dark {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
         background-color: #1E1E26;
         color: #ffffff;
-        font-size: 0.8125rem;
-        font-weight: 600;
-        border-radius: 0.5rem;
         border: 1px solid #363644;
-        transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
-        cursor: pointer;
-        text-decoration: none;
     }
     .btn-dark:hover {
         background-color: #252530;
         border-color: #4B4B5C;
-        transform: translateY(-1px);
-    }
-    .btn-dark:active {
-        transform: scale(0.98);
     }
 
-    /* Tombol Outline / Ghost */
     .btn-outline {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
         padding: 0.45rem 0.875rem;
         background-color: #ffffff;
         color: #334155;
-        font-size: 0.8125rem;
-        font-weight: 600;
-        border-radius: 0.5rem;
-        border: 1px solid #E2E8F0;
+        border: var(--hairline);
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
-        transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
-        cursor: pointer;
-        text-decoration: none;
     }
     .btn-outline:hover {
         background-color: #F8FAFC;
         color: #0F172A;
         border-color: #CBD5E1;
-        transform: translateY(-1px);
-    }
-    .btn-outline:active {
-        transform: scale(0.98);
     }
 
-    /* Tombol Destruktif (Pale Red Danger) */
     .btn-danger-soft {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
         gap: 0.375rem;
         padding: 0.4rem 0.75rem;
         background-color: #FDEBEC;
         color: #9F2F2D;
-        font-size: 0.8125rem;
-        font-weight: 600;
-        border-radius: 0.5rem;
         border: 1px solid rgba(159, 47, 45, 0.2);
-        transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
-        cursor: pointer;
     }
     .btn-danger-soft:hover {
         background-color: #FBD5D7;
         color: #7A1C1B;
         border-color: rgba(159, 47, 45, 0.35);
     }
-    .btn-danger-soft:active {
-        transform: scale(0.98);
+
+    /* State 3: Focus-visible (WCAG 2.4.7) — selalu terlihat, bukan outline:none */
+    .btn-primary:focus-visible,
+    .btn-secondary:focus-visible,
+    .btn-dark:focus-visible,
+    .btn-outline:focus-visible,
+    .btn-danger-soft:focus-visible {
+        outline: var(--focus-ring);
+        outline-offset: 2px;
     }
 
-    /* Kartu Kontainer Utama LMS (Flat Bento Card dengan Crisp 1px Border) */
+    /* State 4: Active — umpan balik taktil 3% */
+    .btn-primary:active,
+    .btn-secondary:active,
+    .btn-dark:active,
+    .btn-outline:active,
+    .btn-danger-soft:active {
+        transform: scale(0.97);
+        transition-duration: 80ms;
+    }
+
+    /* State 5: Disabled / Loading — non-interaktif dan jujur secara visual */
+    .btn-primary:disabled,
+    .btn-primary[aria-disabled='true'],
+    .btn-primary.is-loading,
+    .btn-secondary:disabled,
+    .btn-secondary[aria-disabled='true'],
+    .btn-secondary.is-loading,
+    .btn-dark:disabled,
+    .btn-dark[aria-disabled='true'],
+    .btn-dark.is-loading,
+    .btn-outline:disabled,
+    .btn-outline[aria-disabled='true'],
+    .btn-outline.is-loading,
+    .btn-danger-soft:disabled,
+    .btn-danger-soft[aria-disabled='true'],
+    .btn-danger-soft.is-loading {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+        transform: none;
+    }
+
+    .btn-primary.is-loading::before,
+    .btn-secondary.is-loading::before,
+    .btn-dark.is-loading::before,
+    .btn-outline.is-loading::before {
+        content: '';
+        width: 0.8125rem;
+        height: 0.8125rem;
+        border-radius: 9999px;
+        border: 2px solid currentColor;
+        border-top-color: transparent;
+        animation: spin 600ms linear infinite;
+    }
+
+    /* Kartu Kontainer Utama LMS (Flat Bento Card dengan Crisp 1px Hairline) */
     .lms-card {
         background-color: #ffffff;
-        border-radius: 0.875rem;
-        border: 1px solid #E2E8F0;
+        border-radius: var(--radius-lg);
+        border: var(--hairline);
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
-        transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+        transition: border-color var(--dur-base) var(--ease-out-snappy),
+                    box-shadow var(--dur-base) var(--ease-out-snappy),
+                    transform var(--dur-base) var(--ease-out-snappy);
     }
     .lms-card-hover:hover {
         border-color: #CBD5E1;
+        box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.04);
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.03);
     }
 
-    /* Spot Pastel Badges (Linear & Notion Minimalist Palette - WCAG 2.2 AA Compliant) */
-    .badge-mint {
+    /* ------------------------------------------------------------------
+       Status: Titik warna + teks sentence case (bukan pill huruf kapital)
+       ------------------------------------------------------------------ */
+    .status {
         display: inline-flex;
         align-items: center;
         gap: 0.375rem;
-        padding: 0.25rem 0.625rem;
-        border-radius: 9999px;
-        font-size: 0.6875rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        background-color: #EDF3EC;
-        color: #245228;
-        border: 1px solid rgba(36, 82, 40, 0.3);
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #334155;
+        line-height: 1.25rem;
     }
-
-    .badge-amber {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
-        padding: 0.25rem 0.625rem;
+    .status-dot {
+        width: 0.375rem;
+        height: 0.375rem;
         border-radius: 9999px;
-        font-size: 0.6875rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        background-color: #FBF3DB;
-        color: #7E4B00;
-        border: 1px solid rgba(126, 75, 0, 0.3);
+        background-color: currentColor;
+        flex-shrink: 0;
     }
+    .status-active { color: #245228; }
+    .status-draft { color: #7E4B00; }
+    .status-archived { color: #64748B; }
+    .status-admin { color: #8C2220; }
+    .status-dosen { color: #17537D; }
+    .status-mahasiswa { color: #245228; }
+    .status-late { color: #8C2220; }
+    .status-ontime { color: #245228; }
 
-    .badge-sky {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
-        padding: 0.25rem 0.625rem;
-        border-radius: 9999px;
-        font-size: 0.6875rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        background-color: #E1F3FE;
-        color: #17537D;
-        border: 1px solid rgba(23, 83, 125, 0.3);
-    }
-
-    .badge-coral {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
-        padding: 0.25rem 0.625rem;
-        border-radius: 9999px;
-        font-size: 0.6875rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        background-color: #FDEBEC;
-        color: #8C2220;
-        border: 1px solid rgba(140, 34, 32, 0.3);
-    }
-
-    .badge-lilac {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
-        padding: 0.25rem 0.625rem;
-        border-radius: 9999px;
-        font-size: 0.6875rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        background-color: #F4EEF8;
-        color: #5C3276;
-        border: 1px solid rgba(92, 50, 118, 0.3);
-    }
-
+    /* Badge / Chip kategori — sentence case, tanpa tracking huruf kapital */
+    .badge-mint,
+    .badge-amber,
+    .badge-sky,
+    .badge-coral,
+    .badge-lilac,
     .badge-dark {
         display: inline-flex;
         align-items: center;
         gap: 0.375rem;
-        padding: 0.25rem 0.625rem;
-        border-radius: 9999px;
+        padding: 0.125rem 0.5rem;
+        border-radius: var(--radius-xs);
         font-size: 0.6875rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
+        font-weight: 600;
+        line-height: 1.25rem;
+        letter-spacing: 0;
+        text-transform: none;
+        white-space: nowrap;
+    }
+
+    .badge-mint {
+        background-color: #EDF3EC;
+        color: #245228;
+        border: 1px solid rgba(36, 82, 40, 0.24);
+    }
+
+    .badge-amber {
+        background-color: #FBF3DB;
+        color: #7E4B00;
+        border: 1px solid rgba(126, 75, 0, 0.24);
+    }
+
+    .badge-sky {
+        background-color: #E1F3FE;
+        color: #17537D;
+        border: 1px solid rgba(23, 83, 125, 0.24);
+    }
+
+    .badge-coral {
+        background-color: #FDEBEC;
+        color: #8C2220;
+        border: 1px solid rgba(140, 34, 32, 0.24);
+    }
+
+    .badge-lilac {
+        background-color: #F4EEF8;
+        color: #5C3276;
+        border: 1px solid rgba(92, 50, 118, 0.24);
+    }
+
+    .badge-dark {
         background-color: #F1F5F9;
         color: #334155;
         border: 1px solid #CBD5E1;
     }
 
+    /* Label Metadata Section — sentence case, bobot medium, tanpa kapital berteriak */
+    .section-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #0F172A;
+        letter-spacing: -0.01em;
+    }
+    .meta-label {
+        font-size: 0.6875rem;
+        font-weight: 600;
+        color: #64748B;
+        letter-spacing: 0;
+    }
+
     /* Form Controls Utilitarian & Accessible Focus Indicators */
     .form-input {
         width: 100%;
-        padding: 0.625rem 0.875rem;
+        min-height: 2.5rem;
+        padding: 0.5625rem 0.75rem;
         background-color: #ffffff;
         border: 1px solid #94A3B8;
-        border-radius: 0.5rem;
+        border-radius: var(--radius-sm);
         font-size: 0.875rem;
         color: #0F172A;
-        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        transition: border-color var(--dur-base) var(--ease-out-snappy),
+                    box-shadow var(--dur-base) var(--ease-out-snappy);
         outline: none;
     }
     .form-input:focus-visible {
         border-color: #0F172A;
-        box-shadow: 0 0 0 2px #0F172A;
+        box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.12);
+    }
+    .form-input:disabled {
+        background-color: #F1F5F9;
+        color: #64748B;
+        cursor: not-allowed;
+    }
+    .form-input[aria-invalid='true'] {
+        border-color: #9F2F2D;
     }
     .form-input::placeholder {
         color: #64748B;
@@ -305,17 +356,17 @@
     .form-label {
         display: block;
         font-size: 0.75rem;
-        font-weight: 700;
+        font-weight: 600;
         color: #334155;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
+        letter-spacing: 0;
+        text-transform: none;
         margin-bottom: 0.375rem;
     }
 
     /* Progress Bar Minimalist & Accessible */
     .progress-bar {
         width: 100%;
-        height: 0.5rem;
+        height: 0.375rem;
         background-color: #E2E8F0;
         border-radius: 9999px;
         overflow: hidden;
@@ -324,8 +375,27 @@
         height: 100%;
         background-color: #245228;
         border-radius: 9999px;
-        transition: width 0.3s ease-out;
+        transition: width 300ms var(--ease-out-snappy);
     }
+}
+
+/* ==========================================================================
+   Tipografi Data: Angka selalu tabular agar kolom metrik tidak bergoyang
+   ========================================================================== */
+.font-mono,
+kbd,
+code,
+samp,
+.tabular {
+    font-variant-numeric: tabular-nums;
+}
+
+h1, h2, h3, h4 {
+    letter-spacing: -0.02em;
+}
+
+p {
+    text-wrap: pretty;
 }
 
 /* ==========================================================================
@@ -333,8 +403,12 @@
    ========================================================================== */
 
 :focus-visible {
-    outline: 2px solid #0F172A !important;
-    outline-offset: 2px !important;
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 @media (prefers-reduced-motion: reduce) {

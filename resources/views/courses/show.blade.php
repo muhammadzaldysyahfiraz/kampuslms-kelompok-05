@@ -90,7 +90,7 @@
                             {{ $course->materials->count() }} Materi
                         </span>
 
-                        @can('update', $course)
+                        @can('create', [\App\Models\Material::class, $course])
                             <a href="{{ route('courses.materials.create', $course) }}"
                                class="inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50/70 text-sky-800 text-xs font-semibold px-3 py-1.5 hover:bg-sky-100 transition-colors">
                                 <svg class="w-4 h-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -162,7 +162,7 @@
                             {{ $course->assignments->count() }} Tugas
                         </span>
 
-                        @can('update', $course)
+                        @can('create', [\App\Models\Assignment::class, $course])
                             <a href="{{ route('courses.assignments.create', $course) }}"
                                class="inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50/70 text-sky-800 text-xs font-semibold px-3 py-1.5 hover:bg-sky-100 transition-colors">
                                 <svg class="w-4 h-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">

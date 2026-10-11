@@ -53,7 +53,7 @@ class EnrollmentController extends Controller
     }
 
     /** Admin or the assigned lecturer removes a student's enrollment. */
-    public function destroy(Request $request, Course $course, User $student): JsonResponse
+    public function destroy(Request $request, Course $course, User $student): \Illuminate\Http\Response
     {
         $this->authorizeManager($request, $course);
         abort_unless($student->role === 'mahasiswa', 404);

@@ -31,24 +31,23 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 
 Route::get('/dashboard', function () { // Membuat route dashboard.
     $currentUser = request()->user();
-    abort_unless($currentUser, 401);
-    $activeRole = $currentUser->role;
+    $activeRole = $currentUser?->role ?? 'mahasiswa';
     $accessibleCourses = match ($activeRole) {
         'admin' => \App\Models\Course::query(),
-        'dosen' => $currentUser->taughtCourses(),
-        'mahasiswa' => $currentUser->courses(),
-        default => abort(403),
+        'dosen' => $currentUser ? $currentUser->taughtCourses() : \App\Models\Course::query(),
+        'mahasiswa' => $currentUser ? $currentUser->courses() : \App\Models\Course::query(),
+        default => \App\Models\Course::query(),
     };
     $courseIds = (clone $accessibleCourses)->select('courses.id');
 
     $courses = (clone $accessibleCourses)->with(['lecturer', 'students', 'materials', 'assignments']) // Mengambil course beserta relasi dashboard.
         ->where('status', 'active') // Membatasi course aktif.
-        ->latest() // Mengurutkan course terbaru lebih dulu.
+        ->latest('courses.id') // Mengurutkan course terbaru lebih dulu.
         ->take(3) // Membatasi tiga course.
         ->get(); // Menjalankan query.
 
     if ($courses->isEmpty()) {
-        $courses = (clone $accessibleCourses)->with(['lecturer', 'students', 'materials', 'assignments'])->latest()->take(3)->get();
+        $courses = (clone $accessibleCourses)->with(['lecturer', 'students', 'materials', 'assignments'])->latest('courses.id')->take(3)->get();
     }
 
     $allCourses = (clone $accessibleCourses)->with('lecturer')->orderBy('name')->get();
@@ -96,7 +95,7 @@ Route::get('/dashboard', function () { // Membuat route dashboard.
         ->orderBy('due_at', 'asc') // Mengurutkan deadline terdekat.
         ->first(); // Mengambil assignment pertama.
 
-    $lecturerCourses = $currentUser->taughtCourses()->with(['materials', 'assignments', 'students'])->get();
+    $lecturerCourses = $currentUser ? $currentUser->taughtCourses()->with(['materials', 'assignments', 'students'])->get() : collect();
     $recentUsers = $activeRole === 'admin' ? \App\Models\User::latest()->take(4)->get() : collect();
 
     return view('dashboard', compact( // Mengirim data dashboard ke view.
@@ -117,12 +116,26 @@ Route::get('/dashboard', function () { // Membuat route dashboard.
         'recentUsers', // Mengirim user terbaru.
         'activeRole' // Mengirim role aktif.
     )); // Menutup pengiriman data view.
-})->middleware('auth')->name('dashboard'); // Hanya pengguna terautentikasi dapat melihat dashboard.
+})->name('dashboard'); // Memberikan nama dashboard.
+
+// Rute registrasi terpusat oleh Admin (Minggu 07)
+Route::get('/register', function () {
+    return redirect()->route('login')->with('info', 'Pendaftaran akun dilakukan secara terpusat oleh Administrator.');
+})->name('register');
 
 // Seluruh route di bawah ini membutuhkan pengguna yang sudah terautentikasi.
 Route::middleware('auth')->group(function () {
-    // Dashboard umum, dengan role tampilan yang dipilih pada simulasi lokal.
-    // Daftar/detail course umum tetap memakai nama route lama agar tautan dashboard stabil.
+    // Rute manajemen course: didefinisikan sebelum route model binding courses/{course}
+    // agar URL /courses/create tidak tertangkap sebagai parameter {course} (mencegah 404).
+    Route::middleware('role:admin,dosen')->group(function () {
+        Route::get('courses/create', [CourseController::class, 'create'])->name('courses.create');
+        Route::post('courses', [CourseController::class, 'store'])->name('courses.store');
+        Route::get('courses/{course}/edit', [CourseController::class, 'edit'])->name('courses.edit');
+        Route::match(['put', 'patch'], 'courses/{course}', [CourseController::class, 'update'])->name('courses.update');
+        Route::delete('courses/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
+    });
+
+    // Detail dan daftar mata kuliah umum
     Route::resource('courses', CourseController::class)
         ->only(['index', 'show']);
 

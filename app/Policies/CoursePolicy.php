@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Course;
 use App\Models\User;
+use Illuminate\Auth\Access\Response;
 
 class CoursePolicy
 {
@@ -13,14 +14,18 @@ class CoursePolicy
         return in_array($user->role, ['admin', 'dosen', 'mahasiswa'], true);
     }
 
-    public function view(User $user, Course $course): bool
+    public function view(User $user, Course $course): Response
     {
-        return match ($user->role) {
+        $allowed = match ($user->role) {
             'admin'     => true,
             'dosen'     => $course->isTaughtBy($user),
             'mahasiswa' => $course->hasStudent($user),
             default     => false,
         };
+
+        return $allowed
+            ? Response::allow()
+            : Response::deny('Anda tidak memiliki akses ke sumber daya ini.');
     }
 
     public function create(User $user): bool

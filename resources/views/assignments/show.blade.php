@@ -102,7 +102,7 @@
             @auth
                 @if (auth()->user()->role === 'mahasiswa' || auth()->user()->role === 'student')
                     @php
-                        $submission = $mySubmission;
+                        $submission = $mySubmission ?? ($assignment->submissions()->where('user_id', auth()->id())->first());
                     @endphp
 
                     <div class="lms-card p-6">
@@ -194,7 +194,7 @@
                         </div>
 
                         <div class="flex flex-wrap items-center gap-3">
-                            <span class="text-xs text-slate-600">{{ $submittedCount }} pengumpulan tercatat.</span>
+                            <span class="text-xs text-slate-600">{{ $submittedCount ?? $assignment->submissions()->count() }} pengumpulan tercatat.</span>
                             <a
                                 href="{{ route('courses.show', $assignment->course) }}#assignments"
                                 class="btn-outline text-xs inline-flex items-center gap-2"

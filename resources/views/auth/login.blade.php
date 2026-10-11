@@ -85,6 +85,7 @@
                             class="block w-full rounded-xl border @error('email') border-rose-300 ring-rose-200 focus:border-rose-500 @else border-slate-300 focus:border-slate-900 focus:ring-slate-900 @enderror bg-white px-3.5 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors"
                         >
                     </div>
+                    <a href="{{ route('password.request') }}" class="mt-2 inline-block text-[11px] text-slate-600 underline">Lupa kata sandi?</a>
                 </div>
 
                 {{-- Input Password --}}

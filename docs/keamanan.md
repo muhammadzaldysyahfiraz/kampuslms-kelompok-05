@@ -78,6 +78,8 @@ Berikut adalah daftar titik rawan yang didokumentasikan dan diuji secara menyelu
 | **6** | `/courses/{course}/materials/{material}` | `GET` | Penyerang mencoba memanggil materi milik MK-A melalui konteks URL MK-B (*Cross-Course IDOR*). | Mahasiswa/Dosen memanggil `/courses/2/materials/1` | `Route::scopeBindings()` & `MaterialController@showNested` verifikasi `material->course_id === course->id` | **404 Not Found** | Skenario 6 |
 | **7** | `/courses/{course}` | `PUT` / `DELETE` | Dosen atau Mahasiswa mencoba mengubah metadata atau menghapus data mata kuliah master. | Dosen (User 2) atau Mahasiswa (User 5) mengubah MK 1 | `CoursePolicy@update` & `CoursePolicy@delete` (dibatasi `role === 'admin'`) | **403 Forbidden** | Skenario 7 |
 | **8** | `/users` atau `/admin/users` | `GET` / `POST` | Pengguna selain admin mencoba mengakses daftar seluruh pengguna atau mendaftarkan akun baru. | Dosen (User 2) atau Mahasiswa (User 5) | Rute dilindungi Middleware `role:admin` pada grup rute web. | **403 Forbidden** | Skenario 8 |
+| **9** | `/courses/{course}/enrollments` | `POST` / `DELETE` | Pengguna tidak berwenang mencoba memanipulasi daftar mahasiswa di kelas (*Roster Tamper*). | Dosen non-pengampu atau Mahasiswa | `EnrollmentController` membatasi akses hanya kepada admin atau dosen pengampu mata kuliah. | **403 Forbidden** | Roster Guard |
+| **10** | `/{role}/notifications/{notification}` | `GET` / `PATCH` | Pengguna mencoba membaca atau menandai notifikasi milik pengguna lain. | Pengguna lain | `NotificationController` hanya mengambil notifikasi melalui relasi pengguna yang sedang login (`$user->notifications()`). | **404 / 403** | User Scoped |
 
 ---
 

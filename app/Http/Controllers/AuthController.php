@@ -47,9 +47,7 @@ class AuthController extends Controller
 
         // Perlindungan anti session fixation: regenerasi ID sesi saat login berhasil
         $request->session()->regenerate();
-
         $user = Auth::user();
-        session(['active_role' => $user->role]);
 
         return redirect()->intended(route('dashboard'))
             ->with('success', 'Selamat datang kembali, ' . $user->name . '!');

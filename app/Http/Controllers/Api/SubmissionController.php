@@ -12,6 +12,7 @@ use App\Models\Grade;
 use App\Models\Submission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
 class SubmissionController extends Controller
@@ -20,12 +21,7 @@ class SubmissionController extends Controller
     {
         $user = $request->user();
 
-        // TODO minggu 7: dipindah ke SubmissionPolicy
-        abort_unless(
-            $user->role === 'dosen' && $assignment->course->lecturer_id === $user->id,
-            403,
-            'Anda tidak memiliki akses ke sumber daya ini.'
-        );
+        Gate::authorize('viewSubmissions', $assignment);
 
         $submissions = $assignment->submissions()
             ->with(['student', 'grade'])

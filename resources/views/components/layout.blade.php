@@ -70,6 +70,9 @@
 
             {{-- Right Context: Profile Pill & Auth Action --}}
             <div class="flex items-center gap-3">
+                <span class="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold capitalize text-slate-800">
+                    {{ $activeRole }}
+                </span>
                 @auth
                     <div class="flex items-center gap-2.5">
                         <div class="w-7 h-7 rounded-lg bg-slate-900 text-white font-bold text-[11px] flex items-center justify-center font-mono flex-shrink-0" aria-hidden="true">
@@ -212,9 +215,8 @@
 
     {{-- Global Script: Navigasi, Keyboard Shortcuts, & Auto-dismiss Flash --}}
     <script>
-
-
         function toggleMobileNav() {
+
             const drawer = document.getElementById('mobile-nav-drawer');
             const toggleBtn = document.getElementById('mobile-nav-toggle');
             if (drawer && toggleBtn) {

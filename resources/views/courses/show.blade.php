@@ -9,7 +9,7 @@
             <span>Kembali ke Daftar</span>
         </a>
 
-        @if ($activeRole !== 'mahasiswa')
+        @can('update', $course)
             <div class="flex items-center gap-2">
                 <a href="{{ route('courses.edit', $course) }}" class="btn-secondary text-xs py-2">
                     <svg class="w-4 h-4 text-slate-700" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -18,6 +18,7 @@
                     <span>Edit Mata Kuliah</span>
                 </a>
 
+                @can('delete', $course)
                 <form action="{{ route('courses.destroy', $course) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus mata kuliah {{ $course->name }}?')" class="inline">
                     @csrf
                     @method('DELETE')
@@ -28,6 +29,7 @@
                         <span>Hapus</span>
                     </button>
                 </form>
+                @endcan
             </div>
         @else
             <div class="flex items-center gap-2">
@@ -113,10 +115,10 @@
                             <div class="py-3.5 flex items-start justify-between gap-4">
                                 <div class="min-w-0 flex-1">
                                     <div class="flex items-center gap-2">
-                                        <a href="{{ route('courses.materials.scoped-show', [$course, $material]) }}" class="text-sm font-semibold text-slate-900 hover:text-sky-700 transition-colors">
+                                        <a href="{{ route('materials.show', $material) }}" class="text-sm font-semibold text-slate-900 hover:text-sky-700 transition-colors">
                                             {{ $material->title }}
                                         </a>
-                                        @can('update', $course)
+                                        @can('update', $material)
                                             <a href="{{ route('materials.edit', $material) }}" class="text-xs text-slate-500 hover:text-slate-800 font-medium ml-1">
                                                 (Edit)
                                             </a>
@@ -185,13 +187,13 @@
                             <div class="py-3.5 flex items-start justify-between gap-4">
                                 <div class="min-w-0 flex-1">
                                     <div class="flex items-center gap-2">
-                                        <a href="{{ route('courses.assignments.scoped-show', [$course, $assignment]) }}" class="text-sm font-semibold text-slate-900 hover:text-sky-700 transition-colors">
+                                        <a href="{{ route('assignments.show', $assignment) }}" class="text-sm font-semibold text-slate-900 hover:text-sky-700 transition-colors">
                                             {{ $assignment->title }}
                                         </a>
                                         <span class="status {{ $assignment->status === 'published' ? 'status-active' : 'status-archived' }}">
                                             <span class="status-dot" aria-hidden="true"></span>{{ ucfirst($assignment->status) }}
                                         </span>
-                                        @can('update', $course)
+                                        @can('update', $assignment)
                                             <a href="{{ route('assignments.edit', $assignment) }}" class="text-xs text-slate-500 hover:text-slate-800 font-medium ml-1">
                                                 (Edit)
                                             </a>

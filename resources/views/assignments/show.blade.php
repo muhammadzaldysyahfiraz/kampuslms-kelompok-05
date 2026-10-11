@@ -23,6 +23,13 @@
                     </svg>
                     Edit Tugas
                 </a>
+                @can('delete', $assignment)
+                    <form action="{{ route('assignments.destroy', $assignment) }}" method="POST" onsubmit="return confirm('Hapus tugas ini?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn-danger-soft text-xs py-2 px-3">Hapus Tugas</button>
+                    </form>
+                @endcan
             </div>
         @endcan
     </div>
@@ -95,9 +102,7 @@
             @auth
                 @if (auth()->user()->role === 'mahasiswa' || auth()->user()->role === 'student')
                     @php
-                        $submission = $assignment->submissions()
-                            ->where('user_id', auth()->id())
-                            ->first();
+                        $submission = $mySubmission ?? ($assignment->submissions()->where('user_id', auth()->id())->first());
                     @endphp
 
                     <div class="lms-card p-6">
@@ -120,12 +125,14 @@
                                         </span>
                                     </p>
                                     @if ($submission->grade)
+                                        @can('view', $submission->grade)
                                         <p class="text-sm text-slate-700 mt-1">
                                             Nilai: <span class="font-mono font-bold text-slate-900">
                                                 {{ $submission->grade->score ?? '-' }}
                                             </span>
                                             / {{ $assignment->max_score }}
                                         </p>
+                                        @endcan
                                     @endif
                                 @else
                                     <div class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 text-xs font-semibold px-3 py-2 mb-2">
@@ -147,7 +154,7 @@
                                             <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
-                                            <span>Unggah berkas dibuka pada Milestone 3</span>
+                                            <span>Pengumpulan berkas akan tersedia pada milestone unggah berkas</span>
                                         </div>
                                     @else
                                         <span class="text-xs text-rose-600 font-medium">
@@ -170,7 +177,6 @@
                     </div>
                 @elseif (auth()->user()->role === 'dosen' || auth()->user()->role === 'admin')
                     @php
-                        $submittedCount = $assignment->submissions()->distinct()->count('user_id');
                         $totalStudents = $assignment->course->students_count ?? ($assignment->course->students?->count() ?? 0);
                     @endphp
 
@@ -197,15 +203,7 @@
                         </div>
 
                         <div class="flex flex-wrap items-center gap-3">
-                            <a
-                                href="{{ route('courses.assignments.scoped-show', [$assignment->course, $assignment]) }}"
-                                class="btn-primary text-xs inline-flex items-center gap-2"
-                            >
-                                <svg class="w-4 h-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.094-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801-.372-.312.312c1.541.184 3.14.28 4.748.28 1.608 0 3.216-.096 4.752-.28l.312.312c1.568.18 3.26.33 5.043.428a9.563 9.563 0 0 1-2.124 10.21c-1.621.35-3.34.523-5.098.523-1.758 0-3.476-.173-5.182-.52a9.828 9.828 0 0 1-2.123-10.21c1.783-.098 3.474-.248 5.043-.428Z" />
-                                </svg>
-                                Lihat & Nilai Pengumpulan
-                            </a>
+                            <span class="text-xs text-slate-600">{{ $submittedCount ?? $assignment->submissions()->count() }} pengumpulan tercatat.</span>
                             <a
                                 href="{{ route('courses.show', $assignment->course) }}#assignments"
                                 class="btn-outline text-xs inline-flex items-center gap-2"

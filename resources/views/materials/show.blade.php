@@ -12,7 +12,7 @@
             <span class="text-slate-800 font-semibold">{{ $material->title }}</span>
         </div>
 
-        @can('update', $material->course)
+        @can('update', $material)
             <div class="flex items-center gap-2">
                 <a
                     href="{{ route('materials.edit', $material) }}"

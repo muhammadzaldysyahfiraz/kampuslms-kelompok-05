@@ -133,14 +133,27 @@ class DatabaseSeeder extends Seeder
             $courses->push(Course::create($cData));
         }
 
+        // Pastikan akun dosen demo punya kelas yang dapat diperagakan saat UTS.
+        $courses->first()->update(['lecturer_id' => $dosenDemo->id]);
+
         /*
         |--------------------------------------------------------------------------
         | 5. SETIAP MK MINIMAL 15 MAHASISWA (Mahasiswa Demo terdaftar di MK 1 & 2)
         |--------------------------------------------------------------------------
         */
 
+<<<<<<< HEAD
         foreach ($courses as $index => $course) {
             $students = $mahasiswa->random(15);
+=======
+        foreach ($courses as $course) {
+
+            // Mahasiswa demo selalu terdaftar; 14 peserta lain dipilih acak.
+            $students = $mahasiswa
+                ->reject(fn (User $student) => $student->is($mahasiswaDemo))
+                ->random(14)
+                ->push($mahasiswaDemo);
+>>>>>>> origin/main
 
             foreach ($students as $student) {
                 $course->students()->syncWithoutDetaching([
@@ -312,12 +325,12 @@ class DatabaseSeeder extends Seeder
         // 2. Buat sisa submission hingga 25 submission per mata kuliah
         foreach ($courses as $course) {
             $students = $course->students()->get();
-            $courseAssignments = $course->assignments()->get();
-
             $target = ($course->id === 1) ? 24 : 25;
+            // Submission demo hanya boleh terkait tugas yang memang dapat dilihat mahasiswa (published).
+            $courseAssignments = $course->assignments()->where('status', 'published')->get();
             $created = 0;
 
-            while ($created < $target) {
+            while ($created < $target && $courseAssignments->isNotEmpty()) {
                 $student = $students->random();
                 $assignment = $courseAssignments->random();
 

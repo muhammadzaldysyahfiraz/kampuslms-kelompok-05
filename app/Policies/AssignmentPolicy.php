@@ -10,7 +10,7 @@ class AssignmentPolicy
 {
     public function viewAny(User $user): bool
     {
-        return true;
+        return in_array($user->role, ['admin', 'dosen', 'mahasiswa'], true);
     }
 
     public function view(User $user, Assignment $assignment): bool
@@ -35,7 +35,6 @@ class AssignmentPolicy
 
     private function manages(User $user, Course $course): bool
     {
-        return $user->role === 'admin'
-            || ($user->role === 'dosen' && $course->isTaughtBy($user));
+        return $user->can('manageContent', $course);
     }
 }

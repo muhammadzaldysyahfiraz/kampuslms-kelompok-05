@@ -1,13 +1,13 @@
-# Jalur Frontend (Minggu 7-16)
+# Jalur Frontend (Minggu 7–16)
 
-**Jalur yang dipilih:** Blade + Livewire
+**Jalur yang dipakai oleh kode saat ini:** Blade (jalur a pada spesifikasi).
 
-**Alasan:**
-- View proyek sudah berbasis Blade (courses.index, dan lain-lain).
-- API Minggu 6 tetap berjalan di samping tampilan web, tidak perlu diubah.
-- Tidak perlu menulis ulang tampilan.
+Halaman antarmuka berada di `resources/views` dan memakai Blade. REST API minggu 6 tetap tersedia terpisah. Belum ada komponen Livewire di source aplikasi.
 
-**Teknologi:**
+**Catatan konsistensi:** `composer.json` saat ini masih mencantumkan Livewire `^4.4`, sedangkan spesifikasi proyek hanya menyebut opsi Livewire 3. Karena belum dipakai oleh kode UI, jangan menyebut aplikasi ini “Blade + Livewire” sebelum kelompok mendaftarkan jalur tersebut dan menyelaraskan versinya dengan dosen.
+
+**Teknologi UI yang aktif:**
+
 - Laravel 12
-- Livewire v4.4.7
-- Blade + Tailwind
+- Blade
+- Tailwind CSS melalui Vite

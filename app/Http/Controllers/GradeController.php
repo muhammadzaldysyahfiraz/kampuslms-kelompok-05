@@ -7,38 +7,18 @@ use App\Models\Grade;
 use App\Models\Submission;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class GradeController extends Controller
 {
     private function ensureGrader(Request $request, Submission $submission): void
     {
-        $user = $request->user();
-        abort_unless($user, 401);
-        $submission->loadMissing('assignment.course');
-        abort_unless(
-            $user->role === 'admin'
-                || ($user->role === 'dosen' && (int) $submission->assignment->course->lecturer_id === (int) $user->id),
-            403
-        );
-    }
-
-    private function ensureGradeViewer(Request $request, Grade $grade): void
-    {
-        $user = $request->user();
-        abort_unless($user, 401);
-        $grade->loadMissing('submission.assignment.course');
-        $submission = $grade->submission;
-        abort_unless(
-            $user->role === 'admin'
-                || ($user->role === 'dosen' && (int) $submission->assignment->course->lecturer_id === (int) $user->id)
-                || ($user->role === 'mahasiswa' && (int) $submission->user_id === (int) $user->id),
-            403
-        );
+        Gate::authorize('create', [Grade::class, $submission]);
     }
 
     public function indexAdmin(Request $request): JsonResponse
     {
-        abort_unless($request->user(), 401);
+        Gate::authorize('viewAny', Grade::class);
         return response()->json([
             'grades' => Grade::with(['submission.assignment.course', 'submission.student', 'grader'])->latest()->paginate(20),
         ]);
@@ -46,9 +26,8 @@ class GradeController extends Controller
 
     public function indexForCourse(Request $request, Course $course): JsonResponse
     {
-        $user = $request->user();
-        abort_unless($user, 401);
-        abort_unless($user->role === 'admin' || (int) $course->lecturer_id === (int) $user->id, 403);
+        Gate::authorize('view', $course);
+        Gate::authorize('viewAny', Grade::class);
 
         return response()->json([
             'course' => ['id' => $course->id, 'name' => $course->name],
@@ -60,9 +39,8 @@ class GradeController extends Controller
 
     public function indexMine(Request $request): JsonResponse
     {
+        Gate::authorize('viewAny', Grade::class);
         $user = $request->user();
-        abort_unless($user, 401);
-        abort_unless($user->role === 'mahasiswa', 403);
 
         return response()->json([
             'grades' => Grade::with(['submission.assignment.course', 'grader'])
@@ -73,7 +51,7 @@ class GradeController extends Controller
 
     public function show(Request $request, Grade $grade): JsonResponse
     {
-        $this->ensureGradeViewer($request, $grade);
+        Gate::authorize('view', $grade);
         return response()->json(['grade' => $grade->load(['submission.assignment.course', 'submission.student', 'grader'])]);
     }
 
@@ -102,9 +80,7 @@ class GradeController extends Controller
 
     public function update(Request $request, Grade $grade): JsonResponse
     {
-        $this->ensureGradeViewer($request, $grade);
-        abort_unless(in_array($request->user()->role, ['admin', 'dosen'], true), 403);
-        $this->ensureGrader($request, $grade->submission);
+        Gate::authorize('update', $grade);
         $data = $request->validate([
             'score' => ['sometimes', 'required', 'numeric', 'min:0', 'max:'.$grade->submission->assignment->max_score],
             'feedback' => ['sometimes', 'nullable', 'string'],
@@ -121,9 +97,7 @@ class GradeController extends Controller
 
     public function destroy(Request $request, Grade $grade): JsonResponse
     {
-        $this->ensureGradeViewer($request, $grade);
-        abort_unless(in_array($request->user()->role, ['admin', 'dosen'], true), 403);
-        $this->ensureGrader($request, $grade->submission);
+        Gate::authorize('delete', $grade);
         $grade->delete();
 
         return response()->json(['message' => 'Nilai berhasil dihapus.']);

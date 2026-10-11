@@ -9,13 +9,8 @@ class StoreAssignmentRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $user = $this->user();
         $course = Course::find($this->input('course_id'));
-
-        return $user
-            && $user->role === 'dosen'
-            && $course
-            && $course->lecturer_id === $user->id;
+        return $course && ($this->user()?->can('create', [\App\Models\Assignment::class, $course]) ?? false);
     }
 
     protected function failedAuthorization(): void

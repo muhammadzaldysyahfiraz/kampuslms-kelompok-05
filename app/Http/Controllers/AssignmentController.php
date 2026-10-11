@@ -6,54 +6,49 @@ use App\Models\Assignment;
 use App\Models\Course;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class AssignmentController extends Controller
 {
     private function ensureCourseManager(Request $request, Course $course): void
     {
-        $user = $request->user();
-        abort_unless($user, 401);
-        abort_unless(
-            $user->role === 'admin'
-                || ($user->role === 'dosen' && (int) $course->lecturer_id === (int) $user->id),
-            403
-        );
+        Gate::authorize('create', [Assignment::class, $course]);
     }
 
-    private function ensureAssignmentManager(Request $request, Assignment $assignment): void
+    private function ensureAssignmentManager(Assignment $assignment, string $ability): void
     {
         $assignment->loadMissing('course');
-        $this->ensureCourseManager($request, $assignment->course);
+        Gate::authorize($ability, $assignment);
     }
 
     public function index(Request $request, Course $course): mixed
     {
+        Gate::authorize('viewAny', Assignment::class);
+        Gate::authorize('view', $course);
         $user = $request->user();
-        abort_unless($user, 401);
-        abort_unless($user->role !== 'dosen' || (int) $course->lecturer_id === (int) $user->id, 403);
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'course' => ['id' => $course->id, 'name' => $course->name],
-                'assignments' => $course->assignments()->latest()->get(),
-            ]);
+        if (! $request->expectsJson()) {
+            return redirect()->route('courses.show', $course);
         }
 
-        return redirect()->route('courses.show', $course);
+        return response()->json([
+            'course' => ['id' => $course->id, 'name' => $course->name],
+            'assignments' => $course->assignments()->when($user->role === 'mahasiswa', fn ($q) => $q->where('status', 'published'))->latest()->paginate(15)->withQueryString(),
+        ]);
     }
 
     public function create(Request $request, Course $course): mixed
     {
         $this->ensureCourseManager($request, $course);
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'course' => ['id' => $course->id, 'name' => $course->name],
-                'message' => 'Form metadata tugas siap diisi.',
-            ]);
+        if (! $request->expectsJson()) {
+            return view('assignments.create', compact('course'));
         }
 
-        return view('assignments.create', compact('course'));
+        return response()->json([
+            'course' => ['id' => $course->id, 'name' => $course->name],
+            'message' => 'Form metadata tugas siap diisi.',
+        ]);
     }
 
     public function store(Request $request, Course $course): mixed
@@ -71,55 +66,59 @@ class AssignmentController extends Controller
         $assignment = $course->assignments()->make($data);
         $assignment->created_by = $request->user()->id;
         $assignment->status = $data['status'] ?? 'draft';
-        $assignment->allow_late = $data['allow_late'] ?? false;
+        $assignment->allow_late = $data['allow_late'] ?? true;
         $assignment->save();
 
         if ($request->expectsJson()) {
             return response()->json(['assignment' => $assignment], 201);
         }
 
-        return redirect()->route('courses.show', $course)->with('success', 'Tugas berhasil ditambahkan.');
+        return redirect()->route('assignments.show', $assignment)
+            ->with('success', 'Tugas berhasil ditambahkan.');
     }
 
     /** Shallow detail route: /assignments/{assignment}. */
     public function show(Request $request, Assignment $assignment): mixed
     {
-        abort_unless($request->user(), 401);
-        $assignment->load(['course', 'submissions.user']);
-        abort_unless(
-            $request->user()->role !== 'dosen'
-                || (int) $assignment->course->lecturer_id === (int) $request->user()->id,
-            403
-        );
+        Gate::authorize('view', $assignment);
+        $assignment->load(['course.lecturer'])->loadCount('submissions');
+        $assignment->course->loadCount('students');
+        abort_if($request->user()->role === 'mahasiswa' && $assignment->status !== 'published', 404);
 
         if ($request->expectsJson()) {
             return $this->assignmentResponse($assignment->course, $assignment);
         }
 
+        $mySubmission = $request->user()->role === 'mahasiswa'
+            ? $assignment->submissions()->where('user_id', $request->user()->id)->with('grade')->first()
+            : null;
+        $submittedCount = $assignment->submissions_count;
+
         return view('assignments.show', [
             'assignment' => $assignment,
             'course' => $assignment->course,
+            'mySubmission' => $mySubmission,
+            'submittedCount' => $submittedCount,
         ]);
     }
 
     public function edit(Request $request, Assignment $assignment): mixed
     {
-        $this->ensureAssignmentManager($request, $assignment);
-        $assignment->load('course');
+        $this->ensureAssignmentManager($assignment, 'update');
 
-        if ($request->expectsJson()) {
-            return response()->json(['assignment' => $assignment]);
+        if (! $request->expectsJson()) {
+            return view('assignments.edit', [
+                'assignment' => $assignment,
+                'course' => $assignment->course,
+            ]);
         }
 
-        return view('assignments.edit', [
-            'assignment' => $assignment,
-            'course' => $assignment->course,
-        ]);
+        return response()->json(['assignment' => $assignment->load('course')]);
     }
 
     public function update(Request $request, Assignment $assignment): mixed
     {
-        $this->ensureAssignmentManager($request, $assignment);
+        $this->ensureAssignmentManager($assignment, 'update');
         $data = $request->validate([
             'title' => ['sometimes', 'required', 'string', 'max:255'],
             'instructions' => ['sometimes', 'required', 'string'],
@@ -141,12 +140,13 @@ class AssignmentController extends Controller
             return response()->json(['assignment' => $assignment->fresh('course')]);
         }
 
-        return redirect()->route('courses.show', $assignment->course)->with('success', 'Tugas berhasil diperbarui.');
+        return redirect()->route('assignments.show', $assignment)
+            ->with('success', 'Tugas berhasil diperbarui.');
     }
 
     public function destroy(Request $request, Assignment $assignment): mixed
     {
-        $this->ensureAssignmentManager($request, $assignment);
+        $this->ensureAssignmentManager($assignment, 'delete');
         $course = $assignment->course;
         $assignment->delete();
 
@@ -154,7 +154,8 @@ class AssignmentController extends Controller
             return response()->json(['message' => 'Tugas berhasil dihapus.']);
         }
 
-        return redirect()->route('courses.show', $course)->with('success', 'Tugas berhasil dihapus.');
+        return redirect()->route('courses.show', $course)
+            ->with('success', 'Tugas berhasil dihapus.');
     }
 
     /** Explicit nested detail route used to demonstrate scoped binding. */
@@ -164,13 +165,23 @@ class AssignmentController extends Controller
         abort_unless($user, 401);
         abort_unless((int) $assignment->course_id === (int) $course->id, 404);
         abort_unless($user->role !== 'dosen' || (int) $course->lecturer_id === (int) $user->id, 403);
+        abort_if($user->role === 'mahasiswa' && $assignment->status !== 'published', 404);
 
         if ($request->expectsJson()) {
             return $this->assignmentResponse($course, $assignment);
         }
 
-        $assignment->load(['course', 'submissions.user']);
-        return view('assignments.show', compact('course', 'assignment'));
+        $mySubmission = $user->role === 'mahasiswa'
+            ? $assignment->submissions()->where('user_id', $user->id)->with('grade')->first()
+            : null;
+        $submittedCount = $assignment->submissions()->count();
+
+        return view('assignments.show', [
+            'assignment' => $assignment,
+            'course' => $course,
+            'mySubmission' => $mySubmission,
+            'submittedCount' => $submittedCount,
+        ]);
     }
 
     private function assignmentResponse(Course $course, Assignment $assignment): JsonResponse

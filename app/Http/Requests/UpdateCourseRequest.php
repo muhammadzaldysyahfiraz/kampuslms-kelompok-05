@@ -9,8 +9,8 @@ class UpdateCourseRequest extends FormRequest // Membuat request khusus untuk pr
 {
     public function authorize(): bool // Menentukan apakah request update diperbolehkan.
     {
-        // TODO: Ganti dengan Policy pada minggu 7. // Hak akses nantinya akan diperiksa menggunakan Policy.
-        return true; // Untuk Week 4 sementara request diperbolehkan.
+        $course = $this->route('course');
+        return $course && ($this->user()?->can('update', $course) ?? false);
     }
 
     public function rules(): array // Menentukan aturan validasi untuk proses update.
@@ -25,7 +25,7 @@ class UpdateCourseRequest extends FormRequest // Membuat request khusus untuk pr
             'name' => ['required', 'string', 'max:150'], // Nama wajib, berupa teks, maksimal 150 karakter.
             'description' => ['nullable', 'string'], // Deskripsi boleh kosong tetapi jika diisi harus teks.
             'sks' => ['required', 'integer', 'between:1,6'], // SKS wajib, bilangan bulat, dan 1 sampai 6.
-            'lecturer_id' => ['required', 'exists:users,id'], // Dosen wajib ada dan ID-nya harus ditemukan pada users.
+            'lecturer_id' => ['required', Rule::exists('users', 'id')->where('role', 'dosen')], // Pengajar harus benar-benar akun dosen.
             'status' => ['required', 'in:draft,active,archived'], // Status wajib dan hanya boleh tiga nilai yang ditentukan.
         ];
     }

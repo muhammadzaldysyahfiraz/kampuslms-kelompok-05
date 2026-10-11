@@ -43,9 +43,9 @@ class AuthTest extends TestCase
             'password' => 'password',
         ]);
 
-        $this->assertAuthenticatedAs($user);
+        $this->assertFalse(session()->has('active_role'));
         $response->assertRedirect('/dashboard');
-        $this->assertEquals('mahasiswa', session('active_role'));
+        $this->assertAuthenticatedAs($user);
     }
 
     public function test_user_cannot_login_with_invalid_credentials_and_prevents_user_enumeration(): void

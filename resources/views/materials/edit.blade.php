@@ -17,6 +17,7 @@
             <span class="font-normal text-slate-600">— {{ $material->title }}</span>
         </h1>
 
+        @can('update', $material)
         <form action="{{ route('materials.update', $material) }}" method="POST">
             @csrf
             @method('PUT')
@@ -153,6 +154,7 @@
                 </button>
             </div>
         </form>
+        @endcan
     </div>
 
 </x-layout>

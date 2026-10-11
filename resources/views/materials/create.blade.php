@@ -16,6 +16,7 @@
             Buat Materi untuk {{ $course->name }}
         </h1>
 
+        @can('create', [\App\Models\Material::class, $course])
         <form action="{{ route('courses.materials.store', $course) }}" method="POST">
             @csrf
 
@@ -150,6 +151,7 @@
                 </button>
             </div>
         </form>
+        @endcan
     </div>
 
 </x-layout>

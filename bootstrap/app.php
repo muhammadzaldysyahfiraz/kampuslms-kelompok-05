@@ -5,6 +5,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Auth\Access\AuthorizationException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -29,6 +30,14 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => 'Data yang diberikan tidak valid.',
                     'errors' => $e->errors(),
                 ], 422);
+            }
+        });
+
+        $exceptions->render(function (AuthorizationException $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Anda tidak memiliki akses ke sumber daya ini.',
+                ], 403);
             }
         });
     })

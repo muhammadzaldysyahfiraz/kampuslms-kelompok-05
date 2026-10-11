@@ -3,13 +3,13 @@
 namespace App\Http\Requests; // Menentukan namespace tempat class request ini berada.
 
 use Illuminate\Foundation\Http\FormRequest; // Mengimpor class FormRequest Laravel untuk membuat validasi terpisah.
+use Illuminate\Validation\Rule;
 
 class StoreCourseRequest extends FormRequest // Membuat request khusus untuk proses STORE/tambah mata kuliah.
 {
     public function authorize(): bool // Menentukan apakah request ini diizinkan masuk ke proses validasi.
     {
-        // TODO: Ganti dengan Policy pada minggu 7. // Catatan bahwa pengecekan hak akses akan dipindahkan ke Policy pada Week 7.
-        return true; // Untuk Week 4 sementara semua request diizinkan.
+        return $this->user()?->can('create', \App\Models\Course::class) ?? false;
     }
 
     public function rules(): array // Menentukan aturan validasi untuk data yang dikirim.
@@ -19,7 +19,7 @@ class StoreCourseRequest extends FormRequest // Membuat request khusus untuk pro
             'name' => ['required', 'string', 'max:150'], // Nama wajib, berupa teks, dan maksimal 150 karakter.
             'description' => ['nullable', 'string'], // Deskripsi boleh kosong, tetapi jika diisi harus berupa teks.
             'sks' => ['required', 'integer', 'between:1,6'], // SKS wajib, harus bilangan bulat, dan nilainya 1 sampai 6.
-            'lecturer_id' => ['required', 'exists:users,id'], // Dosen wajib dipilih dan ID-nya harus benar-benar ada di tabel users.
+            'lecturer_id' => ['required', Rule::exists('users', 'id')->where('role', 'dosen')], // Pengajar harus benar-benar akun dosen.
             'status' => ['required', 'in:draft,active,archived'], // Status wajib dan hanya boleh salah satu dari tiga nilai tersebut.
         ];
     }

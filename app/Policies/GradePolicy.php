@@ -11,7 +11,7 @@ class GradePolicy
     public function viewAny(User $user): bool
     {
         // Disaring di query: dosen hanya MK sendiri, mahasiswa hanya nilainya.
-        return true;
+        return in_array($user->role, ['admin', 'dosen', 'mahasiswa'], true);
     }
 
     public function view(User $user, Grade $grade): bool
@@ -28,14 +28,12 @@ class GradePolicy
 
     public function create(User $user, Submission $submission): bool
     {
-        return $user->role === 'dosen'
-            && $submission->assignment->course->isTaughtBy($user);
+        return $user->role === 'dosen' && $submission->assignment->course->isTaughtBy($user);
     }
 
     public function update(User $user, Grade $grade): bool
     {
-        return $user->role === 'dosen'
-            && $grade->submission->assignment->course->isTaughtBy($user);
+        return $user->role === 'dosen' && $grade->submission->assignment->course->isTaughtBy($user);
     }
 
     // Keputusan kelompok (di luar matriks): dosen pemilik boleh menghapus nilai.

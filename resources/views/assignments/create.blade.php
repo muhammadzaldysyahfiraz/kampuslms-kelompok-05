@@ -16,6 +16,7 @@
             Buat Tugas untuk {{ $course->name }}
         </h1>
 
+        @can('create', [\App\Models\Assignment::class, $course])
         <form action="{{ route('courses.assignments.store', $course) }}" method="POST">
             @csrf
 
@@ -95,11 +96,12 @@
 
                 {{-- Izinkan terlambat --}}
                 <label class="inline-flex items-center gap-2.5 cursor-pointer select-none rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 hover:border-slate-300 transition-colors">
+                    <input type="hidden" name="allow_late" value="0" />
                     <input
                         type="checkbox"
                         name="allow_late"
                         value="1"
-                        {{ old('allow_late') ? 'checked' : '' }}
+                        {{ old('allow_late', true) ? 'checked' : '' }}
                         class="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-600 accent-sky-600 cursor-pointer"
                     />
                     <span class="font-medium">Izinkan peserta mengumpulkan tugas setelah batas waktu</span>
@@ -146,6 +148,7 @@
                 </button>
             </div>
         </form>
+        @endcan
     </div>
 
 </x-layout>

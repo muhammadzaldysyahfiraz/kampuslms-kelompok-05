@@ -89,6 +89,9 @@ class DatabaseSeeder extends Seeder
             ->count(5)
             ->create();
 
+        // Pastikan akun dosen demo punya kelas yang dapat diperagakan saat UTS.
+        $courses->first()->update(['lecturer_id' => $dosenDemo->id]);
+
         /*
         |--------------------------------------------------------------------------
         | 5. SETIAP MK MINIMAL 15 MAHASISWA
@@ -97,7 +100,11 @@ class DatabaseSeeder extends Seeder
 
         foreach ($courses as $course) {
 
-            $students = $mahasiswa->random(15);
+            // Mahasiswa demo selalu terdaftar; 14 peserta lain dipilih acak.
+            $students = $mahasiswa
+                ->reject(fn (User $student) => $student->is($mahasiswaDemo))
+                ->random(14)
+                ->push($mahasiswaDemo);
 
             foreach ($students as $student) {
 
@@ -162,7 +169,8 @@ class DatabaseSeeder extends Seeder
             $students = $course->students()->get();
 
             // Tugas yang dimiliki MK ini
-            $assignments = $course->assignments()->get();
+            // Submission demo hanya boleh terkait tugas yang memang dapat dilihat mahasiswa.
+            $assignments = $course->assignments()->where('status', 'published')->get();
 
             $created = 0;
 

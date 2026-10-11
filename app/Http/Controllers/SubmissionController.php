@@ -5,6 +5,7 @@ namespace App\Http\Controllers; // Menentukan namespace controller.
 use App\Models\Submission; // Mengimpor model Submission agar data submission bisa diambil.
 use Illuminate\Http\Request; // Mengimpor Request untuk membaca request yang masuk.
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Gate;
 
 class SubmissionController extends Controller // Membuat controller untuk menangani submission.
 {
@@ -13,6 +14,7 @@ class SubmissionController extends Controller // Membuat controller untuk menang
     {
         $user = $request->user();
         abort_unless($user, 401);
+        Gate::authorize('viewAny', Submission::class);
 
         $query = Submission::with(['assignment.course', 'student', 'grade']);
         if ($user->role === 'mahasiswa') {
@@ -30,19 +32,8 @@ class SubmissionController extends Controller // Membuat controller untuk menang
 
     public function show(Request $request, Submission $submission) // Menampilkan satu submission menggunakan route model binding.
     {
-        $user = $request->user(); // Mengambil user yang sedang login dari request.
-
-        abort_unless($user, 401); // Jika tidak ada user yang login, hentikan request dengan status 401.
-
-        abort_unless( // Memastikan user yang membuka submission memang berhak mengaksesnya.
-            (int) $submission->user_id === (int) $user->id // Mahasiswa boleh melihat submission miliknya sendiri.
-                || $user->role === 'admin' // Admin boleh melihat submission.
-                || (
-                    $user->role === 'dosen'
-                    && (int) $submission->assignment->course->lecturer_id === (int) $user->id
-                ), // Hanya dosen pengampu course yang boleh melihat submission.
-            403 // Jika tidak memenuhi kondisi di atas, kembalikan status 403.
-        );
+        Gate::authorize('view', $submission);
+        $user = $request->user();
 
         $submission->load(['assignment.course', 'student', 'grade']); // Memuat data tugas, course, mahasiswa, dan nilai yang berhubungan.
 

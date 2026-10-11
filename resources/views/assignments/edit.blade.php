@@ -17,6 +17,7 @@
             <span class="font-normal text-slate-600">— {{ $assignment->title }}</span>
         </h1>
 
+        @can('update', $assignment)
         <form action="{{ route('assignments.update', $assignment) }}" method="POST">
             @csrf
             @method('PUT')
@@ -94,6 +95,7 @@
 
                 {{-- Izinkan terlambat --}}
                 <label class="inline-flex items-center gap-2.5 cursor-pointer select-none rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 hover:border-slate-300 transition-colors">
+                    <input type="hidden" name="allow_late" value="0" />
                     <input
                         type="checkbox"
                         name="allow_late"
@@ -144,6 +146,7 @@
                 </button>
             </div>
         </form>
+        @endcan
     </div>
 
 </x-layout>

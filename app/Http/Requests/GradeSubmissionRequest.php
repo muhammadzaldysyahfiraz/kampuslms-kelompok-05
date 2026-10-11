@@ -8,12 +8,8 @@ class GradeSubmissionRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $user       = $this->user();
         $submission = $this->route('submission');
-
-        // TODO minggu 7: dipindah ke SubmissionPolicy
-        return $user->role === 'dosen'
-            && $submission->assignment->course->lecturer_id === $user->id;
+        return $submission && ($this->user()?->can('create', [\App\Models\Grade::class, $submission]) ?? false);
     }
 
     protected function failedAuthorization(): void

@@ -10,6 +10,11 @@ class Material extends Model
 {
     use HasFactory;
 
+    // Jalur penyimpanan internal tidak pernah ikut dalam respons JSON model.
+    protected $hidden = [
+        'file_path',
+    ];
+
     protected $fillable = [
         'title',
         'description',

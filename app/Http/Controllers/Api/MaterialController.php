@@ -5,18 +5,16 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\MaterialResource;
 use App\Models\Course;
+use App\Models\Material;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class MaterialController extends Controller
 {
     public function index(Request $request, Course $course)
     {
-        // TODO minggu 7: dipindah ke CoursePolicy
-        abort_unless(
-            $course->isAccessibleBy($request->user()),
-            403,
-            'Anda tidak memiliki akses ke sumber daya ini.'
-        );
+        Gate::authorize('viewAny', Material::class);
+        Gate::authorize('view', $course);
 
         $materials = $course->materials()
             ->with('uploader')

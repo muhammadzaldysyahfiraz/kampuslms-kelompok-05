@@ -1,4 +1,5 @@
 <x-layout title="Detail Pengumpulan: {{ $submission->assignment->title }}">
+    @can('view', $submission)
     <div class="max-w-4xl mx-auto space-y-6">
         <div class="flex items-center justify-between">
             <a href="{{ url()->previous() ?: route('dashboard') }}" class="btn-outline text-xs py-2 inline-flex items-center gap-2">
@@ -48,8 +49,19 @@
 
             <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
                 <span>Berkas: <strong class="text-slate-800">{{ $submission->original_name ?? 'submission-file' }}</strong></span>
-                <span>Nilai: <strong class="text-slate-900">{{ $submission->grade?->score ?? 'Belum Dinilai' }}</strong> / {{ $submission->assignment->max_score ?? 100 }}</span>
+                <span>Nilai:
+                    @if ($submission->grade)
+                        @can('view', $submission->grade)
+                            <strong class="text-slate-900">{{ $submission->grade->score }}</strong> / {{ $submission->assignment->max_score ?? 100 }}
+                        @else
+                            <strong class="text-slate-900">Belum dapat dilihat</strong>
+                        @endcan
+                    @else
+                        <strong class="text-slate-900">Belum Dinilai</strong> / {{ $submission->assignment->max_score ?? 100 }}
+                    @endif
+                </span>
             </div>
         </div>
     </div>
+    @endcan
 </x-layout>

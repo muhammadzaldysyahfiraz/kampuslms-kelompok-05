@@ -9,6 +9,7 @@ use App\Http\Resources\AssignmentResource;
 use App\Models\Assignment;
 use App\Models\Course;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class AssignmentController extends Controller
 {
@@ -16,11 +17,8 @@ class AssignmentController extends Controller
     {
         $user = $request->user();
 
-        abort_unless(
-            $course->isAccessibleBy($user),
-            403,
-            'Anda tidak memiliki akses ke sumber daya ini.'
-        );
+        Gate::authorize('viewAny', Assignment::class);
+        Gate::authorize('view', $course);
 
         $validated = $request->validate([
             'status' => ['nullable', 'in:draft,published'],
@@ -40,6 +38,7 @@ class AssignmentController extends Controller
     {
         $user = $request->user();
         $course = Course::findOrFail($request->validated('course_id'));
+        Gate::authorize('create', [Assignment::class, $course]);
 
         $assignment = new Assignment($request->safe()->only([
             'title',
@@ -62,6 +61,7 @@ class AssignmentController extends Controller
     public function update(UpdateAssignmentRequest $request, Assignment $assignment)
     {
         $data = $request->validated();
+        Gate::authorize('update', $assignment);
 
         $assignment->fill(collect($data)->except('status')->all());
 
@@ -76,13 +76,7 @@ class AssignmentController extends Controller
 
     public function destroy(Request $request, Assignment $assignment)
     {
-        $user = $request->user();
-
-        abort_unless(
-            $user->role === 'dosen' && $assignment->course->lecturer_id === $user->id,
-            403,
-            'Anda tidak memiliki akses ke sumber daya ini.'
-        );
+        Gate::authorize('delete', $assignment);
 
         $assignment->delete();
 

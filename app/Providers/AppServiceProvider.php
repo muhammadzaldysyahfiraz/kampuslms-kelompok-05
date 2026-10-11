@@ -16,10 +16,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         View::composer('*', function ($view) {
-            // Akun yang benar-benar login selalu menjadi sumber role utama.
-            // Session active_role hanya dipakai untuk mode demo saat belum login.
+            // Role akun login adalah sumber kebenaran; guest hanya mendapat tampilan default.
             $activeUser = auth()->user();
-            $activeRole = $activeUser?->role ?? session('active_role', 'mahasiswa');
+            $activeRole = $activeUser?->role ?? 'mahasiswa';
 
             if (!$activeUser) {
                 if ($activeRole === 'dosen') {

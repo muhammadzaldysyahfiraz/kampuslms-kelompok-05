@@ -26,11 +26,11 @@
 
 ## 🛠️ Persyaratan Lingkungan (Prerequisites)
 
-* **PHP:** `>= 8.3` (atau minimal 8.2)
+* **PHP:** `^8.4.1` (mengikuti versi minimum paket yang terkunci di `composer.lock`)
 * **Composer:** `>= 2.2`
-* **Database:** MySQL 8.x / MariaDB 11.x (via Laragon / XAMPP / Native)
+* **Database:** MySQL 8.x / MariaDB 11.x
 * **Web Server / CLI:** Laravel Development Server (`php artisan serve`) atau Laravel Herd
-* **Node.js & NPM:** (Opsional untuk asset bundler Vite)
+* **Node.js & NPM:** diperlukan untuk membangun asset frontend dengan Vite
 
 ---
 
@@ -58,7 +58,7 @@ php artisan key:generate
 ```
 
 ### 4. Pengaturan Database
-Pastikan layanan MySQL di Laragon / XAMPP sudah berjalan. Buka file `.env` dan sesuaikan kredensial database:
+Pastikan layanan MySQL/MariaDB sudah berjalan. Buka file `.env` dan sesuaikan kredensial database:
 ```env
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1

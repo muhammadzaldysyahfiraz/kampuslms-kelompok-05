@@ -80,12 +80,6 @@
                     {{-- Role Specific Quick Action Buttons --}}
                     <div class="flex items-center gap-2 flex-shrink-0">
                         @if ($activeRole === 'dosen')
-                            <a href="{{ route('courses.create') }}" class="btn-primary text-xs py-2">
-                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                </svg>
-                                <span>Tambah Mata Kuliah</span>
-                            </a>
                             <a href="{{ route('courses.index') }}" class="btn-outline text-xs py-2">
                                 <span>Kelas Saya</span>
                             </a>

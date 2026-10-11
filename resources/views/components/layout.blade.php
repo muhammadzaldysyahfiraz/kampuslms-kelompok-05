@@ -64,93 +64,11 @@
                 </nav>
             </div>
 
-            {{-- Right Context: Interactive Role Switcher & Profile Pill --}}
+            {{-- Role diambil dari akun yang benar-benar login. --}}
             <div class="flex items-center gap-3">
-                
-                {{-- Role Switcher Dropdown --}}
-                <div class="relative" id="role-switcher-container">
-                    <button 
-                        type="button" 
-                        onclick="toggleRoleDropdown()" 
-                        id="role-switcher-btn"
-                        class="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 text-xs font-semibold text-slate-800 transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900"
-                        aria-haspopup="true"
-                        aria-expanded="false"
-                        aria-label="Ganti simulasi peran pengguna"
-                    >
-                        <span class="text-[10px] text-slate-600 font-normal hidden lg:inline">Mode Tampilan:</span>
-                        @if ($activeRole === 'admin')
-                            <span class="badge-coral text-[11px] py-0.5 px-2">🛡️ Admin</span>
-                        @elseif ($activeRole === 'dosen')
-                            <span class="badge-sky text-[11px] py-0.5 px-2">👨‍🏫 Dosen</span>
-                        @else
-                            <span class="badge-mint text-[11px] py-0.5 px-2">🎓 Mahasiswa</span>
-                        @endif
-                        <svg class="w-3.5 h-3.5 text-slate-500 transition-transform" id="role-chevron" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                        </svg>
-                    </button>
-
-                    {{-- Dropdown Menu --}}
-                    <div 
-                        id="role-dropdown-menu" 
-                        class="hidden absolute right-0 mt-2 w-64 rounded-xl bg-white border border-slate-200 shadow-lg py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100"
-                        role="menu"
-                        aria-orientation="vertical"
-                        aria-labelledby="role-switcher-btn"
-                    >
-                        <div class="px-3 py-2 border-b border-slate-100 text-[11px]">
-                            <p class="font-bold text-slate-900">Simulasi Hak Akses (Role)</p>
-                            <p class="text-slate-600 font-normal mt-0.5">Ubah perspektif antarmuka pengguna LMS.</p>
-                        </div>
-
-                        <a href="{{ route('switch-role', 'mahasiswa') }}" 
-                           class="flex items-center justify-between px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors {{ $activeRole === 'mahasiswa' ? 'text-emerald-800 bg-emerald-50/60 font-bold' : 'text-slate-700' }}"
-                           role="menuitem">
-                            <div class="flex items-center gap-2">
-                                <span>🎓</span>
-                                <div>
-                                    <p class="text-slate-900">Mahasiswa</p>
-                                    <p class="text-[10px] text-slate-600 font-normal">Fokus belajar & tugas kuliah</p>
-                                </div>
-                            </div>
-                            @if ($activeRole === 'mahasiswa')
-                                <span class="text-emerald-700 text-xs font-bold" aria-hidden="true">✓</span>
-                            @endif
-                        </a>
-
-                        <a href="{{ route('switch-role', 'dosen') }}" 
-                           class="flex items-center justify-between px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors {{ $activeRole === 'dosen' ? 'text-sky-800 bg-sky-50/60 font-bold' : 'text-slate-700' }}"
-                           role="menuitem">
-                            <div class="flex items-center gap-2">
-                                <span>👨‍🏫</span>
-                                <div>
-                                    <p class="text-slate-900">Dosen Pengampu</p>
-                                    <p class="text-[10px] text-slate-600 font-normal">Kelola materi, kelas, & nilai</p>
-                                </div>
-                            </div>
-                            @if ($activeRole === 'dosen')
-                                <span class="text-sky-700 text-xs font-bold" aria-hidden="true">✓</span>
-                            @endif
-                        </a>
-
-                        <a href="{{ route('switch-role', 'admin') }}" 
-                           class="flex items-center justify-between px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors {{ $activeRole === 'admin' ? 'text-rose-800 bg-rose-50/60 font-bold' : 'text-slate-700' }}"
-                           role="menuitem">
-                            <div class="flex items-center gap-2">
-                                <span>🛡️</span>
-                                <div>
-                                    <p class="text-slate-900">Administrator</p>
-                                    <p class="text-[10px] text-slate-600 font-normal">Kelola pengguna & kurikulum MK</p>
-                                </div>
-                            </div>
-                            @if ($activeRole === 'admin')
-                                <span class="text-rose-700 text-xs font-bold" aria-hidden="true">✓</span>
-                            @endif
-                        </a>
-                    </div>
-                </div>
-
+                <span class="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold capitalize text-slate-800">
+                    {{ $activeRole }}
+                </span>
                 {{-- User Avatar Pill & Auth Action --}}
                 @auth
                     <div class="hidden sm:flex items-center gap-2 pl-3 border-l border-slate-200">
@@ -292,32 +210,6 @@
 
     {{-- Global Script: Navigasi, Keyboard Shortcuts, & Auto-dismiss Flash --}}
     <script>
-        function toggleRoleDropdown() {
-            const menu = document.getElementById('role-dropdown-menu');
-            const btn = document.getElementById('role-switcher-btn');
-            const chevron = document.getElementById('role-chevron');
-            if (menu && btn) {
-                const isHidden = menu.classList.toggle('hidden');
-                btn.setAttribute('aria-expanded', !isHidden);
-                if (chevron) {
-                    chevron.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
-                }
-            }
-        }
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            const container = document.getElementById('role-switcher-container');
-            const menu = document.getElementById('role-dropdown-menu');
-            const btn = document.getElementById('role-switcher-btn');
-            const chevron = document.getElementById('role-chevron');
-            if (container && !container.contains(e.target) && menu && !menu.classList.contains('hidden')) {
-                menu.classList.add('hidden');
-                btn?.setAttribute('aria-expanded', 'false');
-                if (chevron) chevron.style.transform = 'rotate(0deg)';
-            }
-        });
-
         function toggleMobileNav() {
             const drawer = document.getElementById('mobile-nav-drawer');
             const toggleBtn = document.getElementById('mobile-nav-toggle');

@@ -90,7 +90,7 @@ class WeekFiveAccessTest extends TestCase
         ]);
     }
 
-    public function test_lecturer_can_edit_own_course(): void
+    public function test_lecturer_cannot_manage_course_even_when_assigned_to_it(): void
     {
         $lecturer = $this->userWithRole('dosen');
         $course = $this->courseFor($lecturer);
@@ -104,16 +104,16 @@ class WeekFiveAccessTest extends TestCase
                 'lecturer_id' => $lecturer->id,
                 'status' => 'active',
             ])
-            ->assertRedirect(route('courses.show', $course));
+            ->assertForbidden();
 
         $this->assertDatabaseHas('courses', [
             'id' => $course->id,
-            'name' => 'Course dosen sendiri',
+            'name' => $course->name,
             'lecturer_id' => $lecturer->id,
         ]);
     }
 
-    public function test_lecturer_cannot_assign_new_course_to_another_lecturer(): void
+    public function test_only_admin_can_create_a_course(): void
     {
         $lecturer = $this->userWithRole('dosen');
         $otherLecturer = $this->userWithRole('dosen');
@@ -127,11 +127,24 @@ class WeekFiveAccessTest extends TestCase
                 'lecturer_id' => $otherLecturer->id,
                 'status' => 'active',
             ])
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('courses', ['code' => 'SI9999003']);
+
+        $this->actingAs($this->userWithRole('admin'))
+            ->post('/courses', [
+                'code' => 'SI9999003',
+                'name' => 'Course dibuat admin',
+                'description' => 'Course dikelola admin',
+                'sks' => 3,
+                'lecturer_id' => $otherLecturer->id,
+                'status' => 'active',
+            ])
             ->assertRedirect(route('courses.index'));
 
         $this->assertDatabaseHas('courses', [
             'code' => 'SI9999003',
-            'lecturer_id' => $lecturer->id,
+            'lecturer_id' => $otherLecturer->id,
         ]);
     }
 
@@ -204,5 +217,64 @@ class WeekFiveAccessTest extends TestCase
         $this->actingAs($admin)
             ->get('/users')
             ->assertOk();
+    }
+
+    public function test_only_admin_or_assigned_lecturer_can_enroll_a_student(): void
+    {
+        $admin = $this->userWithRole('admin');
+        $lecturer = $this->userWithRole('dosen');
+        $otherLecturer = $this->userWithRole('dosen');
+        $student = $this->userWithRole('mahasiswa');
+        $course = $this->courseFor($lecturer);
+
+        $this->actingAs($student)
+            ->postJson("/dosen/courses/{$course->id}/enrollments", ['student_id' => $student->id])
+            ->assertForbidden();
+
+        $this->actingAs($otherLecturer)
+            ->postJson("/dosen/courses/{$course->id}/enrollments", ['student_id' => $student->id])
+            ->assertForbidden();
+
+        $this->actingAs($lecturer)
+            ->postJson("/dosen/courses/{$course->id}/enrollments", ['student_id' => $student->id])
+            ->assertCreated()
+            ->assertJsonPath('student_id', $student->id);
+
+        $this->assertDatabaseHas('course_user', [
+            'course_id' => $course->id,
+            'user_id' => $student->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->deleteJson("/admin/courses/{$course->id}/enrollments/{$student->id}")
+            ->assertNoContent();
+
+        $this->assertDatabaseMissing('course_user', [
+            'course_id' => $course->id,
+            'user_id' => $student->id,
+        ]);
+    }
+
+    public function test_student_cannot_open_a_draft_assignment_by_direct_or_nested_url(): void
+    {
+        $lecturer = $this->userWithRole('dosen');
+        $student = $this->userWithRole('mahasiswa');
+        $course = $this->courseFor($lecturer);
+        $course->students()->attach($student->id, ['enrolled_at' => now()]);
+        $draft = $this->assignmentFor($course, $lecturer);
+        $draft->update(['status' => 'draft']);
+
+        $this->actingAs($student)
+            ->getJson("/assignments/{$draft->id}")
+            ->assertNotFound();
+
+        $this->actingAs($student)
+            ->getJson("/courses/{$course->id}/assignments/{$draft->id}")
+            ->assertNotFound();
+    }
+
+    public function test_role_is_not_mass_assignable(): void
+    {
+        $this->assertFalse((new User())->isFillable('role'));
     }
 }

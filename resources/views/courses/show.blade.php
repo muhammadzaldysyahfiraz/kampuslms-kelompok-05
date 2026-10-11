@@ -9,7 +9,7 @@
             <span>Kembali ke Daftar</span>
         </a>
 
-        @if ($activeRole !== 'mahasiswa')
+        @can('update', $course)
             <div class="flex items-center gap-2">
                 <a href="{{ route('courses.edit', $course) }}" class="btn-secondary text-xs py-2">
                     <svg class="w-4 h-4 text-slate-700" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -18,6 +18,7 @@
                     <span>Edit Mata Kuliah</span>
                 </a>
 
+                @can('delete', $course)
                 <form action="{{ route('courses.destroy', $course) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus mata kuliah {{ $course->name }}?')" class="inline">
                     @csrf
                     @method('DELETE')
@@ -28,6 +29,7 @@
                         <span>Hapus</span>
                     </button>
                 </form>
+                @endcan
             </div>
         @else
             <div class="flex items-center gap-2">
@@ -85,9 +87,12 @@
                             <p class="text-xs text-slate-600 font-normal">Bahan ajar dan referensi materi perkuliahan</p>
                         </div>
                     </div>
-                    <span class="badge-sky text-[11px]">
-                        {{ $course->materials->count() }} Materi
-                    </span>
+                    <div class="flex items-center gap-2">
+                        @can('create', [\App\Models\Material::class, $course])
+                            <a href="{{ route('courses.materials.create', $course) }}" class="btn-secondary text-xs py-1.5">Tambah Materi</a>
+                        @endcan
+                        <span class="badge-sky text-[11px]">{{ $course->materials->count() }} Materi</span>
+                    </div>
                 </div>
 
                 @if ($course->materials->count() > 0)
@@ -96,7 +101,7 @@
                             <div class="py-3.5 flex items-start justify-between gap-4">
                                 <div>
                                     <h3 class="text-sm font-semibold text-slate-900 hover:text-slate-950 transition-colors">
-                                        {{ $material->title }}
+                                        <a href="{{ route('materials.show', $material) }}">{{ $material->title }}</a>
                                     </h3>
                                     <p class="text-xs text-slate-600 mt-0.5 font-normal leading-relaxed">
                                         {{ $material->description ?? 'Tidak ada keterangan materi.' }}
@@ -138,9 +143,12 @@
                             <p class="text-xs text-slate-600 font-normal">Penugasan dan tenggat waktu pengumpulan tugas</p>
                         </div>
                     </div>
-                    <span class="badge-amber text-[11px]">
-                        {{ $course->assignments->count() }} Tugas
-                    </span>
+                    <div class="flex items-center gap-2">
+                        @can('create', [\App\Models\Assignment::class, $course])
+                            <a href="{{ route('courses.assignments.create', $course) }}" class="btn-secondary text-xs py-1.5">Tambah Tugas</a>
+                        @endcan
+                        <span class="badge-amber text-[11px]">{{ $course->assignments->count() }} Tugas</span>
+                    </div>
                 </div>
 
                 @if ($course->assignments->count() > 0)
@@ -150,7 +158,7 @@
                                 <div>
                                     <div class="flex items-center gap-2">
                                         <h3 class="text-sm font-semibold text-slate-900">
-                                            {{ $assignment->title }}
+                                            <a href="{{ route('assignments.show', $assignment) }}">{{ $assignment->title }}</a>
                                         </h3>
                                         <span class="text-[11px] font-bold px-2 py-0.5 rounded {{ $assignment->status === 'published' ? 'badge-mint' : 'badge-dark' }}">
                                             {{ ucfirst($assignment->status) }}

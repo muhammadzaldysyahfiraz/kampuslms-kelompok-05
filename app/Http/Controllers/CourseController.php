@@ -7,26 +7,10 @@ use App\Models\User; // Mengimpor model User untuk mengambil data dosen.
 use App\Http\Requests\StoreCourseRequest; // Mengimpor Form Request untuk validasi saat menambah course.
 use App\Http\Requests\UpdateCourseRequest; // Mengimpor Form Request untuk validasi saat mengedit course.
 use Illuminate\Http\Request; // Mengimpor Request untuk membaca query string dan user yang sedang login.
+use Illuminate\Support\Facades\Gate;
 
 class CourseController extends Controller // Membuat controller untuk mengelola mata kuliah.
 {
-    // Memeriksa apakah pengguna berhak mengelola mata kuliah tertentu.
-    private function authorizeCourseManager(Request $request, Course $course): void
-    {
-        $user = $request->user(); // Mengambil data pengguna yang sedang login.
-
-        abort_unless($user, 401); // Menghentikan request dengan status 401 jika pengguna belum login.
-
-        abort_unless( // Memastikan pengguna memiliki hak akses untuk mengelola course.
-            $user->role === 'admin' // Admin diperbolehkan mengelola semua course.
-                || ( // Memeriksa ketentuan khusus untuk dosen.
-                    $user->role === 'dosen' // Pengguna harus memiliki role dosen.
-                    && (int) $course->lecturer_id === (int) $user->id // Dosen hanya boleh mengelola course yang diampunya.
-                ),
-            403 // Mengembalikan status 403 jika pengguna tidak memiliki hak akses.
-        );
-    } // Menutup method authorizeCourseManager.
-
     // Menampilkan daftar mata kuliah dengan pencarian, filter, dan pagination.
     public function index(Request $request) // Menerima request agar parameter q dan status dari URL bisa dibaca.
     {
@@ -38,7 +22,27 @@ class CourseController extends Controller // Membuat controller untuk mengelola 
         $keyword = $validated['q'] ?? null; // Mengambil kata pencarian yang sudah lolos validasi.
         $status = $validated['status'] ?? 'all'; // Mengambil status dari URL atau memakai all sebagai nilai default.
 
-        $query = Course::with('lecturer')->latest(); // Mengambil course beserta lecturer dengan eager loading dan mengurutkan dari terbaru.
+        $user = $request->user();
+        abort_unless($user, 401);
+        Gate::authorize('viewAny', Course::class);
+        $scope = match ($user->role) {
+            'admin' => Course::query(),
+            'dosen' => $user->taughtCourses(),
+            'mahasiswa' => $user->courses(),
+            default => abort(403),
+        };
+
+        $courseCounts = (clone $scope)
+            ->when($keyword, fn ($query) => $query->where(function ($query) use ($keyword) {
+                $query->where('code', 'like', "%{$keyword}%")
+                    ->orWhere('name', 'like', "%{$keyword}%");
+            }))
+            ->selectRaw('courses.status, COUNT(*) as total')
+            ->groupBy('courses.status')
+            ->pluck('total', 'status');
+        $totalCourseCount = $courseCounts->sum();
+
+        $query = (clone $scope)->with('lecturer')->latest('courses.id');
 
         if (!empty($keyword)) { // Memeriksa apakah pengguna benar-benar memasukkan kata pencarian.
             $query->where(function ($query) use ($keyword) { // Membuat kelompok pencarian untuk code atau name.
@@ -53,19 +57,13 @@ class CourseController extends Controller // Membuat controller untuk mengelola 
 
         $courses = $query->paginate(15)->withQueryString(); // Membatasi 15 data per halaman dan mempertahankan parameter query string saat pindah halaman.
 
-        $courseCounts = Course::query() // Membuat query terpisah untuk menghitung jumlah course berdasarkan status.
-            ->selectRaw('status, COUNT(*) as total') // Mengambil status dan jumlah data untuk setiap status.
-            ->groupBy('status') // Mengelompokkan hasil berdasarkan status course.
-            ->pluck('total', 'status'); // Mengubah hasil menjadi pasangan status => jumlah agar mudah digunakan di Blade.
-
-        $totalCourseCount = $courseCounts->sum(); // Menghitung jumlah seluruh course dari semua status.
-
         return view('courses.index', compact('courses', 'courseCounts', 'totalCourseCount')); // Mengirim data course dan statistik status ke halaman daftar.
     } // Menutup method index.
 
     // Menampilkan form tambah mata kuliah.
     public function create() // Menjalankan halaman form tambah course.
     {
+        Gate::authorize('create', Course::class);
         $lecturers = User::where('role', 'dosen')->get(); // Mengambil semua user yang memiliki role dosen.
 
         return view('courses.create', compact('lecturers')); // Mengirim daftar dosen ke halaman form.
@@ -74,12 +72,8 @@ class CourseController extends Controller // Membuat controller untuk mengelola 
     // Menyimpan mata kuliah baru.
     public function store(StoreCourseRequest $request) // Menerima request yang sudah melewati validasi StoreCourseRequest.
     {
+        Gate::authorize('create', Course::class);
         $data = $request->validated(); // Mengambil hanya field yang lolos aturan validasi.
-
-        // Dosen hanya boleh membuat course atas namanya sendiri.
-        if ($request->user()->role === 'dosen') {
-            $data['lecturer_id'] = $request->user()->id;
-        }
 
         Course::create($data); // Menyimpan data tervalidasi ke tabel courses.
 
@@ -91,15 +85,17 @@ class CourseController extends Controller // Membuat controller untuk mengelola 
     // Menampilkan detail mata kuliah.
     public function show(Request $request, Course $course) // Menerima course melalui route model binding.
     {
+        Gate::authorize('view', $course);
         $user = $request->user();
-        abort_unless($user, 401);
 
-        // Pada area dosen, detail dibatasi ke course yang diampu dosen login.
-        if ($request->routeIs('dosen.courses.*')) {
-            abort_unless((int) $course->lecturer_id === (int) $user->id, 403);
-        }
-
-        $course->load(['lecturer', 'materials', 'assignments']); // Memuat relasi lecturer, materials, dan assignments untuk halaman detail.
+        $course->load([
+            'lecturer',
+            'materials',
+            'assignments' => fn ($query) => $query->when(
+                $user->role === 'mahasiswa',
+                fn ($query) => $query->where('status', 'published')
+            ),
+        ]); // Mahasiswa hanya menerima tugas terbit di payload halaman.
         $course->loadCount('students'); // Menghitung jumlah mahasiswa yang terdaftar pada course.
 
         $activeRole = auth()->user()->role; // Menggunakan role akun terautentikasi, bukan session switch-role.
@@ -109,7 +105,7 @@ class CourseController extends Controller // Membuat controller untuk mengelola 
     // Menampilkan form edit.
     public function edit(Request $request, Course $course) // Menerima request dan course melalui route model binding.
     {
-        $this->authorizeCourseManager($request, $course); // Memastikan hanya admin atau dosen pengampu yang dapat mengedit course.
+        Gate::authorize('update', $course);
 
         $lecturers = User::where('role', 'dosen')->get(); // Mengambil daftar user yang berperan sebagai dosen.
 
@@ -119,14 +115,9 @@ class CourseController extends Controller // Membuat controller untuk mengelola 
     // Memperbarui mata kuliah.
     public function update(UpdateCourseRequest $request, Course $course) // Menerima request tervalidasi dan course yang akan diperbarui.
     {
-        $this->authorizeCourseManager($request, $course); // Memastikan hanya admin atau dosen pengampu yang dapat memperbarui course.
+        Gate::authorize('update', $course);
 
         $data = $request->validated(); // Mengambil hanya field yang lolos validasi.
-        // Dosen pengampu tidak boleh memindahkan course ke dosen lain.
-        if ($request->user()->role === 'dosen') {
-            $data['lecturer_id'] = $request->user()->id;
-        }
-
         $course->update($data); // Memperbarui course hanya menggunakan data yang sudah lolos validasi.
 
         return redirect() // Membuat response redirect setelah update selesai.
@@ -137,7 +128,7 @@ class CourseController extends Controller // Membuat controller untuk mengelola 
     // Menghapus mata kuliah.
     public function destroy(Request $request, Course $course) // Menerima request dan course yang akan dihapus melalui route model binding.
     {
-        $this->authorizeCourseManager($request, $course); // Memastikan hanya admin atau dosen pengampu yang dapat menghapus course.
+        Gate::authorize('delete', $course);
 
         $course->delete(); // Menghapus course dari database.
 

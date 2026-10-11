@@ -11,6 +11,11 @@ class Submission extends Model
 {
     use HasFactory;
 
+    // Jalur berkas internal hanya dipakai backend dan tidak diekspos sebagai JSON.
+    protected $hidden = [
+        'file_path',
+    ];
+
     protected $fillable = [
         'note',
     ];

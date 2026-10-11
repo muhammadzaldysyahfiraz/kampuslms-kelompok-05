@@ -11,7 +11,7 @@
 | **Autentikasi** | Siapa yang sedang mengakses? | `Auth::attempt(...)`, middleware `auth`, session atau token Sanctum |
 | **Otorisasi** | Apakah pengguna ini boleh melakukan tindakan pada data ini? | `Gate::authorize('update', $course)`, `CoursePolicy::update()` |
 
-Contoh: dosen berhasil login berarti ia terautentikasi. Ia tetap tidak boleh mengedit mata kuliah milik dosen lain; Policy harus menolak tindakan tersebut.
+Contoh: dosen berhasil login berarti ia terautentikasi. Sesuai matriks spesifikasi, CRUD mata kuliah hanya untuk admin; Policy menolak semua permintaan perubahan mata kuliah dari dosen.
 
 ### 1.2 Login, session, dan logout
 
@@ -100,8 +100,7 @@ class CoursePolicy
 
     public function update(User $user, Course $course): bool
     {
-        return $user->role === 'admin'
-            || $course->lecturer_id === $user->id;
+        return $user->role === 'admin';
     }
 }
 ```
@@ -109,7 +108,7 @@ class CoursePolicy
 Penjelasan:
 
 - `view()` memberi akses bila pengguna admin, dosen pemilik mata kuliah, atau mahasiswa terdaftar. Relasi `students()` adalah contoh; namanya harus cocok dengan model proyek.
-- `update()` hanya memberi akses kepada admin atau dosen pemilik.
+- `update()` hanya memberi akses kepada admin, sesuai matriks proyek yang menetapkan CRUD mata kuliah khusus admin.
 - `exists()` mengecek keanggotaan langsung di database tanpa mengambil seluruh koleksi mahasiswa.
 - Jangan menyalin aturan ini membabi buta: hak `create`, `delete`, serta akses Material, Assignment, Submission, dan Grade harus mengikuti **matriks hak akses pada spesifikasi proyek**.
 
@@ -221,16 +220,16 @@ Isi URI, parameter, dan nama relasi berdasarkan route/model KampusLMS yang benar
 | Titik rawan | Risiko | Pengaman backend yang harus dicatat |
 |---|---|---|
 | `GET /courses/{course}` | Mahasiswa membuka course yang tidak diikuti atau dosen membuka course milik dosen lain | `CoursePolicy::view()` dan/atau query scoped sesuai rancangan |
-| `PUT /courses/{course}` | Dosen mengubah course milik dosen lain | `CoursePolicy::update()` dipanggil dengan `Gate::authorize()` |
+| `PUT /courses/{course}` | Dosen mencoba mengubah mata kuliah apa pun | `CoursePolicy::update()` hanya memberi izin kepada admin dan dipanggil dengan `Gate::authorize()` |
 | `GET /courses/{course}/materials` | Pengguna membaca materi dari course tanpa akses | Filter query berdasarkan course yang boleh diakses dan Policy pada objek bila diperlukan |
 | `PUT/DELETE /materials/{material}` | Mengubah/menghapus materi milik pihak lain | `MaterialPolicy::update/delete()` |
 | `GET /courses/{course}/assignments` | Daftar tugas course lain bocor | Query assignments melalui course yang dapat diakses; batasi status sesuai role |
 | `PUT/DELETE /assignments/{assignment}` | Dosen memodifikasi tugas dosen lain | `AssignmentPolicy::update/delete()` |
-| `GET /assignments/{assignment}/submissions` | Dosen melihat pengumpulan di luar kewenangannya | `SubmissionPolicy::viewAny()`/query scoped berdasarkan course yang diajar |
+| `GET /assignments/{assignment}/submissions` | Dosen melihat pengumpulan di luar kewenangannya | `SubmissionPolicy::viewSubmissions()` memeriksa dosen pengampu |
 | `GET /submissions/{submission}` | Mahasiswa melihat submission mahasiswa lain (IDOR) | `SubmissionPolicy::view()` memeriksa pemilik serta role pengecualian yang sah |
-| `PUT /submissions/{submission}/grade` | Pengguna tidak berwenang memberi/mengubah nilai | `GradePolicy` atau `SubmissionPolicy` menolak selain aktor yang berwenang |
+| `PUT /api/v1/submissions/{submission}/grade` atau `POST /dosen/submissions/{submission}/grade` | Pengguna tidak berwenang memberi/mengubah nilai | `GradePolicy::create()` memastikan dosen pengampu; pembaruan grade memeriksa `GradePolicy::update()` |
 | `POST /profile` atau `PUT /profile` | Pengguna mengirim `role=admin` | Validasi allowlist; jangan mass-assign `role`; proses perubahan role khusus admin |
-| `GET /notifications/{id}` atau `POST /notifications/{id}/read` | Membaca/mengubah notifikasi orang lain | Query melalui relasi `user` yang login atau otorisasi kepemilikan |
+| `GET /notifications/{id}` atau `PATCH /{role}/notifications/{id}/read` | Membaca/mengubah notifikasi orang lain | Query melalui relasi pengguna yang login sebelum menampilkan atau mengubah notifikasi |
 
 > Status `403` atau `404` untuk objek yang bukan milik pengguna harus mengikuti kebijakan proyek. Hal yang wajib adalah data tidak dapat diakses tanpa izin.
 
@@ -240,7 +239,7 @@ Isi URI, parameter, dan nama relasi berdasarkan route/model KampusLMS yang benar
 
 ### 1. Apa beda autentikasi dan otorisasi?
 
-Autentikasi memverifikasi identitas pengguna, misalnya login dengan email dan kata sandi. Otorisasi memutuskan tindakan yang boleh dilakukan, misalnya `CoursePolicy::update()` memeriksa apakah dosen adalah pemilik course.
+Autentikasi memverifikasi identitas pengguna, misalnya login dengan email dan kata sandi. Otorisasi memutuskan tindakan yang boleh dilakukan, misalnya `CoursePolicy::update()` mengizinkan admin dan menolak dosen karena CRUD mata kuliah khusus admin.
 
 ### 2. Tunjukkan Policy yang ditulis dan jelaskan tiap baris
 
@@ -249,16 +248,13 @@ Contoh penjelasan `CoursePolicy::update()`:
 ```php
 public function update(User $user, Course $course): bool
 {
-    return $user->role === 'admin'
-        || $course->lecturer_id === $user->id;
+    return $user->role === 'admin';
 }
 ```
 
 - Method menerima pengguna yang login dan course yang dituju.
-- `role === 'admin'` memberi izin kepada admin sesuai aturan contoh.
-- `lecturer_id === user.id` memberi izin kepada dosen pemilik course.
-- `||` berarti salah satu kondisi benar sudah cukup.
-- Jika dua kondisi salah, method mengembalikan `false` dan tindakan harus ditolak.
+- Peran admin saja yang mendapat izin mengubah course, sesuai matriks proyek.
+- Dosen dan mahasiswa mendapat `false`; controller yang memakai `Gate::authorize()` akan menolak request mereka.
 
 ### 3. Kenapa `@can` tidak cukup?
 

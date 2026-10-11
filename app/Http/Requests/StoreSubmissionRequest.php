@@ -8,13 +8,9 @@ class StoreSubmissionRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $user       = $this->user();
         $assignment = $this->route('assignment');
-
-        // TODO minggu 7: dipindah ke SubmissionPolicy
-        return $user->role === 'mahasiswa'
-            && $assignment->status === 'published'
-            && $assignment->course->isAccessibleBy($user);
+        return $assignment && ($this->user()?->can('create', [\App\Models\Submission::class, $assignment]) ?? false)
+            && $assignment->status === 'published';
     }
 
     protected function failedAuthorization(): void

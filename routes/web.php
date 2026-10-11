@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route; // Mengimpor facade Route Laravel.
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\CourseController; // Mengimpor CourseController.
 use App\Http\Controllers\UserController; // Mengimpor UserController.
 use App\Http\Controllers\SubmissionController; // Mengimpor SubmissionController untuk route submission.
@@ -21,52 +22,45 @@ Route::get('/tentang', function () { // Membuat route halaman tentang.
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+    Route::get('/forgot-password', [PasswordResetController::class, 'requestForm'])->name('password.request');
+    Route::post('/forgot-password', [PasswordResetController::class, 'sendLink'])->middleware('throttle:3,1')->name('password.email');
+    Route::get('/reset-password/{token}', [PasswordResetController::class, 'resetForm'])->name('password.reset');
+    Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:5,1')->name('password.update');
 });
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
-// Simulasi login cepat lokal untuk praktikum (lingkungan dev).
-Route::get('/switch-role/{role}', function (string $role) {
-    abort_unless(app()->environment('local'), 404);
-
-    $validRoles = ['mahasiswa', 'dosen', 'admin'];
-    abort_unless(in_array($role, $validRoles, true), 404);
-
-    $user = \App\Models\User::where('role', $role)->first();
-    abort_unless($user, 404, 'Akun untuk role tersebut belum tersedia di database.');
-
-    \Illuminate\Support\Facades\Auth::login($user);
-    request()->session()->regenerate();
-    session(['active_role' => $role]);
-
-    return redirect()->route('dashboard');
-})->name('switch-role');
-
 Route::get('/dashboard', function () { // Membuat route dashboard.
-    $activeRole = session('active_role', 'mahasiswa'); // Mengambil role aktif dari session dengan default mahasiswa.
+    $currentUser = request()->user();
+    abort_unless($currentUser, 401);
+    $activeRole = $currentUser->role;
+    $accessibleCourses = match ($activeRole) {
+        'admin' => \App\Models\Course::query(),
+        'dosen' => $currentUser->taughtCourses(),
+        'mahasiswa' => $currentUser->courses(),
+        default => abort(403),
+    };
+    $courseIds = (clone $accessibleCourses)->select('courses.id');
 
-    $courses = \App\Models\Course::with(['lecturer', 'students', 'materials', 'assignments']) // Mengambil course beserta relasi dashboard.
+    $courses = (clone $accessibleCourses)->with(['lecturer', 'students', 'materials', 'assignments']) // Mengambil course beserta relasi dashboard.
         ->where('status', 'active') // Membatasi course aktif.
         ->latest() // Mengurutkan course terbaru lebih dulu.
         ->take(3) // Membatasi tiga course.
         ->get(); // Menjalankan query.
 
-    if ($courses->isEmpty()) { // Memeriksa apakah tidak ada course aktif.
-        $courses = \App\Models\Course::with(['lecturer', 'students', 'materials', 'assignments']) // Mengambil course beserta relasi lagi.
-            ->latest() // Mengurutkan dari terbaru.
-            ->take(3) // Membatasi tiga course.
-            ->get(); // Menjalankan query.
-    } // Mengakhiri kondisi course kosong.
+    if ($courses->isEmpty()) {
+        $courses = (clone $accessibleCourses)->with(['lecturer', 'students', 'materials', 'assignments'])->latest()->take(3)->get();
+    }
 
-    $allCourses = \App\Models\Course::orderBy('name')->get(); // Mengambil semua course berdasarkan nama.
-    $totalCourses = \App\Models\Course::count(); // Menghitung jumlah seluruh course.
-    $totalLecturers = \App\Models\User::where('role', 'dosen')->count(); // Menghitung jumlah dosen.
-    $totalStudents = \App\Models\User::where('role', 'mahasiswa')->count(); // Menghitung jumlah mahasiswa.
-    $totalAssignments = \App\Models\Assignment::count(); // Menghitung jumlah assignment.
-    $totalMaterials = \App\Models\Material::count(); // Menghitung jumlah material.
-    $totalSubmissions = \App\Models\Submission::count(); // Menghitung jumlah submission.
+    $allCourses = (clone $accessibleCourses)->with('lecturer')->orderBy('name')->get();
+    $totalCourses = (clone $accessibleCourses)->count();
+    $totalLecturers = (clone $accessibleCourses)->distinct()->count('lecturer_id');
+    $totalStudents = \App\Models\Course::whereIn('courses.id', $courseIds)->with('students')->get()->flatMap->students->unique('id')->count();
+    $totalAssignments = \App\Models\Assignment::whereIn('course_id', $courseIds)->count();
+    $totalMaterials = \App\Models\Material::whereIn('course_id', $courseIds)->count();
+    $totalSubmissions = \App\Models\Submission::whereHas('assignment', fn ($q) => $q->whereIn('course_id', $courseIds))->count();
 
-    $topStudents = \App\Models\User::where('role', 'mahasiswa') // Mengambil mahasiswa.
-        ->withCount('submissions') // Menghitung submission mahasiswa.
+    $topStudents = \App\Models\User::where('role', 'mahasiswa')->whereHas('courses', fn ($q) => $q->whereIn('courses.id', $courseIds)) // Mahasiswa pada course yang dapat diakses.
+        ->withCount(['submissions' => fn ($q) => $q->whereHas('assignment', fn ($a) => $a->whereIn('course_id', $courseIds))]) // Hanya menghitung pengumpulan pada course tersebut.
         ->take(4) // Membatasi empat mahasiswa.
         ->get() // Menjalankan query.
         ->map(function ($student, $index) { // Memproses hasil mahasiswa.
@@ -74,53 +68,36 @@ Route::get('/dashboard', function () { // Membuat route dashboard.
             return $student; // Mengembalikan data mahasiswa.
         }); // Mengakhiri map.
 
-    $homeworks = \App\Models\Assignment::with('course') // Mengambil assignment beserta course.
+    $homeworks = \App\Models\Assignment::with('course')->whereIn('course_id', $courseIds) // Hanya tugas dari course yang dapat diakses.
+        ->when($activeRole === 'mahasiswa', fn ($q) => $q->where('status', 'published'))
         ->where('status', 'published') // Membatasi assignment published.
         ->orderBy('due_at', 'desc') // Mengurutkan berdasarkan deadline.
         ->take(3) // Membatasi tiga assignment.
         ->get(); // Menjalankan query.
 
     if ($homeworks->isEmpty()) { // Memeriksa apakah tidak ada homework published.
-        $homeworks = \App\Models\Assignment::with('course') // Mengambil assignment beserta course lagi.
+        $homeworks = \App\Models\Assignment::with('course')->whereIn('course_id', $courseIds) // Mengambil tugas dalam cakupan yang sama.
+            ->when($activeRole === 'mahasiswa', fn ($q) => $q->where('status', 'published'))
             ->latest() // Mengurutkan terbaru.
             ->take(3) // Membatasi tiga data.
             ->get(); // Menjalankan query.
     } // Mengakhiri kondisi homework kosong.
 
-    $upcomingSchedule = \App\Models\Assignment::with('course') // Mengambil assignment beserta course untuk jadwal.
+    $upcomingSchedule = \App\Models\Assignment::with('course')->whereIn('course_id', $courseIds) // Jadwal hanya dari course yang dapat diakses.
         ->where('status', 'published') // Membatasi assignment published.
         ->where('due_at', '>=', now()) // Mengambil deadline yang belum lewat.
         ->orderBy('due_at', 'asc') // Mengurutkan dari deadline terdekat.
         ->take(2) // Membatasi dua jadwal.
         ->get(); // Menjalankan query.
 
-    $urgentAssignment = \App\Models\Assignment::with('course') // Mengambil assignment untuk notifikasi.
+    $urgentAssignment = \App\Models\Assignment::with('course')->whereIn('course_id', $courseIds) // Deadline course yang dapat diakses.
         ->where('status', 'published') // Membatasi assignment published.
         ->where('due_at', '>=', now()) // Mengambil deadline yang belum lewat.
         ->orderBy('due_at', 'asc') // Mengurutkan deadline terdekat.
         ->first(); // Mengambil assignment pertama.
 
-    if ($activeRole === 'dosen') { // Memeriksa role dosen.
-        $currentUser = \App\Models\User::where('role', 'dosen')->first(); // Mengambil user dosen pertama.
-    } elseif ($activeRole === 'admin') { // Memeriksa role admin.
-        $currentUser = \App\Models\User::where('role', 'admin')->first(); // Mengambil user admin pertama.
-    } else { // Menangani mahasiswa atau role lain.
-        $currentUser = \App\Models\User::where('role', 'mahasiswa')->first(); // Mengambil mahasiswa pertama.
-    } // Mengakhiri percabangan role.
-
-    $currentUser = $currentUser ?? (object)[ // Menyediakan fallback user jika data tidak ditemukan.
-        'name' => 'Muhammad Rifa Al-Rizqul', // Nama fallback.
-        'email' => '10241050@student.itk.ac.id', // Email fallback.
-        'role' => $activeRole, // Menentukan role fallback.
-        'nim_nip' => '10241050' // NIM/NIP fallback.
-    ]; // Menutup data fallback.
-
-    $lecturerCourses = \App\Models\Course::where('lecturer_id', $currentUser->id ?? 0)->with(['materials', 'assignments', 'students'])->get(); // Mengambil course yang diampu user aktif.
-    if ($lecturerCourses->isEmpty() && $activeRole === 'dosen') { // Memeriksa fallback course untuk dosen.
-        $lecturerCourses = \App\Models\Course::take(2)->with(['materials', 'assignments', 'students'])->get(); // Mengambil dua course sebagai fallback.
-    } // Mengakhiri kondisi fallback dosen.
-
-    $recentUsers = \App\Models\User::latest()->take(4)->get(); // Mengambil empat user terbaru.
+    $lecturerCourses = $currentUser->taughtCourses()->with(['materials', 'assignments', 'students'])->get();
+    $recentUsers = $activeRole === 'admin' ? \App\Models\User::latest()->take(4)->get() : collect();
 
     return view('dashboard', compact( // Mengirim data dashboard ke view.
         'courses', // Mengirim course.
@@ -140,7 +117,7 @@ Route::get('/dashboard', function () { // Membuat route dashboard.
         'recentUsers', // Mengirim user terbaru.
         'activeRole' // Mengirim role aktif.
     )); // Menutup pengiriman data view.
-})->name('dashboard'); // Memberikan nama dashboard.
+})->middleware('auth')->name('dashboard'); // Hanya pengguna terautentikasi dapat melihat dashboard.
 
 // Seluruh route di bawah ini membutuhkan pengguna yang sudah terautentikasi.
 Route::middleware('auth')->group(function () {
@@ -149,9 +126,24 @@ Route::middleware('auth')->group(function () {
     Route::resource('courses', CourseController::class)
         ->only(['index', 'show']);
 
+    // CRUD metadata untuk halaman Blade. Gate di controller tetap memeriksa
+    // bahwa dosen hanya mengelola materi/tugas course yang ia ampu.
+    Route::middleware('role:admin,dosen')->scopeBindings()->group(function () {
+        Route::resource('courses.materials', \App\Http\Controllers\MaterialController::class)
+            ->except(['show'])->shallow();
+        Route::resource('courses.assignments', \App\Http\Controllers\AssignmentController::class)
+            ->except(['show'])->shallow();
+    });
+
+    // Detail dapat dibuka semua role yang login; Policy memeriksa akses objek.
+    Route::get('materials/{material}', [\App\Http\Controllers\MaterialController::class, 'show'])
+        ->name('materials.show');
+    Route::get('assignments/{assignment}', [\App\Http\Controllers\AssignmentController::class, 'show'])
+        ->name('assignments.show');
+
     // Kompatibilitas URI lama untuk course management. Akses tetap dibatasi role
     // dan kepemilikan objek diperiksa lagi di CourseController.
-    Route::middleware('role:admin,dosen')->group(function () {
+    Route::middleware('role:admin')->group(function () {
         Route::resource('courses', CourseController::class)
             ->except(['index', 'show']);
     });
@@ -168,6 +160,10 @@ Route::middleware('auth')->group(function () {
             Route::resource('courses', CourseController::class);
             Route::get('courses/{course}/enrollments', [EnrollmentController::class, 'index'])
                 ->name('courses.enrollments.index');
+            Route::post('courses/{course}/enrollments', [EnrollmentController::class, 'store'])
+                ->name('courses.enrollments.store');
+            Route::delete('courses/{course}/enrollments/{student}', [EnrollmentController::class, 'destroy'])
+                ->name('courses.enrollments.destroy');
             Route::get('submissions', [SubmissionController::class, 'index'])->name('submissions.index');
             Route::get('submissions/{submission}', [SubmissionController::class, 'show'])->name('submissions.show');
             Route::get('grades', [GradeController::class, 'indexAdmin'])->name('grades.index');
@@ -188,9 +184,13 @@ Route::middleware('auth')->group(function () {
     // di CourseController; nested resources menggunakan scoped model binding.
     Route::prefix('dosen')->name('dosen.')
         ->middleware('role:dosen')->group(function () {
-            Route::resource('courses', CourseController::class);
+            Route::resource('courses', CourseController::class)->only(['index', 'show']);
             Route::get('courses/{course}/enrollments', [EnrollmentController::class, 'index'])
                 ->name('courses.enrollments.index');
+            Route::post('courses/{course}/enrollments', [EnrollmentController::class, 'store'])
+                ->name('courses.enrollments.store');
+            Route::delete('courses/{course}/enrollments/{student}', [EnrollmentController::class, 'destroy'])
+                ->name('courses.enrollments.destroy');
             Route::get('courses/{course}/grades', [GradeController::class, 'indexForCourse'])
                 ->name('courses.grades.index');
             Route::get('submissions', [SubmissionController::class, 'index'])->name('submissions.index');
@@ -218,10 +218,6 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:mahasiswa')->group(function () {
             Route::resource('courses', CourseController::class)
                 ->only(['index', 'show']);
-            Route::post('courses/{course}/enrollments', [EnrollmentController::class, 'store'])
-                ->name('courses.enrollments.store');
-            Route::delete('courses/{course}/enrollments', [EnrollmentController::class, 'destroy'])
-                ->name('courses.enrollments.destroy');
             Route::get('submissions', [SubmissionController::class, 'index'])->name('submissions.index');
             Route::get('submissions/{submission}', [SubmissionController::class, 'show'])->name('submissions.show');
             Route::get('grades', [GradeController::class, 'indexMine'])->name('grades.index');

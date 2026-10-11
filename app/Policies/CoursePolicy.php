@@ -10,7 +10,7 @@ class CoursePolicy
     public function viewAny(User $user): bool
     {
         // Semua yang login boleh melihat daftar; isinya disaring per peran di query.
-        return true;
+        return in_array($user->role, ['admin', 'dosen', 'mahasiswa'], true);
     }
 
     public function view(User $user, Course $course): bool
@@ -30,12 +30,18 @@ class CoursePolicy
 
     public function update(User $user, Course $course): bool
     {
-        // Sesuai matriks: dosen tidak boleh mengubah mata kuliah hanya karena ia mengajarnya.
         return $user->role === 'admin';
     }
 
     public function delete(User $user, Course $course): bool
     {
         return $user->role === 'admin';
+    }
+
+    /** Admin or the assigned lecturer may manage course content. */
+    public function manageContent(User $user, Course $course): bool
+    {
+        return $user->role === 'admin'
+            || ($user->role === 'dosen' && $course->isTaughtBy($user));
     }
 }

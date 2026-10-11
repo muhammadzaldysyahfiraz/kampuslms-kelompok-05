@@ -8,12 +8,8 @@ class UpdateAssignmentRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $user       = $this->user();
         $assignment = $this->route('assignment');
-
-        // TODO minggu 7: dipindah ke AssignmentPolicy
-        return $user->role === 'dosen'
-            && $assignment->course->lecturer_id === $user->id;
+        return $assignment && ($this->user()?->can('update', $assignment) ?? false);
     }
 
     protected function failedAuthorization(): void

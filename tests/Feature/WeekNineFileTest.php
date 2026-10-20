@@ -259,4 +259,58 @@ class WeekNineFileTest extends TestCase
         $responseLecturer = $this->actingAs($lecturer)->get(route('submissions.download', $subA));
         $responseLecturer->assertStatus(200);
     }
+
+    /** Test penghapusan Assignment dan Course turut menghapus berkas fisik di disk privat (Section 9.1). */
+    public function test_deleting_course_and_assignment_deletes_physical_files(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $lecturer = User::factory()->create(['role' => 'dosen']);
+        $student = User::factory()->create(['role' => 'mahasiswa']);
+
+        $course = Course::factory()->create(['lecturer_id' => $lecturer->id, 'status' => 'active']);
+        $course->students()->attach($student->id, ['enrolled_at' => now()]);
+
+        $materialPath = "materials/{$course->id}/materi-uji.pdf";
+        Storage::disk('local')->put($materialPath, 'isi materi');
+
+        $material = new Material();
+        $material->course_id = $course->id;
+        $material->uploaded_by = $lecturer->id;
+        $material->title = 'Materi Uji Hapus';
+        $material->type = 'file';
+        $material->file_path = $materialPath;
+        $material->original_name = 'materi-uji.pdf';
+        $material->file_size = 512;
+        $material->mime_type = 'application/pdf';
+        $material->save();
+
+        $assignment = Assignment::factory()->create([
+            'course_id' => $course->id,
+            'created_by' => $lecturer->id,
+            'due_at' => now()->addDays(2),
+            'status' => 'published',
+        ]);
+
+        $subPath = "submissions/{$assignment->id}/jawaban-uji.pdf";
+        Storage::disk('local')->put($subPath, 'isi jawaban');
+
+        $sub = new Submission();
+        $sub->assignment_id = $assignment->id;
+        $sub->user_id = $student->id;
+        $sub->file_path = $subPath;
+        $sub->original_name = 'jawaban-uji.pdf';
+        $sub->file_size = 512;
+        $sub->submitted_at = now();
+        $sub->is_late = false;
+        $sub->save();
+
+        Storage::disk('local')->assertExists($materialPath);
+        Storage::disk('local')->assertExists($subPath);
+
+        // Hapus course -> harus menghapus berkas fisik material dan submission terkait
+        $this->actingAs($admin)->delete(route('courses.destroy', $course));
+
+        Storage::disk('local')->assertMissing($materialPath);
+        Storage::disk('local')->assertMissing($subPath);
+    }
 }

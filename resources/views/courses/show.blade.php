@@ -31,15 +31,6 @@
                 </form>
                 @endcan
             </div>
-        @elseif(auth()->user()?->role === 'mahasiswa')
-            <div class="flex items-center gap-2">
-                <span class="status status-mahasiswa">
-                    <svg class="w-4 h-4 flex-shrink-0" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
-                    </svg>
-                    Mahasiswa terdaftar
-                </span>
-            </div>
         @endcan
     </div>
 
@@ -93,14 +84,14 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-2.5">
-                        <span class="badge-sky text-[11px]">
+                        <span class="font-mono text-[11px] font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
                             {{ $course->materials->count() }} Materi
                         </span>
 
                         @can('create', [\App\Models\Material::class, $course])
                             <a href="{{ route('courses.materials.create', $course) }}"
-                               class="inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50/70 text-sky-800 text-xs font-semibold px-3 py-1.5 hover:bg-sky-100 transition-colors">
-                                <svg class="w-4 h-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                               class="btn-outline text-xs py-1.5 px-3">
+                                <svg class="w-3.5 h-3.5" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                                 </svg>
                                 Tambah Materi
@@ -174,14 +165,14 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-2.5">
-                        <span class="badge-amber text-[11px]">
+                        <span class="font-mono text-[11px] font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
                             {{ $course->assignments->count() }} Tugas
                         </span>
 
                         @can('create', [\App\Models\Assignment::class, $course])
                             <a href="{{ route('courses.assignments.create', $course) }}"
-                               class="inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50/70 text-sky-800 text-xs font-semibold px-3 py-1.5 hover:bg-sky-100 transition-colors">
-                                <svg class="w-4 h-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                               class="btn-outline text-xs py-1.5 px-3">
+                                <svg class="w-3.5 h-3.5" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                                 </svg>
                                 Tambah Tugas
@@ -259,29 +250,16 @@
                     @endif
                 </div>
 
-                {{-- Peserta Perkuliahan --}}
-                <div class="py-5 border-b border-slate-100">
-                    <div class="flex items-center justify-between mb-2">
+                {{-- Peserta Perkuliahan (Tanpa Kapasitas Palsu /30 atau Timestamp Mentah) --}}
+                @php
+                    $stdCount = $course->students_count ?? ($course->students ? $course->students->count() : 0);
+                @endphp
+                <div class="pt-5">
+                    <div class="flex items-center justify-between">
                         <span class="section-title">Peserta kuliah</span>
-                        <span class="text-xs font-bold text-slate-900 font-mono">
-                            {{ $course->students_count ?? ($course->students ? $course->students->count() : 0) }} / 30
+                        <span class="text-xs font-bold text-slate-900 font-mono bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded">
+                            {{ $stdCount }} Mahasiswa
                         </span>
-                    </div>
-
-                    @php
-                        $stdCount = $course->students_count ?? ($course->students ? $course->students->count() : 0);
-                        $enrollPct = min(100, round(($stdCount / 30) * 100));
-                    @endphp
-
-                    <div 
-                        class="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-2"
-                        role="progressbar"
-                        aria-valuenow="{{ $stdCount }}"
-                        aria-valuemin="0"
-                        aria-valuemax="30"
-                        aria-label="Kapasitas mahasiswa terdaftar pada mata kuliah ini"
-                    >
-                        <div class="h-full bg-slate-900 rounded-full" style="width: {{ $enrollPct }}%; transition: width 300ms cubic-bezier(0.23, 1, 0.32, 1);"></div>
                     </div>
 
                     {{-- Form Daftarkan Mahasiswa & Daftar Peserta (Hanya Admin / Dosen Pengampu) --}}
@@ -358,18 +336,6 @@
                             @endif
                         </div>
                     @endcan
-                </div>
-
-                {{-- Metadata Sistem --}}
-                <div class="pt-4 text-xs text-slate-600 space-y-1.5 font-normal">
-                    <div class="flex justify-between">
-                        <span>Dibuat:</span>
-                        <span class="font-mono font-semibold text-slate-800">{{ $course->created_at->format('d M Y') }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>Pembaruan:</span>
-                        <span class="font-mono font-semibold text-slate-800">{{ $course->updated_at->format('d M Y, H:i') }}</span>
-                    </div>
                 </div>
             </div>
 

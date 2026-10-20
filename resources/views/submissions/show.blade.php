@@ -8,9 +8,6 @@
                 </svg>
                 <span>Kembali</span>
             </a>
-            <span class="text-xs font-mono px-2.5 py-1 rounded-md bg-slate-100 text-slate-700">
-                Peran: {{ ucfirst($activeRole) }}
-            </span>
         </div>
 
         @if (session('success'))

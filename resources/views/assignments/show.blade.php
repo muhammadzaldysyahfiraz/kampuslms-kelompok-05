@@ -81,17 +81,17 @@
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2 shrink-0">
-                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold rounded-md border border-slate-200 bg-sky-50/70 text-sky-800 px-2.5 py-1.5">
-                            <svg class="w-3.5 h-3.5" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold rounded-md border border-slate-200 bg-slate-100 text-slate-900 px-2.5 py-1.5 font-mono">
+                            <svg class="w-3.5 h-3.5 text-slate-600" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                             </svg>
-                            Batas: {{ $assignment->due_at->format('d M Y, H:i') }}
+                            Tenggat: {{ $assignment->due_at->format('d M Y, H:i') }}
                         </span>
-                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold rounded-md border border-slate-200 bg-slate-100 text-slate-800 px-2.5 py-1.5">
-                            <svg class="w-3.5 h-3.5" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold rounded-md border border-slate-200 bg-slate-100 text-slate-900 px-2.5 py-1.5 font-mono">
+                            <svg class="w-3.5 h-3.5 text-slate-600" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                             </svg>
-                            Nilai maksimal: {{ $assignment->max_score }} pts
+                            Maks: {{ $assignment->max_score }} pts
                         </span>
                     </div>
                 </div>
@@ -147,22 +147,22 @@
                             @endif
                         </div>
 
-                        {{-- Kartu Riwayat Pengumpulan Jika Sudah Ada --}}
+                        {{-- Kartu Riwayat Pengumpulan Jika Sudah Ada (Netral Kontras Tinggi, Tanpa Blok Pastel) --}}
                         @if ($submission)
-                            <div class="rounded-xl border border-emerald-200 bg-emerald-50/50 p-5 space-y-4">
+                            <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-5 space-y-4">
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                     <div class="flex items-center gap-3 min-w-0">
-                                        <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
-                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <div class="w-10 h-10 rounded-lg bg-white border border-slate-200 text-slate-900 flex items-center justify-center shrink-0">
+                                            <svg class="w-5 h-5 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                                             </svg>
                                         </div>
                                         <div class="min-w-0">
-                                            <p class="text-xs font-medium text-emerald-800">Berkas Jawaban Terkumpul:</p>
-                                            <p class="text-sm font-bold text-slate-900 truncate">{{ $submission->original_name }}</p>
-                                            <p class="text-[11px] text-slate-500 font-mono mt-0.5">
+                                            <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Berkas Jawaban Terkumpul</p>
+                                            <p class="text-sm font-bold text-slate-900 truncate mt-0.5">{{ $submission->original_name }}</p>
+                                            <p class="text-[11px] text-slate-600 font-mono mt-0.5">
                                                 {{ $submission->file_size ? \Illuminate\Support\Number::fileSize($submission->file_size) : '-' }} ·
-                                                Diserahkan pada {{ $submission->submitted_at?->format('d M Y, H:i') ?? $submission->created_at->format('d M Y, H:i') }}
+                                                Diserahkan {{ $submission->submitted_at?->format('d M Y, H:i') ?? $submission->created_at->format('d M Y, H:i') }}
                                             </p>
                                         </div>
                                     </div>
@@ -181,23 +181,23 @@
                                 </div>
 
                                 @if ($submission->note)
-                                    <div class="pt-3 border-t border-emerald-200/60 text-xs">
-                                        <span class="text-slate-600 font-semibold block mb-0.5">Catatan Mahasiswa:</span>
-                                        <p class="text-slate-800 italic bg-white/70 p-2.5 rounded-lg border border-emerald-100 whitespace-pre-line">{{ $submission->note }}</p>
+                                    <div class="pt-3 border-t border-slate-200/80 text-xs">
+                                        <span class="text-slate-600 font-semibold block mb-1">Catatan Mahasiswa:</span>
+                                        <p class="text-slate-800 bg-white p-3 rounded-lg border border-slate-200 whitespace-pre-line">{{ $submission->note }}</p>
                                     </div>
                                 @endif
 
                                 @if ($submission->grade)
                                     @can('view', $submission->grade)
-                                        <div class="pt-3 border-t border-emerald-200/60 flex items-center justify-between text-xs">
+                                        <div class="pt-3 border-t border-slate-200/80 flex items-center justify-between text-xs">
                                             <span class="font-semibold text-slate-700">Hasil Penilaian Dosen:</span>
-                                            <span class="font-mono font-bold text-sm text-slate-900 bg-white px-3 py-1 rounded border border-emerald-200">
+                                            <span class="font-mono font-bold text-sm text-slate-900 bg-white px-3 py-1 rounded border border-slate-200">
                                                 {{ $submission->grade->score }} / {{ $assignment->max_score }} pts
                                             </span>
                                         </div>
                                         @if ($submission->grade->feedback)
-                                            <div class="text-xs bg-white/80 p-3 rounded-lg border border-emerald-200">
-                                                <span class="font-semibold text-slate-800 block mb-1">Catatan Evaluasi & Umpan Balik:</span>
+                                            <div class="text-xs bg-white p-3 rounded-lg border border-slate-200">
+                                                <span class="font-semibold text-slate-900 block mb-1">Catatan Evaluasi & Umpan Balik:</span>
                                                 <p class="text-slate-700 leading-relaxed">{{ $submission->grade->feedback }}</p>
                                             </div>
                                         @endif
@@ -246,8 +246,8 @@
                                         <label for="submission_file" class="block text-xs font-semibold text-slate-700 mb-1.5">
                                             Pilih Berkas Jawaban (PDF, DOC, DOCX) <span class="text-rose-600">*</span>
                                         </label>
-                                        <div class="mt-1 flex justify-center px-4 py-4 border-2 border-dashed border-slate-300 rounded-lg hover:border-sky-500 transition-colors bg-slate-50/50">
-                                            <div class="space-y-1 text-center w-full">
+                                        <div class="mt-1 flex justify-center px-4 py-4 border border-dashed border-slate-300 rounded-lg hover:border-slate-900 transition-colors bg-slate-50/50">
+                                            <div class="space-y-1.5 text-center w-full">
                                                 <input
                                                     id="submission_file"
                                                     name="file"
@@ -256,21 +256,21 @@
                                                     required
                                                     aria-describedby="file-constraints"
                                                     aria-errormessage="file-error"
-                                                    class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100 cursor-pointer"
+                                                    class="block w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-3.5 file:rounded-md file:border file:border-slate-300 file:text-xs file:font-semibold file:bg-white file:text-slate-900 hover:file:bg-slate-100 cursor-pointer"
                                                 />
                                                 <p id="file-constraints" class="text-[11px] text-slate-500">Maksimal ukuran berkas: <strong class="text-slate-700">5 MB</strong>.</p>
                                             </div>
                                         </div>
 
                                         {{-- Client-side inspection feedback (Modern Web Guidance: validate-input-after-interaction) --}}
-                                        <div id="file-client-preview" class="hidden mt-2 p-2 rounded bg-sky-50 border border-sky-200 text-xs text-sky-800 flex items-center justify-between">
+                                        <div id="file-client-preview" class="hidden mt-2 p-2.5 rounded-lg bg-slate-100 border border-slate-200 text-xs text-slate-900 flex items-center justify-between">
                                             <div class="flex items-center gap-1.5 min-w-0">
-                                                <svg class="w-4 h-4 text-sky-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <svg class="w-4 h-4 text-slate-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                 </svg>
-                                                <span id="file-client-name" class="font-medium truncate max-w-[200px]"></span>
+                                                <span id="file-client-name" class="font-semibold truncate max-w-[200px]"></span>
                                             </div>
-                                            <span id="file-client-size" class="text-[11px] text-sky-700 shrink-0 font-mono font-semibold"></span>
+                                            <span id="file-client-size" class="text-[11px] text-slate-700 shrink-0 font-mono font-semibold"></span>
                                         </div>
 
                                         <div id="file-client-error" class="hidden mt-2 p-2.5 rounded bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center gap-2">

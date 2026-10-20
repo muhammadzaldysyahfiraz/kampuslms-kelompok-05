@@ -96,9 +96,9 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8"> {{-- Membuat grid responsif untuk kartu course. --}}
 
             @forelse ($courses as $course) {{-- Mengulangi data course yang sudah difilter dan dipaginasi dari controller. --}}
-                <div class="course-card lms-card lms-card-hover flex flex-col justify-between p-5 group"> {{-- Membuka kartu mata kuliah. --}}
+                <div class="course-card two-tone-card group"> {{-- Membuka kartu mata kuliah Two-Tone Swiss Index. --}}
 
-                    <div> {{-- Membuka area isi utama kartu. --}}
+                    <div class="two-tone-body"> {{-- Membuka area isi utama kartu. --}}
                         <div class="flex items-center justify-between gap-2 mb-2.5"> {{-- Membuka bagian kode, SKS, dan status. --}}
 
                             <div class="flex items-center gap-1.5"> {{-- Mengelompokkan kode dan SKS. --}}
@@ -120,12 +120,12 @@
                             <a href="{{ route('courses.show', $course) }}" class="focus:outline-none focus:underline">{{ $course->name }}</a> {{-- Menghubungkan nama course ke halaman detail. --}}
                         </h2> {{-- Menutup judul mata kuliah. --}}
 
-                        <p class="text-xs text-slate-600 line-clamp-2 mb-4 leading-relaxed font-normal"> {{-- Membuka deskripsi course. --}}
+                        <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed font-normal"> {{-- Membuka deskripsi course. --}}
                             {{ $course->description ?? 'Kurikulum pembelajaran terpadu untuk program studi sistem informasi.' }} {{-- Menampilkan deskripsi atau teks default jika kosong. --}}
                         </p> {{-- Menutup deskripsi. --}}
                     </div> {{-- Menutup area isi utama kartu. --}}
 
-                    <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs"> {{-- Membuka footer kartu. --}}
+                    <div class="two-tone-footer"> {{-- Membuka footer kartu two-tone. --}}
 
                         <div class="min-w-0 pr-2"> {{-- Membuka area informasi dosen. --}}
                             <p class="font-semibold text-slate-800 truncate text-[11px]">{{ $course->lecturer->name ?? 'Belum Ditugaskan' }}</p> {{-- Menampilkan nama dosen dari relasi lecturer yang sudah eager loaded. --}}
@@ -135,16 +135,18 @@
                         <div class="flex items-center gap-1.5 flex-shrink-0"> {{-- Membuka tombol aksi course. --}}
 
                             @if ($activeRole === 'mahasiswa') {{-- Memeriksa apakah pengguna adalah mahasiswa. --}}
-                                <a href="{{ route('courses.show', $course) }}" class="px-2.5 py-1.5 rounded-md text-xs font-semibold text-slate-800 hover:text-slate-950 hover:bg-slate-100 transition-colors inline-flex items-center gap-1.5" aria-label="Buka materi kuliah {{ $course->name }}"> {{-- Membuka detail untuk mahasiswa. --}}
+                                <a href="{{ route('courses.show', $course) }}" class="px-2.5 py-1.5 rounded-md text-xs font-semibold text-slate-800 hover:text-slate-950 hover:bg-slate-200/60 transition-colors inline-flex items-center gap-1.5" aria-label="Buka materi kuliah {{ $course->name }}"> {{-- Membuka detail untuk mahasiswa. --}}
                                     <span>Buka</span> {{-- Menampilkan teks aksi buka. --}}
-                                    <svg class="w-3 h-3" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"> {{-- Ikon panah pengganti karakter →. --}}
+                                    <svg class="w-3 h-3 group-hover:translate-x-0.5 group-hover:text-[#FE774C] transition-all" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"> {{-- Ikon panah pengganti karakter →. --}}
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /> {{-- Membentuk ikon panah kanan. --}}
                                     </svg> {{-- Menutup ikon panah. --}}
                                 </a> {{-- Menutup link buka. --}}
                             @else {{-- Menangani dosen atau admin. --}}
-                                <a href="{{ route('courses.show', $course) }}" class="px-2 py-1 rounded text-xs font-semibold text-slate-800 hover:text-slate-950 hover:bg-slate-100 transition-colors" aria-label="Buka detail mata kuliah {{ $course->name }}">Buka</a> {{-- Membuka detail course. --}}
-                                <span class="text-slate-300" aria-hidden="true">•</span> {{-- Menampilkan pemisah aksi. --}}
-                                @can('update', $course)<a href="{{ route('courses.edit', $course) }}" class="px-2 py-1 rounded text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors" aria-label="Edit mata kuliah {{ $course->name }}">Edit</a>@endcan {{-- Blade menyembunyikan aksi tanpa menggantikan Policy di controller. --}}
+                                <a href="{{ route('courses.show', $course) }}" class="px-2 py-1 rounded text-xs font-semibold text-slate-800 hover:text-slate-950 hover:bg-slate-200/60 transition-colors" aria-label="Buka detail mata kuliah {{ $course->name }}">Buka</a> {{-- Membuka detail course. --}}
+                                @can('update', $course)
+                                    <span class="text-slate-300" aria-hidden="true">•</span> {{-- Menampilkan pemisah aksi. --}}
+                                    <a href="{{ route('courses.edit', $course) }}" class="px-2 py-1 rounded text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 transition-colors" aria-label="Edit mata kuliah {{ $course->name }}">Edit</a> {{-- Blade menyembunyikan aksi tanpa menggantikan Policy di controller. --}}
+                                @endcan
                             @endif {{-- Mengakhiri kondisi role aksi. --}}
 
                         </div> {{-- Menutup tombol aksi. --}}
@@ -222,17 +224,19 @@
                                         <a href="{{ route('courses.show', $course) }}" class="px-2 py-1 rounded text-xs font-semibold text-slate-800 hover:text-slate-950 hover:bg-slate-100 transition-colors" aria-label="Lihat detail {{ $course->name }}">{{ $activeRole === 'mahasiswa' ? 'Buka' : 'Lihat' }}</a> {{-- Membuka detail course. --}}
 
                                         @if ($activeRole !== 'mahasiswa') {{-- Hanya admin atau dosen yang mendapatkan aksi edit dan hapus. --}}
-                                            <span class="text-slate-300" aria-hidden="true">•</span> {{-- Menampilkan pemisah aksi. --}}
-                                            @can('update', $course)<a href="{{ route('courses.edit', $course) }}" class="px-2 py-1 rounded text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors" aria-label="Edit {{ $course->name }}">Edit</a>@endcan {{-- Blade hanya menyaring tampilan; controller tetap mengotorisasi request. --}}
-                                            <span class="text-slate-300" aria-hidden="true">•</span> {{-- Menampilkan pemisah aksi. --}}
-
-                                            @can('delete', $course)<form action="{{ route('courses.destroy', $course) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus mata kuliah {{ $course->name }}?')" class="inline"> {{-- Membuat form DELETE untuk menghapus course. --}}
-                                                @csrf {{-- Menambahkan token CSRF untuk melindungi form. --}}
-                                                @method('DELETE') {{-- Mengubah method POST HTML menjadi DELETE untuk resource route Laravel. --}}
-                                                <button type="submit" class="px-2 py-1 rounded text-xs font-medium text-rose-700 hover:text-rose-900 hover:bg-rose-50 transition-colors cursor-pointer" aria-label="Hapus mata kuliah {{ $course->name }}">Hapus</button> {{-- Menjalankan penghapusan setelah konfirmasi. --}}
-                                            </form> {{-- Menutup form hapus. --}}
+                                            @can('update', $course)
+                                                <span class="text-slate-300" aria-hidden="true">•</span> {{-- Menampilkan pemisah aksi. --}}
+                                                <a href="{{ route('courses.edit', $course) }}" class="px-2 py-1 rounded text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors" aria-label="Edit {{ $course->name }}">Edit</a> {{-- Blade hanya menyaring tampilan; controller tetap mengotorisasi request. --}}
                                             @endcan
 
+                                            @can('delete', $course)
+                                                <span class="text-slate-300" aria-hidden="true">•</span> {{-- Menampilkan pemisah aksi. --}}
+                                                <form action="{{ route('courses.destroy', $course) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus mata kuliah {{ $course->name }}?')" class="inline"> {{-- Membuat form DELETE untuk menghapus course. --}}
+                                                    @csrf {{-- Menambahkan token CSRF untuk melindungi form. --}}
+                                                    @method('DELETE') {{-- Mengubah method POST HTML menjadi DELETE untuk resource route Laravel. --}}
+                                                    <button type="submit" class="px-2 py-1 rounded text-xs font-medium text-rose-700 hover:text-rose-900 hover:bg-rose-50 transition-colors cursor-pointer" aria-label="Hapus mata kuliah {{ $course->name }}">Hapus</button> {{-- Menjalankan penghapusan setelah konfirmasi. --}}
+                                                </form> {{-- Menutup form hapus. --}}
+                                            @endcan
                                         @endif {{-- Mengakhiri kondisi role aksi. --}}
                                     </div> {{-- Menutup kelompok aksi. --}}
                                 </td> {{-- Menutup kolom aksi. --}}

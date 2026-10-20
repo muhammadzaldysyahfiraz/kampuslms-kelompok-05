@@ -94,12 +94,12 @@
         transition-timing-function: var(--ease-out-snappy);
     }
 
-    /* State 1-2: Default & Hover (hanya perubahan warna/border, tanpa lift yang goyah) */
+    /* State 1-2: Default & Hover (Command Ink + Tactile Inner Top-Bevel) */
     .btn-primary {
         background-color: #111111;
         color: #ffffff;
         border: 1px solid #111111;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.16), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
     }
     .btn-primary:hover {
         background-color: #252530;
@@ -110,7 +110,7 @@
         background-color: #ffffff;
         color: #0F172A;
         border: var(--hairline);
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+        box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.8), 0 1px 2px 0 rgba(0, 0, 0, 0.02);
     }
     .btn-secondary:hover {
         background-color: #F8FAFC;
@@ -122,6 +122,7 @@
         background-color: #1E1E26;
         color: #ffffff;
         border: 1px solid #363644;
+        box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.14);
     }
     .btn-dark:hover {
         background-color: #252530;
@@ -223,6 +224,96 @@
         border-color: #CBD5E1;
         box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.04);
         transform: translateY(-1px);
+    }
+
+    /* ------------------------------------------------------------------
+       Swiss Academic Index: Clean Two-Tone Card (Zero Left-Spine)
+       ------------------------------------------------------------------ */
+    .two-tone-card {
+        background-color: #ffffff;
+        border-radius: var(--radius-lg);
+        border: var(--hairline);
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: border-color var(--dur-base) var(--ease-out-snappy),
+                    box-shadow var(--dur-base) var(--ease-out-snappy),
+                    transform var(--dur-base) var(--ease-out-snappy);
+    }
+    .two-tone-card:hover {
+        border-color: #CBD5E1;
+        box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.04);
+        transform: translateY(-1px);
+    }
+    .two-tone-body {
+        padding: 1.25rem;
+        background-color: #ffffff;
+        flex: 1 1 auto;
+    }
+    .two-tone-footer {
+        padding: 0.75rem 1.25rem;
+        background-color: #F8FAFC;
+        border-top: 1px solid #E2E8F0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        font-size: 0.75rem;
+    }
+
+    /* Navigasi Utama dengan Indikator Garis Coral 2px (Micro-Signal) */
+    .nav-link-swiss {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        height: 3.5rem;
+        padding: 0 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #475569;
+        transition: color var(--dur-base) var(--ease-out-snappy);
+    }
+    .nav-link-swiss:hover {
+        color: #0F172A;
+    }
+    .nav-link-swiss.is-active {
+        color: #0F172A;
+        font-weight: 700;
+    }
+    .nav-link-swiss.is-active::after {
+        content: '';
+        position: absolute;
+        left: 0.5rem;
+        right: 0.5rem;
+        bottom: 0;
+        height: 2px;
+        background-color: #FE774C;
+        border-radius: 2px 2px 0 0;
+    }
+
+    /* Numbered Syllabus Track (Pure Typography, No Cluttered Boxes) */
+    .syllabus-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.875rem 0;
+    }
+    .syllabus-index {
+        font-family: var(--font-mono);
+        font-size: 0.6875rem;
+        font-weight: 700;
+        color: #94A3B8;
+        line-height: 1.375rem;
+        min-width: 1.5rem;
+        flex-shrink: 0;
+        user-select: none;
+        transition: color var(--dur-base) var(--ease-out-snappy);
+    }
+    .syllabus-row:hover .syllabus-index {
+        color: #FE774C;
     }
 
     /* ------------------------------------------------------------------

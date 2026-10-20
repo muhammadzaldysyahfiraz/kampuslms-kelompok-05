@@ -28,6 +28,26 @@ class Course extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        // Hapus berkas fisik materi dan submission sebelum cascadeOnDelete di level database menghapus baris anak (Minggu 9).
+        static::deleting(function (Course $course) {
+            foreach ($course->materials()->get() as $material) {
+                if ($material->file_path) {
+                    \Illuminate\Support\Facades\Storage::disk('local')->delete($material->file_path);
+                }
+            }
+
+            foreach ($course->assignments()->with('submissions')->get() as $assignment) {
+                foreach ($assignment->submissions as $submission) {
+                    if ($submission->file_path) {
+                        \Illuminate\Support\Facades\Storage::disk('local')->delete($submission->file_path);
+                    }
+                }
+            }
+        });
+    }
+
     public function lecturer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'lecturer_id');

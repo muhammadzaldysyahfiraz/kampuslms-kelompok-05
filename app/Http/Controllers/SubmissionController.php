@@ -15,7 +15,7 @@ use Throwable;
 class SubmissionController extends Controller // Membuat controller untuk menangani submission.
 {
     /** List submissions filtered to the authenticated user's access scope. */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): mixed
     {
         $user = $request->user();
         abort_unless($user, 401);
@@ -32,7 +32,16 @@ class SubmissionController extends Controller // Membuat controller untuk menang
             abort(403);
         }
 
-        return response()->json(['submissions' => $query->latest()->paginate(20)]);
+        $submissions = $query->latest('submitted_at')->paginate(20)->withQueryString();
+
+        if ($request->expectsJson()) {
+            return response()->json(['submissions' => $submissions]);
+        }
+
+        return view('submissions.index', [
+            'submissions' => $submissions,
+            'activeRole' => $user->role,
+        ]);
     }
 
     public function show(Request $request, Submission $submission) // Menampilkan satu submission menggunakan route model binding.

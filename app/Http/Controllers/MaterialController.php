@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
@@ -144,17 +145,75 @@ class MaterialController extends Controller
     public function update(Request $request, Material $material): mixed
     {
         $this->ensureMaterialManager($material, 'update');
+
         $data = $request->validate([
             'title' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['sometimes', 'required', 'string'],
             'type' => ['sometimes', 'required', 'in:file,link'],
             'external_url' => ['nullable', 'url', 'max:2048', 'required_if:type,link'],
+            // File wajib hanya kalau tipe akhirnya 'file' dan belum punya file tersimpan.
+            'file' => [
+                'nullable',
+                'file',
+                'mimes:pdf,pptx,docx',
+                'max:20480',
+                Rule::requiredIf(fn () => $request->input('type') === 'file' && ! $material->file_path),
+            ],
         ]);
 
-        $material->fill(collect($data)->only([
-            'title', 'description', 'type', 'external_url',
-        ])->all());
-        $material->save();
+        $oldPath = $material->file_path;
+        $newPath = null;
+        $finalType = $data['type'] ?? $material->type;
+
+        // Field sederhana: hanya diterapkan kalau dikirim.
+        foreach (['title', 'description'] as $field) {
+            if (array_key_exists($field, $data)) {
+                $material->{$field} = $data[$field];
+            }
+        }
+
+        if ($finalType === 'link') {
+            // Mode link: metadata berkas dikosongkan.
+            $material->type = 'link';
+            $material->external_url = $data['external_url'] ?? $material->external_url;
+            $material->file_path = null;
+            $material->original_name = null;
+            $material->file_size = null;
+            $material->mime_type = null;
+        } else {
+            // Mode file.
+            $material->type = 'file';
+            $material->external_url = null;
+
+            if ($request->hasFile('file')) {
+                $file = $request->file('file');
+
+                $material->original_name = Str::limit($file->getClientOriginalName(), 255, '');
+                $material->file_size = $file->getSize();
+                $material->mime_type = $file->getMimeType();
+
+                $newPath = $file->store("materials/{$material->course_id}", 'local');
+                abort_if($newPath === false, 500, 'Berkas gagal disimpan.');
+                $material->file_path = $newPath;
+            }
+            // Kalau tidak ada upload ulang, file_path lama tetap dipakai.
+        }
+
+        try {
+            $material->save();
+        } catch (Throwable $e) {
+            // Kalau save DB gagal dan tadi ada file baru, buang file barunya.
+            if ($newPath) {
+                Storage::disk('local')->delete($newPath);
+            }
+            throw $e;
+        }
+
+        // Hapus file lama hanya kalau sudah tidak dipakai.
+        // Terjadi saat pindah ke link, atau saat upload file baru menggantikan yang lama.
+        if ($oldPath && $oldPath !== $material->file_path) {
+            Storage::disk('local')->delete($oldPath);
+        }
 
         if ($request->expectsJson()) {
             return response()->json(['material' => $material->fresh('course')]);
@@ -167,8 +226,17 @@ class MaterialController extends Controller
     public function destroy(Request $request, Material $material): mixed
     {
         $this->ensureMaterialManager($material, 'delete');
+
         $course = $material->course;
+        $filePath = $material->file_path;
+
+        // Hapus baris DB dulu. Kalau ini gagal, file masih utuh dan bisa dicoba ulang.
         $material->delete();
+
+        // Setelah DB sukses, baru hapus file fisik.
+        if ($filePath) {
+            Storage::disk('local')->delete($filePath);
+        }
 
         if ($request->expectsJson()) {
             return response()->json(['message' => 'Materi berhasil dihapus.']);

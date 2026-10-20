@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Reset Kata Sandi — KampusLMS</title>@vite(['resources/css/app.css','resources/js/app.js'])</head>
-<body class="min-h-screen bg-slate-50 flex items-center justify-center p-6"><main class="w-full max-w-md rounded-xl bg-white p-8 shadow">
+<body class="min-h-screen bg-[#FAF8F5] flex items-center justify-center p-6"><x-campus-sketch scene="auth" /><main class="w-full max-w-md rounded-xl bg-white p-8 shadow border border-slate-200">
 <h1 class="text-xl font-bold">Lupa kata sandi</h1><p class="mt-2 text-sm text-slate-600">Masukkan email akun Anda. Jika terdaftar, kami mengirim tautan reset.</p>
 @if (session('status'))<p role="status" class="mt-4 text-sm text-emerald-700">{{ session('status') }}</p>@endif
 <form method="POST" action="{{ route('password.email') }}" class="mt-6 space-y-4">@csrf

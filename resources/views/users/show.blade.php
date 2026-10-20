@@ -60,21 +60,21 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6 text-xs text-slate-700 font-normal">
-                <div class="p-4 rounded-lg bg-slate-50 border border-slate-200">
-                    <span class="meta-label block mb-1">Status verifikasi email</span>
-                    <span class="font-bold text-slate-900">
+            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 text-xs">
+                <div>
+                    <dt class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Status Verifikasi Email</dt>
+                    <dd class="text-sm font-semibold text-slate-900">
                         {{ $user->email_verified_at ? 'Terverifikasi (' . $user->email_verified_at->format('d M Y') . ')' : 'Belum Diverifikasi' }}
-                    </span>
+                    </dd>
                 </div>
 
-                <div class="p-4 rounded-lg bg-slate-50 border border-slate-200">
-                    <span class="meta-label block mb-1">Terdaftar sejak</span>
-                    <span class="font-bold text-slate-900 font-mono">
+                <div>
+                    <dt class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Terdaftar Sejak</dt>
+                    <dd class="text-sm font-mono text-slate-900">
                         {{ $user->created_at->format('d F Y, H:i') }}
-                    </span>
+                    </dd>
                 </div>
-            </div>
+            </dl>
 
         </div>
     </div>

@@ -29,6 +29,15 @@ class Material extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::deleting(function (Material $material) {
+            if ($material->file_path) {
+                \Illuminate\Support\Facades\Storage::disk('local')->delete($material->file_path);
+            }
+        });
+    }
+
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);

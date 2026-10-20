@@ -91,6 +91,7 @@ class CourseController extends Controller // Membuat controller untuk mengelola 
         $course->load([
             'lecturer',
             'materials',
+            'students',
             'assignments' => fn ($query) => $query->when(
                 $user->role === 'mahasiswa',
                 fn ($query) => $query->where('status', 'published')
@@ -98,8 +99,17 @@ class CourseController extends Controller // Membuat controller untuk mengelola 
         ]); // Mahasiswa hanya menerima tugas terbit di payload halaman.
         $course->loadCount('students'); // Menghitung jumlah mahasiswa yang terdaftar pada course.
 
+        $availableStudents = collect();
+        if ($user && $user->can('manageContent', $course)) {
+            $enrolledIds = $course->students->pluck('id');
+            $availableStudents = User::where('role', 'mahasiswa')
+                ->whereNotIn('id', $enrolledIds)
+                ->orderBy('name')
+                ->get();
+        }
+
         $activeRole = auth()->user()->role; // Menggunakan role akun terautentikasi, bukan session switch-role.
-        return view('courses.show', compact('course', 'activeRole')); // Mengirim data course dan role ke halaman detail.
+        return view('courses.show', compact('course', 'activeRole', 'availableStudents')); // Mengirim data course dan role ke halaman detail.
     } // Menutup method show.
 
     // Menampilkan form edit.

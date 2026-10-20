@@ -15,7 +15,10 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class="min-h-full bg-[#F8FAFC] font-sans antialiased text-slate-900 flex flex-col selection:bg-[#111111] selection:text-white">
+<body class="min-h-full bg-[#FAF8F5] font-sans antialiased text-slate-900 flex flex-col selection:bg-[#111111] selection:text-white">
+
+    {{-- Latar Belakang Ilustrasi Kampus Minimalis (Multi-Scene per Halaman) --}}
+    <x-campus-sketch />
 
     {{-- Accessible Skip to Content Link (WCAG 2.4.1 Bypass Blocks) --}}
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-[#111111] focus:text-white focus:font-semibold focus:text-xs focus:rounded-md focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 transition-all">
@@ -37,7 +40,7 @@
                         </svg>
                     </div>
                     <span class="text-sm font-bold text-slate-900 tracking-tight">
-                        Kampus<span class="text-slate-600 font-normal">LMS</span>
+                        Kampus<span class="text-slate-600 font-normal">LMS</span><span class="text-[#FE774C]" aria-hidden="true">.</span>
                     </span>
                 </a>
 
@@ -45,47 +48,49 @@
                 <nav class="hidden md:flex items-center gap-1" aria-label="Navigasi Utama">
                     <a href="{{ route('dashboard') }}" 
                        aria-current="{{ request()->routeIs('dashboard') ? 'page' : 'false' }}"
-                       class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors {{ request()->routeIs('dashboard') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-50' }}">
+                       class="nav-link-swiss {{ request()->routeIs('dashboard') ? 'is-active' : '' }}">
                         Dashboard
                     </a>
                     <a href="{{ route('courses.index') }}" 
                        aria-current="{{ request()->routeIs('courses.*') ? 'page' : 'false' }}"
-                       class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors {{ request()->routeIs('courses.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-50' }}">
+                       class="nav-link-swiss {{ request()->routeIs('courses.*') ? 'is-active' : '' }}">
                         {{ $activeRole === 'dosen' ? 'Mata Kuliah Diampu' : 'Mata Kuliah' }}
                     </a>
                     @if ($activeRole === 'admin')
                         <a href="{{ route('users.index') }}" 
                            aria-current="{{ request()->routeIs('users.*') ? 'page' : 'false' }}"
-                           class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors {{ request()->routeIs('users.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-50' }}">
+                           class="nav-link-swiss {{ request()->routeIs('users.*') ? 'is-active' : '' }}">
                             Pengguna
                         </a>
                     @endif
                     <a href="{{ route('tentang') }}" 
                        aria-current="{{ request()->routeIs('tentang') ? 'page' : 'false' }}"
-                       class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors {{ request()->routeIs('tentang') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-50' }}">
+                       class="nav-link-swiss {{ request()->routeIs('tentang') ? 'is-active' : '' }}">
                         Tentang Kelompok
                     </a>
                 </nav>
             </div>
 
-            {{-- Right Context: Profile Pill & Auth Action --}}
+            {{-- Right Context: Profile & Auth Action --}}
             <div class="flex items-center gap-3">
-                <span class="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold capitalize text-slate-800">
-                    {{ $activeRole }}
-                </span>
                 @auth
                     <div class="flex items-center gap-2.5">
                         <div class="w-7 h-7 rounded-lg bg-slate-900 text-white font-bold text-[11px] flex items-center justify-center font-mono flex-shrink-0" aria-hidden="true">
                             {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
                         </div>
-                        <div class="hidden sm:block min-w-0 max-w-[140px]">
+                        <div class="hidden sm:block min-w-0 max-w-[160px]">
                             <p class="text-xs font-bold text-slate-900 truncate leading-tight">
                                 {{ auth()->user()->name }}
                             </p>
-                            <span class="status status-{{ auth()->user()->role }} text-[10px] py-0 px-1.5 mt-0.5">
-                                <span class="status-dot" aria-hidden="true"></span>
-                                {{ ucfirst(auth()->user()->role) }}
-                            </span>
+                            <div class="flex items-center gap-1.5 mt-0.5">
+                                <span class="status status-{{ auth()->user()->role }} text-[10px] py-0 leading-none">
+                                    <span class="status-dot" aria-hidden="true"></span>
+                                    {{ ucfirst(auth()->user()->role) }}
+                                </span>
+                                @if (auth()->user()->nim_nip)
+                                    <span class="text-[10px] text-slate-400 font-mono">· {{ auth()->user()->nim_nip }}</span>
+                                @endif
+                            </div>
                         </div>
 
                         {{-- Tombol Logout --}}

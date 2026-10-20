@@ -14,7 +14,10 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class="min-h-full font-sans antialiased text-slate-900 bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 selection:bg-slate-900 selection:text-white">
+<body class="min-h-full font-sans antialiased text-slate-900 bg-[#FAF8F5] flex flex-col justify-center py-12 sm:px-6 lg:px-8 selection:bg-slate-900 selection:text-white">
+
+    {{-- Latar Belakang Ilustrasi Kampus Minimalis (Scene Auth) --}}
+    <x-campus-sketch scene="auth" />
 
     <div class="sm:mx-auto sm:w-full sm:max-w-md px-4">
         {{-- Brand Logo --}}

@@ -33,6 +33,11 @@ class AssignmentPolicy
         return $this->manages($user, $assignment->course);
     }
 
+    public function viewSubmissions(User $user, Assignment $assignment): bool
+    {
+        return $this->manages($user, $assignment->course);
+    }
+
     private function manages(User $user, Course $course): bool
     {
         return $user->can('manageContent', $course);

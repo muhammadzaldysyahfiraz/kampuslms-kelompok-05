@@ -8,9 +8,6 @@
                 </svg>
                 <span>Kembali</span>
             </a>
-            <span class="text-xs font-mono px-2.5 py-1 rounded-md bg-slate-100 text-slate-700">
-                Peran: {{ ucfirst($activeRole) }}
-            </span>
         </div>
 
         @if (session('success'))
@@ -50,31 +47,48 @@
             </div>
 
             @if ($submission->note)
-                <div class="bg-slate-50 p-4 rounded-lg border border-slate-100">
-                    <span class="meta-label block mb-1">Catatan mahasiswa</span>
-                    <p class="text-sm text-slate-700 whitespace-pre-line">{{ $submission->note }}</p>
+                <div class="pt-4 border-t border-slate-100 space-y-1.5">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Catatan Mahasiswa</h2>
+                    <p class="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{{ $submission->note }}</p>
                 </div>
             @endif
 
-            <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                <span>Berkas: <strong class="text-slate-800">{{ $submission->original_name ?? 'submission-file' }}</strong></span>
-                <span>Nilai:
+            <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-sky-700" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                    </svg>
+                    <span>Berkas Jawaban: <strong class="text-slate-800">{{ $submission->original_name ?? 'submission-file.pdf' }}</strong> ({{ $submission->file_size ? \Illuminate\Support\Number::fileSize($submission->file_size) : '-' }})</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('submissions.download', $submission) }}" class="btn-primary text-xs py-1.5 px-3 inline-flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                        </svg>
+                        <span>Unduh Berkas</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between text-xs text-slate-500 pt-2">
+                <span>Status Penilaian:</span>
+                <span>
                     @if ($submission->grade)
                         @can('view', $submission->grade)
-                            <strong class="text-slate-900 font-semibold">{{ $submission->grade->score }}</strong> / {{ $submission->assignment->max_score ?? 100 }}
+                            <strong class="text-slate-900 font-semibold text-sm">{{ $submission->grade->score }}</strong> / {{ $submission->assignment->max_score ?? 100 }} pts
                         @else
                             <strong class="text-slate-900">Belum dapat dilihat</strong>
                         @endcan
                     @else
-                        <strong class="text-slate-900">Belum Dinilai</strong> / {{ $submission->assignment->max_score ?? 100 }}
+                        <strong class="text-slate-900">Belum Dinilai</strong> / {{ $submission->assignment->max_score ?? 100 }} pts
                     @endif
                 </span>
             </div>
 
             @if ($submission->grade && $submission->grade->feedback)
-                <div class="p-4 rounded-lg bg-slate-50 border border-slate-200">
-                    <span class="text-xs font-semibold text-slate-800 block mb-1">Catatan & Umpan Balik Dosen:</span>
-                    <p class="text-xs text-slate-700 leading-relaxed">{{ $submission->grade->feedback }}</p>
+                <div class="pt-4 border-t border-slate-100 space-y-1.5">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Catatan & Umpan Balik Dosen</h2>
+                    <p class="text-xs text-slate-700 leading-relaxed whitespace-pre-line">{{ $submission->grade->feedback }}</p>
                 </div>
             @endif
 

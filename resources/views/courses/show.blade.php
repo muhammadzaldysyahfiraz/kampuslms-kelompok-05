@@ -31,16 +31,7 @@
                 </form>
                 @endcan
             </div>
-        @else
-            <div class="flex items-center gap-2">
-                <span class="status status-mahasiswa">
-                    <svg class="w-4 h-4 flex-shrink-0" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
-                    </svg>
-                    Mahasiswa terdaftar
-                </span>
-            </div>
-        @endif
+        @endcan
     </div>
 
     {{-- Card Header Detail Mata Kuliah --}}
@@ -93,14 +84,14 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-2.5">
-                        <span class="badge-sky text-[11px]">
+                        <span class="font-mono text-[11px] font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
                             {{ $course->materials->count() }} Materi
                         </span>
 
                         @can('create', [\App\Models\Material::class, $course])
                             <a href="{{ route('courses.materials.create', $course) }}"
-                               class="inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50/70 text-sky-800 text-xs font-semibold px-3 py-1.5 hover:bg-sky-100 transition-colors">
-                                <svg class="w-4 h-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                               class="btn-outline text-xs py-1.5 px-3">
+                                <svg class="w-3.5 h-3.5" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                                 </svg>
                                 Tambah Materi
@@ -127,7 +118,16 @@
                                     <p class="text-xs text-slate-600 mt-0.5 font-normal leading-relaxed">
                                         {{ $material->description ?? 'Tidak ada keterangan materi.' }}
                                     </p>
-                                    @if ($material->external_url)
+                                    @if ($material->type === 'file' && $material->file_path)
+                                        <div class="mt-1.5 flex items-center gap-2">
+                                            <a href="{{ route('materials.download', $material) }}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-700 hover:text-sky-900 hover:underline">
+                                                <svg class="w-3.5 h-3.5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                                </svg>
+                                                <span>Unduh Berkas ({{ $material->file_size ? \Illuminate\Support\Number::fileSize($material->file_size) : 'PDF' }})</span>
+                                            </a>
+                                        </div>
+                                    @elseif ($material->external_url)
                                         <a href="{{ $material->external_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-xs font-semibold text-sky-800 mt-1.5 hover:underline focus:outline-none focus:underline">
                                             <span>Buka Tautan Materi</span>
                                             <span class="sr-only">(buka di tab baru)</span>
@@ -165,14 +165,14 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-2.5">
-                        <span class="badge-amber text-[11px]">
+                        <span class="font-mono text-[11px] font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
                             {{ $course->assignments->count() }} Tugas
                         </span>
 
                         @can('create', [\App\Models\Assignment::class, $course])
                             <a href="{{ route('courses.assignments.create', $course) }}"
-                               class="inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50/70 text-sky-800 text-xs font-semibold px-3 py-1.5 hover:bg-sky-100 transition-colors">
-                                <svg class="w-4 h-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                               class="btn-outline text-xs py-1.5 px-3">
+                                <svg class="w-3.5 h-3.5" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                                 </svg>
                                 Tambah Tugas
@@ -250,42 +250,92 @@
                     @endif
                 </div>
 
-                {{-- Peserta Perkuliahan --}}
-                <div class="py-5 border-b border-slate-100">
-                    <div class="flex items-center justify-between mb-2">
+                {{-- Peserta Perkuliahan (Tanpa Kapasitas Palsu /30 atau Timestamp Mentah) --}}
+                @php
+                    $stdCount = $course->students_count ?? ($course->students ? $course->students->count() : 0);
+                @endphp
+                <div class="pt-5">
+                    <div class="flex items-center justify-between">
                         <span class="section-title">Peserta kuliah</span>
-                        <span class="text-xs font-bold text-slate-900 font-mono">
-                            {{ $course->students_count ?? ($course->students ? $course->students->count() : 0) }} / 30
+                        <span class="text-xs font-bold text-slate-900 font-mono bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded">
+                            {{ $stdCount }} Mahasiswa
                         </span>
                     </div>
 
-                    @php
-                        $stdCount = $course->students_count ?? ($course->students ? $course->students->count() : 0);
-                        $enrollPct = min(100, round(($stdCount / 30) * 100));
-                    @endphp
+                    {{-- Form Daftarkan Mahasiswa & Daftar Peserta (Hanya Admin / Dosen Pengampu) --}}
+                    @can('manageContent', $course)
+                        <div class="mt-4 pt-4 border-t border-slate-100">
+                            <h4 class="text-xs font-bold text-slate-900 mb-2 flex items-center justify-between">
+                                <span>Daftarkan Mahasiswa</span>
+                                <span class="text-[10px] text-slate-500 font-normal">{{ $availableStudents->count() }} belum terdaftar</span>
+                            </h4>
 
-                    <div 
-                        class="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-2"
-                        role="progressbar"
-                        aria-valuenow="{{ $stdCount }}"
-                        aria-valuemin="0"
-                        aria-valuemax="30"
-                        aria-label="Kapasitas mahasiswa terdaftar pada mata kuliah ini"
-                    >
-                        <div class="h-full bg-slate-900 rounded-full" style="width: {{ $enrollPct }}%; transition: width 300ms cubic-bezier(0.23, 1, 0.32, 1);"></div>
-                    </div>
-                </div>
+                            @if ($availableStudents->isNotEmpty())
+                                <form action="{{ route('courses.enrollments.store', $course) }}" method="POST" class="space-y-3">
+                                    @csrf
+                                    <div>
+                                        <select name="student_id" required class="w-full text-xs py-1.5 px-2.5 rounded-lg border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-slate-900">
+                                            <option value="">-- Pilih Mahasiswa --</option>
+                                            @foreach ($availableStudents as $mhs)
+                                                <option value="{{ $mhs->id }}">
+                                                    {{ $mhs->name }} ({{ $mhs->nim_nip ?? 'MHS' }})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="w-full btn-primary text-xs py-1.5 flex items-center justify-center gap-1.5 cursor-pointer">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                        </svg>
+                                        <span>Daftarkan ke Kelas</span>
+                                    </button>
+                                </form>
+                            @else
+                                <p class="text-[11px] text-slate-500 italic py-1 text-center">
+                                    Semua mahasiswa telah terdaftar pada mata kuliah ini.
+                                </p>
+                            @endif
+                        </div>
 
-                {{-- Metadata Sistem --}}
-                <div class="pt-4 text-xs text-slate-600 space-y-1.5 font-normal">
-                    <div class="flex justify-between">
-                        <span>Dibuat:</span>
-                        <span class="font-mono font-semibold text-slate-800">{{ $course->created_at->format('d M Y') }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>Pembaruan:</span>
-                        <span class="font-mono font-semibold text-slate-800">{{ $course->updated_at->format('d M Y, H:i') }}</span>
-                    </div>
+                        {{-- Daftar Peserta Terdaftar --}}
+                        <div class="mt-4 pt-4 border-t border-slate-100">
+                            <h4 class="text-xs font-bold text-slate-900 mb-2">
+                                Daftar Peserta ({{ $course->students->count() }})
+                            </h4>
+
+                            @if ($course->students->isNotEmpty())
+                                <div class="max-h-52 overflow-y-auto space-y-2 pr-1 divide-y divide-slate-100">
+                                    @foreach ($course->students as $student)
+                                        <div class="pt-2 first:pt-0 flex items-center justify-between gap-2 text-xs">
+                                            <div class="min-w-0 flex items-center gap-2">
+                                                <div class="w-6 h-6 rounded bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-[10px] flex-shrink-0">
+                                                    {{ strtoupper(substr($student->name, 0, 1)) }}
+                                                </div>
+                                                <div class="truncate">
+                                                    <p class="font-semibold text-slate-900 truncate">{{ $student->name }}</p>
+                                                    <p class="text-[10px] text-slate-500 font-mono">{{ $student->nim_nip ?? $student->email }}</p>
+                                                </div>
+                                            </div>
+
+                                            <form action="{{ route('courses.enrollments.destroy', [$course, $student]) }}" method="POST" onsubmit="return confirm('Keluarkan {{ $student->name }} dari mata kuliah ini?')" class="flex-shrink-0">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" title="Keluarkan mahasiswa" class="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer" aria-label="Keluarkan {{ $student->name }}">
+                                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <p class="text-[11px] text-slate-500 italic py-2 text-center">
+                                    Belum ada mahasiswa yang terdaftar di kelas ini.
+                                </p>
+                            @endif
+                        </div>
+                    @endcan
                 </div>
             </div>
 

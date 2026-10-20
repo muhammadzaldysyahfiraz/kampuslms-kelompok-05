@@ -20,7 +20,7 @@ return new class extends Migration
                 ->restrictOnDelete();
 
             $table->string('title');
-            $table->text('description');
+            $table->text('description')->nullable();
             
             $table->enum('type', [
                 'file',

@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Buat Kata Sandi Baru — KampusLMS</title>@vite(['resources/css/app.css','resources/js/app.js'])</head>
-<body class="min-h-screen bg-slate-50 flex items-center justify-center p-6"><main class="w-full max-w-md rounded-xl bg-white p-8 shadow">
+<body class="min-h-screen bg-[#FAF8F5] flex items-center justify-center p-6"><x-campus-sketch scene="auth" /><main class="w-full max-w-md rounded-xl bg-white p-8 shadow border border-slate-200">
 <h1 class="text-xl font-bold">Buat kata sandi baru</h1><form method="POST" action="{{ route('password.update') }}" class="mt-6 space-y-4">@csrf
 <input type="hidden" name="token" value="{{ $token }}">
 <label class="block text-sm">Email<input name="email" type="email" required value="{{ old('email', $email) }}" class="mt-1 w-full rounded border p-2"></label>@error('email')<p class="text-sm text-red-700">{{ $message }}</p>@enderror

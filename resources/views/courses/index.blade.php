@@ -24,10 +24,6 @@
                 </svg> {{-- Menutup ikon tambah. --}}
                 <span>Tambah Mata Kuliah</span> {{-- Menampilkan teks tombol. --}}
             </a> {{-- Menutup link tambah course. --}}
-        @else {{-- Menangani role mahasiswa. --}}
-            <div class="flex items-center gap-2 flex-shrink-0"> {{-- Membuka area badge mahasiswa. --}}
-                <span class="badge-mint text-xs py-1 px-2.5 font-medium">🎓 Mahasiswa Terdaftar</span> {{-- Menampilkan status mahasiswa terdaftar. --}}
-            </div> {{-- Menutup area badge. --}}
         @endcan {{-- Mengakhiri pemeriksaan tombol tambah. --}}
     </div> {{-- Menutup header halaman. --}}
 

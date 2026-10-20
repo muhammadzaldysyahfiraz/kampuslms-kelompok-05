@@ -15,9 +15,10 @@ class ExampleTest extends TestCase
     public function test_the_application_returns_a_successful_response(): void
     {
         $response = $this->get('/');
-        $response->assertRedirect('/dashboard');
+        $response->assertRedirect('/login');
 
-        $dashboard = $this->get('/dashboard');
+        $user = \App\Models\User::factory()->create(['role' => 'mahasiswa']);
+        $dashboard = $this->actingAs($user)->get('/dashboard');
         $dashboard->assertStatus(200);
     }
 }

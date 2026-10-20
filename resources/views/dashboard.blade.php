@@ -59,13 +59,13 @@
                                 Selamat datang, {{ $currentUser->name ?? 'Mahasiswa' }}
                             @endif
                         </h2>
-                        <p class="text-xs text-slate-600 mt-1 max-w-xl leading-relaxed">
+                        <p class="text-xs text-slate-500 mt-0.5">
                             @if ($activeRole === 'dosen')
-                                Kelola silabus materi perkuliahan, terbitkan penugasan baru, dan pantau pengumpulan tugas mahasiswa secara terpadu.
+                                Manajemen silabus, penugasan kelas, dan evaluasi mahasiswa.
                             @elseif ($activeRole === 'admin')
-                                Pantau master data sistem KampusLMS, kelola akun pengguna, dan administrasi kurikulum program studi.
+                                Manajemen master data pengguna dan kurikulum akademik.
                             @else
-                                Pantau kurikulum perkuliahan semester ini, cek materi bahan ajar, dan selesaikan seluruh penugasan akademik tepat waktu.
+                                Kurikulum aktif, materi bahan ajar, dan status penugasan.
                             @endif
                         </p>
                     </div>

@@ -11,7 +11,9 @@ use App\Http\Controllers\GradeController;
 use App\Http\Controllers\NotificationController;
 
 Route::get('/', function () { // Membuat route halaman utama.
-    return redirect()->route('dashboard'); // Mengarahkan halaman utama ke dashboard.
+    return auth()->check() // Memeriksa apakah user sudah login.
+        ? redirect()->route('dashboard') // Jika sudah login, arahkan ke dashboard.
+        : redirect()->route('login'); // Jika belum login, arahkan ke halaman login.
 })->name('home'); // Memberikan nama home pada route utama.
 
 Route::get('/tentang', function () { // Membuat route halaman tentang.
@@ -28,6 +30,20 @@ Route::middleware('guest')->group(function () {
     Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:5,1')->name('password.update');
 });
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+
+// Rute pembantu demonstrasi & uji keamanan (Live Pentest) di lingkungan lokal:
+Route::get('/switch-role/{role}', function (string $role) {
+    $email = match ($role) {
+        'admin' => 'admin@kampuslms.test',
+        'dosen' => 'dosen@kampuslms.test',
+        'mahasiswa' => 'mahasiswa@kampuslms.test',
+        default => abort(404),
+    };
+    $user = \App\Models\User::where('email', $email)->firstOrFail();
+    auth()->login($user);
+    request()->session()->regenerate();
+    return redirect()->route('dashboard');
+})->name('switch-role');
 
 Route::get('/dashboard', function () { // Membuat route dashboard.
     $currentUser = request()->user();
@@ -193,7 +209,7 @@ Route::get('/dashboard', function () { // Membuat route dashboard.
         'recentUsers', // Mengirim user terbaru.
         'activeRole' // Mengirim role aktif.
     )); // Menutup pengiriman data view.
-})->name('dashboard'); // Memberikan nama dashboard.
+})->middleware('auth')->name('dashboard'); // Memberikan nama dashboard dan mewajibkan autentikasi.
 
 // Rute registrasi terpusat oleh Admin (Minggu 07)
 Route::get('/register', function () {
@@ -215,6 +231,12 @@ Route::middleware('auth')->group(function () {
     // Detail dan daftar mata kuliah umum
     Route::resource('courses', CourseController::class)
         ->only(['index', 'show']);
+
+    // Kelola pendaftaran peserta mata kuliah (Admin atau Dosen Pengampu)
+    Route::post('courses/{course}/enrollments', [EnrollmentController::class, 'store'])
+        ->name('courses.enrollments.store');
+    Route::delete('courses/{course}/enrollments/{student}', [EnrollmentController::class, 'destroy'])
+        ->name('courses.enrollments.destroy');
 
     // CRUD metadata untuk halaman Blade. Gate di controller tetap memeriksa
     // bahwa dosen hanya mengelola materi/tugas course yang ia ampu.
@@ -340,11 +362,28 @@ Route::middleware('auth')->group(function () {
             ->name('courses.materials.scoped-show');
     });
 
+    // Pengumpulan tugas oleh mahasiswa (Minggu 9)
+    Route::post('/assignments/{assignment}/submissions', [
+        SubmissionController::class, 'store',
+    ])->name('assignments.submissions.store');
+
     // Submission detail: mahasiswa pemilik, dosen pengampu, atau admin.
     Route::get('/submissions/{submission}', [
         SubmissionController::class, 'show',
     ])->middleware('role:mahasiswa,dosen,admin')
         ->name('submissions.show');
+
+    // Unduh berkas submission privat (Minggu 9)
+    Route::get('/submissions/{submission}/download', [
+        SubmissionController::class, 'download',
+    ])->middleware('role:mahasiswa,dosen,admin')
+        ->name('submissions.download');
+
+    // Hapus pengumpulan tugas
+    Route::delete('/submissions/{submission}', [
+        SubmissionController::class, 'destroy',
+    ])->middleware('role:mahasiswa,dosen,admin')
+        ->name('submissions.destroy');
 
     // Penilaian submission oleh dosen pengampu / admin
     Route::post('/submissions/{submission}/grade', [

@@ -1,4 +1,4 @@
-<?php // Menandai awal file PHP.
+<?php 
 
 use Illuminate\Support\Facades\Route; // Mengimpor facade Route Laravel.
 use App\Http\Controllers\AuthController;
@@ -228,6 +228,8 @@ Route::middleware('auth')->group(function () {
     // Detail dapat dibuka semua role yang login; Policy memeriksa akses objek.
     Route::get('materials/{material}', [\App\Http\Controllers\MaterialController::class, 'show'])
         ->name('materials.show');
+    Route::get('materials/{material}/download', [\App\Http\Controllers\MaterialController::class, 'download'])
+        ->name('materials.download');
     Route::get('assignments/{assignment}', [\App\Http\Controllers\AssignmentController::class, 'show'])
         ->name('assignments.show');
 

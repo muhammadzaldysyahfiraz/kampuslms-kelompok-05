@@ -64,6 +64,13 @@
                        class="nav-link-swiss {{ request()->routeIs('courses.*') ? 'is-active' : '' }}">
                         {{ $activeRole === 'dosen' ? 'Mata Kuliah Diampu' : 'Mata Kuliah' }}
                     </a>
+                    @if ($activeRole === 'mahasiswa')
+                        <a href="{{ route('mahasiswa.grades.index') }}" 
+                           aria-current="{{ request()->routeIs('mahasiswa.grades.*') ? 'page' : 'false' }}"
+                           class="nav-link-swiss {{ request()->routeIs('mahasiswa.grades.*') ? 'is-active' : '' }}">
+                            Nilai Saya
+                        </a>
+                    @endif
                     @if ($activeRole === 'admin')
                         <a href="{{ route('users.index') }}" 
                            aria-current="{{ request()->routeIs('users.*') ? 'page' : 'false' }}"
@@ -231,6 +238,11 @@
             <a href="{{ route('courses.index') }}" aria-current="{{ request()->routeIs('courses.*') ? 'page' : 'false' }}" class="flex items-center min-h-11 px-3 rounded-lg text-xs font-semibold {{ request()->routeIs('courses.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
                 {{ $activeRole === 'dosen' ? 'Mata Kuliah Diampu' : 'Mata Kuliah' }}
             </a>
+            @if ($activeRole === 'mahasiswa')
+                <a href="{{ route('mahasiswa.grades.index') }}" aria-current="{{ request()->routeIs('mahasiswa.grades.*') ? 'page' : 'false' }}" class="flex items-center min-h-11 px-3 rounded-lg text-xs font-semibold {{ request()->routeIs('mahasiswa.grades.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
+                    Nilai Saya
+                </a>
+            @endif
             @if ($activeRole === 'admin')
                 <a href="{{ route('users.index') }}" aria-current="{{ request()->routeIs('users.*') ? 'page' : 'false' }}" class="flex items-center min-h-11 px-3 rounded-lg text-xs font-semibold {{ request()->routeIs('users.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
                     Pengguna

@@ -74,9 +74,6 @@ class GradeController extends Controller
         $grade->graded_at = now();
         $grade->save();
 
-<<<<<<< Updated upstream
-        return response()->json(['grade' => $grade], 201);
-=======
         if ($isNew || $grade->wasChanged(['score', 'feedback'])) {
             GradeReleased::dispatch($grade);
         }
@@ -85,8 +82,11 @@ class GradeController extends Controller
             return response()->json(['grade' => $grade], 201);
         }
 
-        return redirect()->back()->with('success', 'Nilai dan umpan balik tugas berhasil disimpan.');
->>>>>>> Stashed changes
+        return redirect()->back()->with(
+            'success',
+            'Nilai dan umpan balik tugas berhasil disimpan.'
+        );
+
     }
 
     public function update(Request $request, Grade $grade): JsonResponse

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\AssignmentPublished;
 use App\Models\Assignment;
 use App\Models\Course;
 use Illuminate\Http\JsonResponse;
@@ -68,6 +69,10 @@ class AssignmentController extends Controller
         $assignment->status = $data['status'] ?? 'draft';
         $assignment->allow_late = $data['allow_late'] ?? true;
         $assignment->save();
+
+        if ($assignment->status === 'published') {
+            AssignmentPublished::dispatch($assignment);
+        }
 
         if ($request->expectsJson()) {
             return response()->json(['assignment' => $assignment], 201);
@@ -142,6 +147,7 @@ class AssignmentController extends Controller
             'status' => ['sometimes', 'in:draft,published'],
         ]);
 
+        $wasPublished = $assignment->status === 'published';
         $assignment->fill(collect($data)->only([
             'title', 'instructions', 'due_at', 'max_score', 'allow_late',
         ])->all());
@@ -149,6 +155,10 @@ class AssignmentController extends Controller
             $assignment->status = $data['status'];
         }
         $assignment->save();
+
+        if (! $wasPublished && $assignment->status === 'published') {
+            AssignmentPublished::dispatch($assignment);
+        }
 
         if ($request->expectsJson()) {
             return response()->json(['assignment' => $assignment->fresh('course')]);

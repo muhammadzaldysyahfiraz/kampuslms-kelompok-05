@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\JsonResponse;
+use App\Notifications\GradeReleasedNotification;
+use App\Notifications\NewAssignmentNotification;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
 
@@ -13,7 +14,7 @@ class NotificationController extends Controller
         $user = $request->user();
         abort_unless($user, 401);
 
-        $filter = $request->query('filter', 'all');
+        $filter = $request->query('filter', 'all') === 'unread' ? 'unread' : 'all';
         $query = $user->notifications()->latest();
         if ($filter === 'unread') {
             $query->whereNull('read_at');
@@ -43,7 +44,12 @@ class NotificationController extends Controller
             return response()->json(['notification' => $notification]);
         }
 
-        $url = $notification->data['url'] ?? route('notifications.index');
+        $url = $notification->data['url'] ?? match ($notification->type) {
+            NewAssignmentNotification::class => isset($notification->data['assignment_id']) ? route('assignments.show', $notification->data['assignment_id']) : route('notifications.index'),
+            GradeReleasedNotification::class => route('mahasiswa.grades.index'),
+            default => route('notifications.index'),
+        };
+
         return redirect($url);
     }
 
@@ -63,7 +69,7 @@ class NotificationController extends Controller
     {
         $user = $request->user();
         abort_unless($user, 401);
-        $user->unreadNotifications->markAsRead();
+        $user->unreadNotifications()->update(['read_at' => now()]);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json(['message' => 'Semua notifikasi berhasil ditandai telah dibaca.']);

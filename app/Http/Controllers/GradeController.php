@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\GradeReleased;
 use App\Models\Course;
 use App\Models\Grade;
 use App\Models\Submission;
@@ -196,7 +197,7 @@ class GradeController extends Controller
         return response()->json(['grade' => $grade->load(['submission.assignment.course', 'submission.student', 'grader'])]);
     }
 
-    public function store(Request $request, Submission $submission)
+    public function store(Request $request, Submission $submission): mixed
     {
         $this->ensureGrader($request, $submission);
         $data = $request->validate([
@@ -204,13 +205,19 @@ class GradeController extends Controller
             'feedback' => ['nullable', 'string'],
         ]);
 
-        $grade = $submission->grade()->first() ?? new Grade();
+        $grade = $submission->grade()->first();
+        $isNew = $grade === null;
+        $grade ??= new Grade();
         $grade->submission_id = $submission->id;
         $grade->graded_by = $request->user()->id;
         $grade->score = $data['score'];
         $grade->feedback = $data['feedback'] ?? null;
         $grade->graded_at = now();
         $grade->save();
+
+        if ($isNew || $grade->wasChanged(['score', 'feedback'])) {
+            GradeReleased::dispatch($grade);
+        }
 
         if ($request->wantsJson()) {
             return response()->json(['grade' => $grade], 201);
@@ -232,6 +239,10 @@ class GradeController extends Controller
         $grade->graded_by = $request->user()->id;
         $grade->graded_at = now();
         $grade->save();
+
+        if ($grade->wasChanged(['score', 'feedback'])) {
+            GradeReleased::dispatch($grade);
+        }
 
         return response()->json(['grade' => $grade->fresh(['submission.assignment.course', 'grader'])]);
     }

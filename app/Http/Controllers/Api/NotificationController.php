@@ -16,7 +16,9 @@ class NotificationController extends Controller
             ->latest()
             ->paginate(15);
 
-        return NotificationResource::collection($notifications);
+        return NotificationResource::collection($notifications)->additional([
+            'unread_count' => $request->user()->unreadNotifications()->count(),
+        ]);
     }
 
     public function read(Request $request, string $id)

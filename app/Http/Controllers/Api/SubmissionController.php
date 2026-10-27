@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Events\GradeReleased;
 use App\Http\Requests\GradeSubmissionRequest;
 use App\Http\Requests\StoreSubmissionRequest;
 use App\Http\Resources\GradeResource;
@@ -74,7 +75,9 @@ class SubmissionController extends Controller
     public function grade(GradeSubmissionRequest $request, Submission $submission)
     {
         // Kepemilikan sudah dicek di GradeSubmissionRequest::authorize().
-        $grade = $submission->grade ?? new Grade();
+        $grade = $submission->grade;
+        $isNew = $grade === null;
+        $grade ??= new Grade();
 
         // Hanya score dan feedback yang fillable.
         $grade->fill($request->safe()->only(['score', 'feedback']));
@@ -84,6 +87,10 @@ class SubmissionController extends Controller
         $grade->graded_by     = $request->user()->id;
         $grade->graded_at     = now();
         $grade->save();
+
+        if ($isNew || $grade->wasChanged(['score', 'feedback'])) {
+            GradeReleased::dispatch($grade);
+        }
 
         // 201 saat nilai baru dibuat, 200 saat diperbarui.
         return (new GradeResource($grade->load('grader')))

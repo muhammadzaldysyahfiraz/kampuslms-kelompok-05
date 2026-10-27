@@ -84,6 +84,19 @@ Akses aplikasi melalui web browser di:
 Halaman informasi kelompok dapat diakses di:
 👉 **[http://localhost:8000/tentang](http://localhost:8000/tentang)**
 
+### Menjalankan antrean notifikasi
+
+Alurnya sederhana: controller menyimpan tugas atau nilai, lalu mengirim event. Listener menerima event itu di antrean agar request tidak menunggu proses pengiriman. `SendAssignmentNotification` memberi tahu mahasiswa yang terdaftar ketika tugas terbit; `SendGradeNotification` hanya memberi tahu mahasiswa pemilik submission. Notification menyimpan ID, judul, mata kuliah, dan tautan. Nilai serta feedback tidak dimasukkan ke data notifikasi.
+
+Template `.env.example` sudah memakai `QUEUE_CONNECTION=database`; setelah migrasi, jalankan worker di terminal tersendiri:
+
+```bash
+php artisan migrate
+php artisan queue:work --sleep=3 --tries=3
+```
+
+Tanpa worker, tugas dan nilai tetap tersimpan, tetapi notifikasinya hanya menunggu di tabel `jobs`. Periksa kegagalan dengan `php artisan queue:failed`, lalu coba ulang dengan `php artisan queue:retry all`.
+
 ---
 
 ## 🌿 Struktur Branching & Alur Kerja Git

@@ -34,7 +34,7 @@ class SubmissionController extends Controller // Membuat controller untuk menang
 
         $submissions = $query->latest('submitted_at')->paginate(20)->withQueryString();
 
-        if ($request->expectsJson()) {
+        if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
             return response()->json(['submissions' => $submissions]);
         }
 

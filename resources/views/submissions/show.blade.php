@@ -146,6 +146,30 @@
                 </div>
             @endif
         </div>
+
+        @can('create', [\App\Models\Grade::class, $submission])
+            <form action="{{ route('submissions.grade.store', $submission) }}" method="POST" class="lms-card space-y-4 p-6 sm:p-8">
+                @csrf
+                <div>
+                    <h2 class="text-base font-bold text-slate-900">Penilaian</h2>
+                    <p class="mt-1 text-xs text-slate-600">Nilai dan feedback ini hanya bisa dilihat mahasiswa pemilik pengumpulan.</p>
+                </div>
+
+                <label class="block text-sm font-semibold text-slate-800">
+                    Nilai (maksimal {{ $submission->assignment->max_score }})
+                    <input type="number" name="score" min="0" max="{{ $submission->assignment->max_score }}" step="0.01" required value="{{ old('score', $submission->grade?->score) }}" class="mt-1 block w-full rounded-md border-slate-300 text-sm focus:border-slate-700 focus:ring-slate-700">
+                    @error('score') <span class="mt-1 block text-xs font-normal text-rose-700">{{ $message }}</span> @enderror
+                </label>
+
+                <label class="block text-sm font-semibold text-slate-800">
+                    Feedback
+                    <textarea name="feedback" rows="4" maxlength="2000" class="mt-1 block w-full rounded-md border-slate-300 text-sm focus:border-slate-700 focus:ring-slate-700">{{ old('feedback', $submission->grade?->feedback) }}</textarea>
+                    @error('feedback') <span class="mt-1 block text-xs font-normal text-rose-700">{{ $message }}</span> @enderror
+                </label>
+
+                <button type="submit" class="btn-primary text-xs">Simpan nilai</button>
+            </form>
+        @endcan
     </div>
     @endcan
 </x-layout>

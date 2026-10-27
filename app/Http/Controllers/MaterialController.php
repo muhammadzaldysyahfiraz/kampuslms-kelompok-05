@@ -87,7 +87,14 @@ class MaterialController extends Controller
             ]);
         }
 
-        return $this->materialResponse($material->course, $material);
+        if ($request->expectsJson()) {
+            return $this->materialResponse($material->course, $material);
+        }
+
+        return view('materials.show', [
+            'material' => $material,
+            'course' => $material->course,
+        ]);
     }
 
     public function edit(Request $request, Material $material): mixed
@@ -142,11 +149,21 @@ class MaterialController extends Controller
     }
 
     /** Explicit nested detail route used to demonstrate scoped binding. */
-    public function showNested(Request $request, Course $course, Material $material): JsonResponse
+    public function showNested(Request $request, Course $course, Material $material): mixed
     {
         abort_unless((int) $material->course_id === (int) $course->id, 404);
         Gate::authorize('view', $material);
 
+        if ($request->expectsJson()) {
+            return $this->materialResponse($course, $material);
+        }
+
+        $material->load(['course', 'uploader']);
+        return view('materials.show', compact('course', 'material'));
+    }
+
+    private function assignmentResponse(Course $course, Material $material): JsonResponse
+    {
         return $this->materialResponse($course, $material);
     }
 

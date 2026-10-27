@@ -90,21 +90,21 @@ class AssignmentController extends Controller
         $assignment->course->loadCount('students');
         abort_if($request->user()->role === 'mahasiswa' && $assignment->status !== 'published', 404);
 
-        if (! $request->expectsJson()) {
-            $mySubmission = $request->user()->role === 'mahasiswa'
-                ? $assignment->submissions()->where('user_id', $request->user()->id)->with('grade')->first()
-                : null;
-            $submittedCount = $assignment->submissions_count;
-
-            return view('assignments.show', [
-                'assignment' => $assignment,
-                'course' => $assignment->course,
-                'mySubmission' => $mySubmission,
-                'submittedCount' => $submittedCount,
-            ]);
+        if ($request->expectsJson()) {
+            return $this->assignmentResponse($assignment->course, $assignment);
         }
 
-        return $this->assignmentResponse($assignment->course, $assignment);
+        $mySubmission = $request->user()->role === 'mahasiswa'
+            ? $assignment->submissions()->where('user_id', $request->user()->id)->with('grade')->first()
+            : null;
+        $submittedCount = $assignment->submissions_count;
+
+        return view('assignments.show', [
+            'assignment' => $assignment,
+            'course' => $assignment->course,
+            'mySubmission' => $mySubmission,
+            'submittedCount' => $submittedCount,
+        ]);
     }
 
     public function edit(Request $request, Assignment $assignment): mixed
@@ -169,13 +169,29 @@ class AssignmentController extends Controller
     }
 
     /** Explicit nested detail route used to demonstrate scoped binding. */
-    public function showNested(Request $request, Course $course, Assignment $assignment): JsonResponse
+    public function showNested(Request $request, Course $course, Assignment $assignment): mixed
     {
+        $user = $request->user();
+        abort_unless($user, 401);
         abort_unless((int) $assignment->course_id === (int) $course->id, 404);
-        Gate::authorize('view', $assignment);
-        abort_if($request->user()->role === 'mahasiswa' && $assignment->status !== 'published', 404);
+        abort_unless($user->role !== 'dosen' || (int) $course->lecturer_id === (int) $user->id, 403);
+        abort_if($user->role === 'mahasiswa' && $assignment->status !== 'published', 404);
 
-        return $this->assignmentResponse($course, $assignment);
+        if ($request->expectsJson()) {
+            return $this->assignmentResponse($course, $assignment);
+        }
+
+        $mySubmission = $user->role === 'mahasiswa'
+            ? $assignment->submissions()->where('user_id', $user->id)->with('grade')->first()
+            : null;
+        $submittedCount = $assignment->submissions()->count();
+
+        return view('assignments.show', [
+            'assignment' => $assignment,
+            'course' => $course,
+            'mySubmission' => $mySubmission,
+            'submittedCount' => $submittedCount,
+        ]);
     }
 
     private function assignmentResponse(Course $course, Assignment $assignment): JsonResponse

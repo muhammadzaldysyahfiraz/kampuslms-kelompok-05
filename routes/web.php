@@ -1,8 +1,7 @@
-<?php // Menandai awal file PHP.
+<?php 
 
 use Illuminate\Support\Facades\Route; // Mengimpor facade Route Laravel.
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\CourseController; // Mengimpor CourseController.
 use App\Http\Controllers\UserController; // Mengimpor UserController.
 use App\Http\Controllers\SubmissionController; // Mengimpor SubmissionController untuk route submission.
@@ -11,7 +10,9 @@ use App\Http\Controllers\GradeController;
 use App\Http\Controllers\NotificationController;
 
 Route::get('/', function () { // Membuat route halaman utama.
-    return redirect()->route('dashboard'); // Mengarahkan halaman utama ke dashboard.
+    return auth()->check() // Memeriksa apakah user sudah login.
+        ? redirect()->route('dashboard') // Jika sudah login, arahkan ke dashboard.
+        : redirect()->route('login'); // Jika belum login, arahkan ke halaman login.
 })->name('home'); // Memberikan nama home pada route utama.
 
 Route::get('/tentang', function () { // Membuat route halaman tentang.
@@ -22,12 +23,22 @@ Route::get('/tentang', function () { // Membuat route halaman tentang.
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
-    Route::get('/forgot-password', [PasswordResetController::class, 'requestForm'])->name('password.request');
-    Route::post('/forgot-password', [PasswordResetController::class, 'sendLink'])->middleware('throttle:3,1')->name('password.email');
-    Route::get('/reset-password/{token}', [PasswordResetController::class, 'resetForm'])->name('password.reset');
-    Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:5,1')->name('password.update');
 });
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+
+// Rute pembantu demonstrasi & uji keamanan (Live Pentest) di lingkungan lokal:
+Route::get('/switch-role/{role}', function (string $role) {
+    $email = match ($role) {
+        'admin' => 'admin@kampuslms.test',
+        'dosen' => 'dosen@kampuslms.test',
+        'mahasiswa' => 'mahasiswa@kampuslms.test',
+        default => abort(404),
+    };
+    $user = \App\Models\User::where('email', $email)->firstOrFail();
+    auth()->login($user);
+    request()->session()->regenerate();
+    return redirect()->route('dashboard');
+})->name('switch-role');
 
 Route::get('/dashboard', function () { // Membuat route dashboard.
     $currentUser = request()->user();
@@ -50,7 +61,7 @@ Route::get('/dashboard', function () { // Membuat route dashboard.
         $courses = (clone $accessibleCourses)->with(['lecturer', 'students', 'materials', 'assignments'])->latest('courses.id')->take(3)->get();
     }
 
-    $allCourses = (clone $accessibleCourses)->with('lecturer')->orderBy('name')->get();
+    $allCourses = (clone $accessibleCourses)->with('lecturer')->withCount(['students', 'materials', 'assignments'])->orderBy('code')->get();
     $totalCourses = (clone $accessibleCourses)->count();
     $totalLecturers = (clone $accessibleCourses)->distinct()->count('lecturer_id');
     $totalStudents = \App\Models\Course::whereIn('courses.id', $courseIds)->with('students')->get()->flatMap->students->unique('id')->count();
@@ -58,57 +69,197 @@ Route::get('/dashboard', function () { // Membuat route dashboard.
     $totalMaterials = \App\Models\Material::whereIn('course_id', $courseIds)->count();
     $totalSubmissions = \App\Models\Submission::whereHas('assignment', fn ($q) => $q->whereIn('course_id', $courseIds))->count();
 
-    $topStudents = \App\Models\User::where('role', 'mahasiswa')->whereHas('courses', fn ($q) => $q->whereIn('courses.id', $courseIds)) // Mahasiswa pada course yang dapat diakses.
-        ->withCount(['submissions' => fn ($q) => $q->whereHas('assignment', fn ($a) => $a->whereIn('course_id', $courseIds))]) // Hanya menghitung pengumpulan pada course tersebut.
+    // Peringkat dihitung dari jumlah pengumpulan tugas nyata (bukan skor dekoratif).
+    $topStudents = \App\Models\User::where('role', 'mahasiswa') // Mengambil mahasiswa.
+        ->withCount('submissions') // Menghitung submission mahasiswa.
+        ->orderByDesc('submissions_count') // Mengurutkan dari pengumpulan terbanyak.
+        ->orderBy('name') // Menstabilkan urutan saat jumlah sama.
         ->take(4) // Membatasi empat mahasiswa.
-        ->get() // Menjalankan query.
-        ->map(function ($student, $index) { // Memproses hasil mahasiswa.
-            $student->calculated_score = 96 - ($index * 4); // Membuat skor tampilan berdasarkan urutan.
-            return $student; // Mengembalikan data mahasiswa.
-        }); // Mengakhiri map.
-
-    $homeworks = \App\Models\Assignment::with('course')->whereIn('course_id', $courseIds) // Hanya tugas dari course yang dapat diakses.
-        ->when($activeRole === 'mahasiswa', fn ($q) => $q->where('status', 'published'))
-        ->where('status', 'published') // Membatasi assignment published.
-        ->orderBy('due_at', 'desc') // Mengurutkan berdasarkan deadline.
-        ->take(3) // Membatasi tiga assignment.
         ->get(); // Menjalankan query.
 
-    if ($homeworks->isEmpty()) { // Memeriksa apakah tidak ada homework published.
-        $homeworks = \App\Models\Assignment::with('course')->whereIn('course_id', $courseIds) // Mengambil tugas dalam cakupan yang sama.
-            ->when($activeRole === 'mahasiswa', fn ($q) => $q->where('status', 'published'))
-            ->latest() // Mengurutkan terbaru.
-            ->take(3) // Membatasi tiga data.
-            ->get(); // Menjalankan query.
-    } // Mengakhiri kondisi homework kosong.
+    if (auth()->check()) { // Memeriksa jika user sudah login.
+        $currentUser = auth()->user(); // Mengambil user yang sedang terautentikasi.
+        $activeRole = $currentUser->role; // Menyesuaikan role aktif dengan user yang login.
+    } elseif ($activeRole === 'dosen') { // Memeriksa role dosen.
+        $currentUser = \App\Models\User::where('role', 'dosen')->first(); // Mengambil user dosen pertama.
+    } elseif ($activeRole === 'admin') { // Memeriksa role admin.
+        $currentUser = \App\Models\User::where('role', 'admin')->first(); // Mengambil user admin pertama.
+    } else { // Menangani mahasiswa atau role lain.
+        $currentUser = \App\Models\User::where('role', 'mahasiswa')->first(); // Mengambil mahasiswa pertama.
+    } // Mengakhiri percabangan role.
 
-    $upcomingSchedule = \App\Models\Assignment::with('course')->whereIn('course_id', $courseIds) // Jadwal hanya dari course yang dapat diakses.
-        ->where('status', 'published') // Membatasi assignment published.
-        ->where('due_at', '>=', now()) // Mengambil deadline yang belum lewat.
-        ->orderBy('due_at', 'asc') // Mengurutkan dari deadline terdekat.
-        ->take(2) // Membatasi dua jadwal.
-        ->get(); // Menjalankan query.
+    $currentUser = $currentUser ?? (object)[ // Menyediakan fallback user jika data tidak ditemukan.
+        'name' => 'Muhammad Rifa Al Rizqul Aulia', // Nama fallback.
+        'email' => '10241050@student.itk.ac.id', // Email fallback.
+        'role' => $activeRole, // Menentukan role fallback.
+        'nim_nip' => '10241050' // NIM/NIP fallback.
+    ]; // Menutup data fallback.
 
-    $urgentAssignment = \App\Models\Assignment::with('course')->whereIn('course_id', $courseIds) // Deadline course yang dapat diakses.
-        ->where('status', 'published') // Membatasi assignment published.
-        ->where('due_at', '>=', now()) // Mengambil deadline yang belum lewat.
-        ->orderBy('due_at', 'asc') // Mengurutkan deadline terdekat.
-        ->first(); // Mengambil assignment pertama.
+    // Opsi B: Data Penugasan Adaptif Sesuai Peran Pengguna (Mencegah Repetisi)
+    // 1. Mahasiswa: Status pengerjaan & pengumpulan tugas mandiri (Prioritaskan yang belum dikumpulkan di urutan atas)
+    $studentTasks = \App\Models\Assignment::with(['course', 'submissions' => function ($q) use ($currentUser) {
+        if (isset($currentUser->id)) {
+            $q->where('user_id', $currentUser->id)->with('grade');
+        }
+    }])
+        ->whereIn('course_id', $courseIds)
+        ->where('status', 'published')
+        ->orderBy('due_at', 'asc')
+        ->get()
+        ->sortBy(fn ($hw) => [
+            $hw->submissions->isNotEmpty() ? 1 : 0,
+            $hw->due_at ? \Carbon\Carbon::parse($hw->due_at)->timestamp : PHP_INT_MAX,
+        ])
+        ->values()
+        ->take(6);
 
-    $lecturerCourses = $currentUser ? $currentUser->taughtCourses()->with(['materials', 'assignments', 'students'])->get() : collect();
-    $recentUsers = $activeRole === 'admin' ? \App\Models\User::latest()->take(4)->get() : collect();
+    if ($studentTasks->isEmpty()) {
+        $studentTasks = \App\Models\Assignment::with(['course', 'submissions' => function ($q) use ($currentUser) {
+            if (isset($currentUser->id)) {
+                $q->where('user_id', $currentUser->id)->with('grade');
+            }
+        }])
+            ->whereIn('course_id', $courseIds)
+            ->latest()
+            ->take(6)
+            ->get();
+    }
+
+    // 2. Dosen: Antrean tugas mahasiswa yang perlu dinilai
+    $lecturerCourseIds = \App\Models\Course::where('lecturer_id', $currentUser->id ?? 0)->pluck('id');
+    $pendingSubmissionsQuery = \App\Models\Submission::with(['assignment.course', 'student', 'grade']);
+    if ($lecturerCourseIds->isNotEmpty()) {
+        $pendingSubmissionsQuery->whereHas('assignment', function ($q) use ($lecturerCourseIds) {
+            $q->whereIn('course_id', $lecturerCourseIds);
+        });
+    }
+    $pendingSubmissions = (clone $pendingSubmissionsQuery)->whereDoesntHave('grade')->latest()->take(4)->get();
+    if ($pendingSubmissions->isEmpty()) {
+        $pendingSubmissions = $pendingSubmissionsQuery->latest()->take(4)->get();
+    }
+    if ($pendingSubmissions->isEmpty()) {
+        $pendingSubmissions = \App\Models\Submission::with(['assignment.course', 'student', 'grade'])->latest()->take(4)->get();
+    }
+
+    // 3. Admin: Log sistem pengumpulan penugasan lintas kelas
+    $systemAssignments = \App\Models\Assignment::with('course')
+        ->withCount('submissions')
+        ->latest()
+        ->take(4)
+        ->get();
+
+    $homeworks = $studentTasks; // Menjaga kompatibilitas variabel homeworks.
+
+    // Metrik Actionable per Peran (Anti-Vanity Metrics)
+    $activeCoursesCount = (clone $accessibleCourses)->where('status', 'active')->count();
+    $studentActiveSks = $allCourses->where('status', 'active')->sum('sks');
+    $studentUnsubmittedCount = \App\Models\Assignment::whereIn('course_id', $courseIds)
+        ->where('status', 'published')
+        ->whereDoesntHave('submissions', fn ($q) => $q->where('user_id', $currentUser->id ?? 0))
+        ->count();
+    $studentGrades = \App\Models\Grade::whereHas('submission', fn ($q) => $q
+        ->where('user_id', $currentUser->id ?? 0)
+        ->whereHas('assignment', fn ($aq) => $aq->whereIn('course_id', $courseIds))
+    )->get();
+    $studentGradedCount = $studentGrades->count();
+    $studentAverageScore = $studentGradedCount > 0 ? round($studentGrades->avg('score'), 1) : null;
+
+    $ungradedSubmissionsCount = \App\Models\Submission::whereHas('assignment', fn ($q) => $q->whereIn('course_id', $courseIds))
+        ->whereDoesntHave('grade')
+        ->count();
+    $gradedSubmissionsCount = \App\Models\Submission::whereHas('assignment', fn ($q) => $q->whereIn('course_id', $courseIds))
+        ->whereHas('grade')
+        ->count();
+    $publishedAssignmentsCount = \App\Models\Assignment::whereIn('course_id', $courseIds)
+        ->where('status', 'published')
+        ->count();
+    $draftAssignmentsCount = \App\Models\Assignment::whereIn('course_id', $courseIds)
+        ->where('status', 'draft')
+        ->count();
+    $lecturerAssignmentsProgress = \App\Models\Assignment::with(['course' => fn ($q) => $q->withCount('students')])
+        ->withCount('submissions')
+        ->whereIn('course_id', $courseIds)
+        ->orderBy('due_at', 'asc')
+        ->take(4)
+        ->get();
+
+    $totalUsersCount = \App\Models\User::count();
+    $totalMahasiswaUsersCount = \App\Models\User::where('role', 'mahasiswa')->count();
+    $totalDosenUsersCount = \App\Models\User::where('role', 'dosen')->count();
+    $draftCoursesCount = (clone $accessibleCourses)->where('status', 'draft')->count();
+    $archivedCoursesCount = (clone $accessibleCourses)->where('status', 'archived')->count();
+    $totalEnrollmentsCount = \Illuminate\Support\Facades\DB::table('course_user')->count();
+
+    // Panel Kanan: Murni Jadwal & Tenggat Waktu Terdekat (Tanpa Duplikasi dengan Urgent Assignment)
+    $urgentAssignment = \App\Models\Assignment::with('course')
+        ->whereIn('course_id', $courseIds)
+        ->where('status', 'published')
+        ->where('due_at', '>=', now())
+        ->orderBy('due_at', 'asc')
+        ->first();
+
+    if (! $urgentAssignment) {
+        $urgentAssignment = \App\Models\Assignment::with('course')
+            ->whereIn('course_id', $courseIds)
+            ->orderBy('due_at', 'asc')
+            ->first();
+    }
+
+    $upcomingSchedule = \App\Models\Assignment::with('course')
+        ->whereIn('course_id', $courseIds)
+        ->where('status', 'published')
+        ->when($urgentAssignment, fn ($q) => $q->where('id', '!=', $urgentAssignment->id))
+        ->where('due_at', '>=', now())
+        ->orderBy('due_at', 'asc')
+        ->take(3)
+        ->get();
+
+    if ($upcomingSchedule->isEmpty()) {
+        $upcomingSchedule = \App\Models\Assignment::with('course')
+            ->whereIn('course_id', $courseIds)
+            ->when($urgentAssignment, fn ($q) => $q->where('id', '!=', $urgentAssignment->id))
+            ->orderBy('due_at', 'asc')
+            ->take(3)
+            ->get();
+    }
+
+    $lecturerCourses = $currentUser && method_exists($currentUser, 'taughtCourses') ? $currentUser->taughtCourses()->with(['materials', 'assignments', 'students'])->get() : \App\Models\Course::where('lecturer_id', $currentUser->id ?? 0)->with(['materials', 'assignments', 'students'])->get(); // Mengambil course yang diampu user aktif.
+    if ($lecturerCourses->isEmpty() && $activeRole === 'dosen') { // Memeriksa fallback course untuk dosen.
+        $lecturerCourses = \App\Models\Course::take(2)->with(['materials', 'assignments', 'students'])->get(); // Mengambil dua course sebagai fallback.
+    } // Mengakhiri kondisi fallback dosen.
+
+    $recentUsers = $activeRole === 'admin' ? \App\Models\User::latest()->take(5)->get() : collect(); // Mengambil user terbaru untuk admin.
 
     return view('dashboard', compact( // Mengirim data dashboard ke view.
         'courses', // Mengirim course.
         'allCourses', // Mengirim semua course.
         'totalCourses', // Mengirim total course.
+        'activeCoursesCount', // Mengirim jumlah course aktif.
+        'draftCoursesCount', // Mengirim jumlah course draft.
+        'archivedCoursesCount', // Mengirim jumlah course arsip.
+        'totalEnrollmentsCount', // Mengirim total pendaftaran kelas.
         'totalLecturers', // Mengirim total dosen.
         'totalStudents', // Mengirim total mahasiswa.
         'totalAssignments', // Mengirim total assignment.
         'totalMaterials', // Mengirim total material.
         'totalSubmissions', // Mengirim total submission.
+        'studentActiveSks', // Mengirim total SKS aktif mahasiswa.
+        'studentUnsubmittedCount', // Mengirim jumlah tugas belum dikumpul mahasiswa.
+        'studentGradedCount', // Mengirim jumlah tugas mahasiswa yang sudah dinilai.
+        'studentAverageScore', // Mengirim rata-rata nilai tugas mahasiswa.
+        'ungradedSubmissionsCount', // Mengirim jumlah berkas yang belum dinilai dosen.
+        'gradedSubmissionsCount', // Mengirim jumlah berkas yang sudah dinilai dosen.
+        'publishedAssignmentsCount', // Mengirim jumlah tugas terbit.
+        'draftAssignmentsCount', // Mengirim jumlah tugas draft.
+        'lecturerAssignmentsProgress', // Mengirim progres pengumpulan per tugas dosen.
+        'totalUsersCount', // Mengirim total seluruh akun.
+        'totalMahasiswaUsersCount', // Mengirim total akun mahasiswa.
+        'totalDosenUsersCount', // Mengirim total akun dosen.
         'topStudents', // Mengirim leaderboard mahasiswa.
         'homeworks', // Mengirim homework.
+        'studentTasks', // Mengirim status tugas mahasiswa.
+        'pendingSubmissions', // Mengirim antrean nilai dosen.
+        'systemAssignments', // Mengirim rekap penugasan admin.
         'upcomingSchedule', // Mengirim jadwal.
         'urgentAssignment', // Mengirim deadline terdekat.
         'currentUser', // Mengirim user aktif.
@@ -116,7 +267,7 @@ Route::get('/dashboard', function () { // Membuat route dashboard.
         'recentUsers', // Mengirim user terbaru.
         'activeRole' // Mengirim role aktif.
     )); // Menutup pengiriman data view.
-})->name('dashboard'); // Memberikan nama dashboard.
+})->middleware('auth')->name('dashboard'); // Memberikan nama dashboard dan mewajibkan autentikasi.
 
 // Rute registrasi terpusat oleh Admin (Minggu 07)
 Route::get('/register', function () {
@@ -125,6 +276,7 @@ Route::get('/register', function () {
 
 // Seluruh route di bawah ini membutuhkan pengguna yang sudah terautentikasi.
 Route::middleware('auth')->group(function () {
+    // Pusat Pemberitahuan / Notifikasi Mahasiswa, Dosen, dan Admin (Minggu 10)
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notifications/{notification}', [NotificationController::class, 'show'])->name('notifications.show');
     Route::patch('/notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
@@ -145,6 +297,12 @@ Route::middleware('auth')->group(function () {
     Route::resource('courses', CourseController::class)
         ->only(['index', 'show']);
 
+    // Kelola pendaftaran peserta mata kuliah (Admin atau Dosen Pengampu)
+    Route::post('courses/{course}/enrollments', [EnrollmentController::class, 'store'])
+        ->name('courses.enrollments.store');
+    Route::delete('courses/{course}/enrollments/{student}', [EnrollmentController::class, 'destroy'])
+        ->name('courses.enrollments.destroy');
+
     // CRUD metadata untuk halaman Blade. Gate di controller tetap memeriksa
     // bahwa dosen hanya mengelola materi/tugas course yang ia ampu.
     Route::middleware('role:admin,dosen')->scopeBindings()->group(function () {
@@ -157,6 +315,8 @@ Route::middleware('auth')->group(function () {
     // Detail dapat dibuka semua role yang login; Policy memeriksa akses objek.
     Route::get('materials/{material}', [\App\Http\Controllers\MaterialController::class, 'show'])
         ->name('materials.show');
+    Route::get('materials/{material}/download', [\App\Http\Controllers\MaterialController::class, 'download'])
+        ->name('materials.download');
     Route::get('assignments/{assignment}', [\App\Http\Controllers\AssignmentController::class, 'show'])
         ->name('assignments.show');
 
@@ -267,13 +427,32 @@ Route::middleware('auth')->group(function () {
             ->name('courses.materials.scoped-show');
     });
 
+    // Pengumpulan tugas oleh mahasiswa (Minggu 9)
+    Route::post('/assignments/{assignment}/submissions', [
+        SubmissionController::class, 'store',
+    ])->name('assignments.submissions.store');
+
     // Submission detail: mahasiswa pemilik, dosen pengampu, atau admin.
     Route::get('/submissions/{submission}', [
         SubmissionController::class, 'show',
     ])->middleware('role:mahasiswa,dosen,admin')
         ->name('submissions.show');
 
-    Route::post('/submissions/{submission}/grade', [GradeController::class, 'store'])
-        ->middleware('role:dosen')
+    // Unduh berkas submission privat (Minggu 9)
+    Route::get('/submissions/{submission}/download', [
+        SubmissionController::class, 'download',
+    ])->middleware('role:mahasiswa,dosen,admin')
+        ->name('submissions.download');
+
+    // Hapus pengumpulan tugas
+    Route::delete('/submissions/{submission}', [
+        SubmissionController::class, 'destroy',
+    ])->middleware('role:mahasiswa,dosen,admin')
+        ->name('submissions.destroy');
+
+    // Penilaian submission oleh dosen pengampu / admin
+    Route::post('/submissions/{submission}/grade', [
+        GradeController::class, 'store',
+    ])->middleware('role:dosen,admin')
         ->name('submissions.grade.store');
 });

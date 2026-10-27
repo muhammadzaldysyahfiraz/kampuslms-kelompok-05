@@ -32,12 +32,7 @@ class NotificationController extends Controller
             ]);
         }
 
-        return view('notifications.index', compact(
-            'notifications',
-            'unreadCount',
-            'totalCount',
-            'filter'
-        ));
+        return view('notifications.index', compact('notifications', 'unreadCount', 'totalCount', 'filter'));
     }
 
     public function show(Request $request, DatabaseNotification $notification): mixed
@@ -49,13 +44,13 @@ class NotificationController extends Controller
             return response()->json(['notification' => $notification]);
         }
 
-        $destination = match ($notification->type) {
-            NewAssignmentNotification::class => route('assignments.show', $notification->data['assignment_id']),
+        $url = $notification->data['url'] ?? match ($notification->type) {
+            NewAssignmentNotification::class => isset($notification->data['assignment_id']) ? route('assignments.show', $notification->data['assignment_id']) : route('notifications.index'),
             GradeReleasedNotification::class => route('mahasiswa.grades.index'),
             default => route('notifications.index'),
         };
 
-        return redirect($destination);
+        return redirect($url);
     }
 
     public function read(Request $request, DatabaseNotification $notification): mixed
@@ -77,10 +72,10 @@ class NotificationController extends Controller
         $user->unreadNotifications()->update(['read_at' => now()]);
 
         if ($request->wantsJson() || $request->ajax()) {
-            return response()->json(['message' => 'Semua notifikasi ditandai telah dibaca.']);
+            return response()->json(['message' => 'Semua notifikasi berhasil ditandai telah dibaca.']);
         }
 
-        return back()->with('success', 'Semua notifikasi ditandai telah dibaca.');
+        return back()->with('success', 'Semua notifikasi berhasil ditandai telah dibaca.');
     }
 
     public function destroy(Request $request, DatabaseNotification $notification): mixed
@@ -99,7 +94,7 @@ class NotificationController extends Controller
     {
         $user = $request->user();
         abort_unless($user, 401);
-        // 404 menyamarkan keberadaan notifikasi milik pengguna lain.
+        // 404 menyamarkan keberadaan notifikasi milik pengguna lain (IDOR Prevention).
         abort_unless(
             $user->notifications()->whereKey($notification->getKey())->exists(),
             404

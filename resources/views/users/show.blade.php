@@ -45,11 +45,11 @@
                             {{ $user->name }}
                         </h1>
                         @if ($user->role === 'admin')
-                            <span class="badge-coral text-[11px]">Administrator</span>
+                            <span class="status status-admin"><span class="status-dot" aria-hidden="true"></span>Administrator</span>
                         @elseif ($user->role === 'dosen')
-                            <span class="badge-sky text-[11px]">Dosen</span>
+                            <span class="status status-dosen"><span class="status-dot" aria-hidden="true"></span>Dosen</span>
                         @else
-                            <span class="badge-mint text-[11px]">Mahasiswa</span>
+                            <span class="status status-mahasiswa"><span class="status-dot" aria-hidden="true"></span>Mahasiswa</span>
                         @endif
                     </div>
 
@@ -60,21 +60,21 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6 text-xs text-slate-700 font-normal">
-                <div class="p-4 rounded-lg bg-slate-50 border border-slate-200">
-                    <span class="text-slate-600 block mb-1 font-semibold uppercase tracking-wider text-[11px]">Status Verifikasi Email</span>
-                    <span class="font-bold text-slate-900">
+            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 text-xs">
+                <div>
+                    <dt class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Status Verifikasi Email</dt>
+                    <dd class="text-sm font-semibold text-slate-900">
                         {{ $user->email_verified_at ? 'Terverifikasi (' . $user->email_verified_at->format('d M Y') . ')' : 'Belum Diverifikasi' }}
-                    </span>
+                    </dd>
                 </div>
 
-                <div class="p-4 rounded-lg bg-slate-50 border border-slate-200">
-                    <span class="text-slate-600 block mb-1 font-semibold uppercase tracking-wider text-[11px]">Terdaftar Sejak</span>
-                    <span class="font-bold text-slate-900 font-mono">
+                <div>
+                    <dt class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Terdaftar Sejak</dt>
+                    <dd class="text-sm font-mono text-slate-900">
                         {{ $user->created_at->format('d F Y, H:i') }}
-                    </span>
+                    </dd>
                 </div>
-            </div>
+            </dl>
 
         </div>
     </div>

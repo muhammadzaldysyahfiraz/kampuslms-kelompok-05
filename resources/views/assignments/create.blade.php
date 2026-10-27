@@ -55,7 +55,7 @@
                         type="datetime-local"
                         id="due_at"
                         name="due_at"
-                        value="{{ old('due_at') ? old('due_at')->format('Y-m-d\TH:i') : '' }}"
+                        value="{{ old('due_at') }}"
                         class="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 ring-focus transition-shadow focus:border-sky-600 focus:ring-sky-600"
                         placeholder="Pilih tanggal dan waktu"
                     />
@@ -110,7 +110,7 @@
                 {{-- Instruksi --}}
                 <div>
                     <label for="instructions" class="block text-sm font-semibold text-slate-800 mb-1.5">
-                        Instruksi Tugas
+                        Instruksi Tugas <span class="text-rose-600">*</span>
                     </label>
                     <textarea
                         id="instructions"

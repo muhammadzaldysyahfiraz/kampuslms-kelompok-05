@@ -7,6 +7,11 @@ use App\Models\Material;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 
 class MaterialController extends Controller
 {
@@ -46,25 +51,58 @@ class MaterialController extends Controller
 
         return response()->json([
             'course' => ['id' => $course->id, 'name' => $course->name],
-            'message' => 'Form metadata materi siap diisi. Unggah berkas belum termasuk Week 5.',
+            'message' => 'Form materi siap diisi.',
         ]);
     }
 
     public function store(Request $request, Course $course): mixed
     {
         $this->ensureCourseManager($request, $course);
+
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
             'type' => ['required', 'in:file,link'],
             'external_url' => ['nullable', 'url', 'max:2048', 'required_if:type,link'],
+            // mimes memeriksa isi berkas, bukan cuma ekstensi. max dalam KB (20480 = 20 MB).
+            'file' => ['nullable', 'required_if:type,file', 'file', 'mimes:pdf,pptx,docx', 'max:20480'],
         ]);
 
-        $material = $course->materials()->make(collect($data)->only([
-            'title', 'description', 'type', 'external_url',
-        ])->all());
+        $material = new Material([
+            'title' => $data['title'],
+            'description' => $data['description'],
+            'type' => $data['type'],
+            'external_url' => $data['type'] === 'link' ? $data['external_url'] : null,
+        ]);
+        // Kolom ini sengaja tidak fillable, jadi diisi manual dari sisi server.
+        $material->course_id = $course->id;
         $material->uploaded_by = $request->user()->id;
-        $material->save();
+
+        $storedPath = null;
+
+        if ($data['type'] === 'file') {
+            $file = $request->file('file');
+
+            // Metadata diambil dari server, bukan dari klaim klien.
+            $material->original_name = Str::limit($file->getClientOriginalName(), 255, '');
+            $material->file_size = $file->getSize();
+            $material->mime_type = $file->getMimeType();
+
+            // Nama acak di disk privat. Nama asli TIDAK dipakai sebagai nama di disk.
+            $storedPath = $file->store("materials/{$course->id}", 'local');
+            abort_if($storedPath === false, 500, 'Berkas gagal disimpan.');
+            $material->file_path = $storedPath;
+        }
+
+        try {
+            $material->save();
+        } catch (Throwable $e) {
+            // Jangan tinggalkan berkas yatim kalau insert DB gagal.
+            if ($storedPath) {
+                Storage::disk('local')->delete($storedPath);
+            }
+            throw $e;
+        }
 
         if ($request->expectsJson()) {
             return response()->json(['material' => $material], 201);
@@ -87,14 +125,7 @@ class MaterialController extends Controller
             ]);
         }
 
-        if ($request->expectsJson()) {
-            return $this->materialResponse($material->course, $material);
-        }
-
-        return view('materials.show', [
-            'material' => $material,
-            'course' => $material->course,
-        ]);
+        return $this->materialResponse($material->course, $material);
     }
 
     public function edit(Request $request, Material $material): mixed
@@ -114,17 +145,75 @@ class MaterialController extends Controller
     public function update(Request $request, Material $material): mixed
     {
         $this->ensureMaterialManager($material, 'update');
+
         $data = $request->validate([
             'title' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['sometimes', 'required', 'string'],
             'type' => ['sometimes', 'required', 'in:file,link'],
             'external_url' => ['nullable', 'url', 'max:2048', 'required_if:type,link'],
+            // File wajib hanya kalau tipe akhirnya 'file' dan belum punya file tersimpan.
+            'file' => [
+                'nullable',
+                'file',
+                'mimes:pdf,pptx,docx',
+                'max:20480',
+                Rule::requiredIf(fn () => $request->input('type') === 'file' && ! $material->file_path),
+            ],
         ]);
 
-        $material->fill(collect($data)->only([
-            'title', 'description', 'type', 'external_url',
-        ])->all());
-        $material->save();
+        $oldPath = $material->file_path;
+        $newPath = null;
+        $finalType = $data['type'] ?? $material->type;
+
+        // Field sederhana: hanya diterapkan kalau dikirim.
+        foreach (['title', 'description'] as $field) {
+            if (array_key_exists($field, $data)) {
+                $material->{$field} = $data[$field];
+            }
+        }
+
+        if ($finalType === 'link') {
+            // Mode link: metadata berkas dikosongkan.
+            $material->type = 'link';
+            $material->external_url = $data['external_url'] ?? $material->external_url;
+            $material->file_path = null;
+            $material->original_name = null;
+            $material->file_size = null;
+            $material->mime_type = null;
+        } else {
+            // Mode file.
+            $material->type = 'file';
+            $material->external_url = null;
+
+            if ($request->hasFile('file')) {
+                $file = $request->file('file');
+
+                $material->original_name = Str::limit($file->getClientOriginalName(), 255, '');
+                $material->file_size = $file->getSize();
+                $material->mime_type = $file->getMimeType();
+
+                $newPath = $file->store("materials/{$material->course_id}", 'local');
+                abort_if($newPath === false, 500, 'Berkas gagal disimpan.');
+                $material->file_path = $newPath;
+            }
+            // Kalau tidak ada upload ulang, file_path lama tetap dipakai.
+        }
+
+        try {
+            $material->save();
+        } catch (Throwable $e) {
+            // Kalau save DB gagal dan tadi ada file baru, buang file barunya.
+            if ($newPath) {
+                Storage::disk('local')->delete($newPath);
+            }
+            throw $e;
+        }
+
+        // Hapus file lama hanya kalau sudah tidak dipakai.
+        // Terjadi saat pindah ke link, atau saat upload file baru menggantikan yang lama.
+        if ($oldPath && $oldPath !== $material->file_path) {
+            Storage::disk('local')->delete($oldPath);
+        }
 
         if ($request->expectsJson()) {
             return response()->json(['material' => $material->fresh('course')]);
@@ -137,8 +226,17 @@ class MaterialController extends Controller
     public function destroy(Request $request, Material $material): mixed
     {
         $this->ensureMaterialManager($material, 'delete');
+
         $course = $material->course;
+        $filePath = $material->file_path;
+
+        // Hapus baris DB dulu. Kalau ini gagal, file masih utuh dan bisa dicoba ulang.
         $material->delete();
+
+        // Setelah DB sukses, baru hapus file fisik.
+        if ($filePath) {
+            Storage::disk('local')->delete($filePath);
+        }
 
         if ($request->expectsJson()) {
             return response()->json(['message' => 'Materi berhasil dihapus.']);
@@ -162,9 +260,17 @@ class MaterialController extends Controller
         return view('materials.show', compact('course', 'material'));
     }
 
-    private function assignmentResponse(Course $course, Material $material): JsonResponse
+    /** Unduh berkas materi. Akses dicek lewat Policy, bukan lewat URL. */
+    public function download(Material $material): StreamedResponse
     {
-        return $this->materialResponse($course, $material);
+        Gate::authorize('view', $material);
+
+        abort_unless($material->type === 'file' && $material->file_path, 404);
+
+        $disk = Storage::disk('local');
+        abort_unless($disk->exists($material->file_path), 404);
+
+        return $disk->download($material->file_path, $material->original_name);
     }
 
     private function materialResponse(Course $course, Material $material): JsonResponse

@@ -1,59 +1,41 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Akses Ditolak</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f9;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-        }
+<x-layout title="Akses Ditolak" scene="error">
 
-        .container {
-            background: white;
-            padding: 32px;
-            border-radius: 12px;
-            text-align: center;
-            max-width: 420px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-        }
+    <div class="min-h-[70vh] flex flex-col items-center justify-center text-center px-4 py-12 relative z-10">
 
-        h1 {
-            font-size: 48px;
-            margin: 0 0 12px;
-            color: #dc2626;
-        }
+        {{-- Open Doodles Clumsy (Mahasiswa terpeleset karena akses terkunci) --}}
+        <div class="relative mb-2">
+            <x-diorama.doodle name="clumsy" size="240" class="w-44 sm:w-52 h-auto mx-auto filter drop-shadow-xs" />
+            <div class="w-40 h-2 mx-auto rounded-full mt-1 pointer-events-none" style="background: radial-gradient(ellipse at center, rgba(47, 52, 55, 0.2) 0%, rgba(47, 52, 55, 0) 70%);"></div>
+        </div>
 
-        p {
-            color: #4b5563;
-            line-height: 1.6;
-        }
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-mono font-medium bg-amber-50 border border-amber-200 text-amber-800 mb-3">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500" aria-hidden="true"></span>
+            Error 403 <span aria-hidden="true">·</span> Akses Dibatasi
+        </span>
 
-        a {
-            display: inline-block;
-            margin-top: 16px;
-            padding: 10px 18px;
-            background: #2563eb;
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-        }
-    </style>
-</head>
-<body>
-    <main class="container">
-        <h1>403</h1>
-        <h2>Akses Ditolak</h2>
-        <p>
-            Maaf, kamu tidak memiliki izin untuk mengakses halaman ini.
+        <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-2">
+            Anda Tidak Memiliki Izin
+        </h1>
+
+        <p class="text-xs sm:text-sm text-slate-600 max-w-md mx-auto font-normal mb-8 leading-relaxed">
+            Ruang perkuliahan atau data ini memerlukan hak akses khusus (peran dosen atau administrator). Silakan kembali ke dashboard atau hubungi dosen pengampu.
         </p>
-        <a href="{{ route('dashboard') }}">Kembali ke Dashboard</a>
-    </main>
-</body>
-</html>
+
+        <div class="flex flex-wrap items-center justify-center gap-3">
+            <a href="{{ route('dashboard') }}" class="btn-primary">
+                <svg class="w-4 h-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                </svg>
+                <span>Kembali ke dashboard</span>
+            </a>
+            <a href="{{ route('courses.index') }}" class="btn-outline">
+                <svg class="w-4 h-4 text-slate-600" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+                </svg>
+                <span>Lihat mata kuliah</span>
+            </a>
+        </div>
+
+    </div>
+
+</x-layout>

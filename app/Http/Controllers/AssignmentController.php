@@ -99,11 +99,25 @@ class AssignmentController extends Controller
             : null;
         $submittedCount = $assignment->submissions_count;
 
+        $submissions = collect();
+        $enrolledStudents = collect();
+
+        if ($request->user() && $request->user()->can('viewSubmissions', $assignment)) {
+            $assignment->load([
+                'submissions' => fn ($q) => $q->with(['student', 'grade'])->latest('submitted_at'),
+                'course.students' => fn ($q) => $q->select('users.id', 'users.name', 'users.email', 'users.nim_nip')->orderBy('name'),
+            ]);
+            $submissions = $assignment->submissions;
+            $enrolledStudents = $assignment->course->students;
+        }
+
         return view('assignments.show', [
             'assignment' => $assignment,
             'course' => $assignment->course,
             'mySubmission' => $mySubmission,
             'submittedCount' => $submittedCount,
+            'submissions' => $submissions,
+            'enrolledStudents' => $enrolledStudents,
         ]);
     }
 
@@ -185,12 +199,27 @@ class AssignmentController extends Controller
             ? $assignment->submissions()->where('user_id', $user->id)->with('grade')->first()
             : null;
         $submittedCount = $assignment->submissions()->count();
+        $course->loadCount('students');
+
+        $submissions = collect();
+        $enrolledStudents = collect();
+
+        if ($user->can('viewSubmissions', $assignment)) {
+            $assignment->load([
+                'submissions' => fn ($q) => $q->with(['student', 'grade'])->latest('submitted_at'),
+                'course.students' => fn ($q) => $q->select('users.id', 'users.name', 'users.email', 'users.nim_nip')->orderBy('name'),
+            ]);
+            $submissions = $assignment->submissions;
+            $enrolledStudents = $assignment->course->students;
+        }
 
         return view('assignments.show', [
             'assignment' => $assignment,
             'course' => $course,
             'mySubmission' => $mySubmission,
             'submittedCount' => $submittedCount,
+            'submissions' => $submissions,
+            'enrolledStudents' => $enrolledStudents,
         ]);
     }
 

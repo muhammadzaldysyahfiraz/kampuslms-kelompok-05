@@ -30,6 +30,18 @@ class Assignment extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        // Hapus berkas fisik seluruh submission sebelum cascadeOnDelete di database menghapus barisnya (Minggu 9).
+        static::deleting(function (Assignment $assignment) {
+            foreach ($assignment->submissions()->get() as $submission) {
+                if ($submission->file_path) {
+                    \Illuminate\Support\Facades\Storage::disk('local')->delete($submission->file_path);
+                }
+            }
+        });
+    }
+
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);

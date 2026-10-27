@@ -28,6 +28,15 @@ class Submission extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::deleting(function (Submission $submission) {
+            if ($submission->file_path) {
+                \Illuminate\Support\Facades\Storage::disk('local')->delete($submission->file_path);
+            }
+        });
+    }
+
     public function assignment(): BelongsTo
     {
         return $this->belongsTo(Assignment::class);

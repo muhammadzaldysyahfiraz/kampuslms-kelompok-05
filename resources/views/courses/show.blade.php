@@ -9,37 +9,40 @@
             <span>Kembali ke Daftar</span>
         </a>
 
-        @if (auth()->user()?->role === 'dosen' && (int) $course->lecturer_id === (int) auth()->id())
-            <a href="{{ route('dosen.courses.grades.index', $course) }}" class="btn-secondary text-xs py-2">Rekap Nilai Kelas</a>
-        @endif
-
-        @can('update', $course)
-            <div class="flex items-center gap-2">
-                <a href="{{ route('courses.edit', $course) }}" class="btn-secondary text-xs py-2">
-                    <svg class="w-4 h-4 text-slate-700" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+        <div class="flex flex-wrap items-center gap-2">
+            @if (auth()->check() && (auth()->user()->role === 'dosen' && $course->isTaughtBy(auth()->user()) || auth()->user()->role === 'admin'))
+                <a href="{{ route('dosen.courses.grades.index', $course) }}" class="btn-primary text-xs py-2 inline-flex items-center gap-2 shadow-xs">
+                    <svg class="w-4 h-4 text-white" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5m.75-9 3-3 2.148 2.148A12.061 12.061 0 0 1 16.5 7.605" />
                     </svg>
-                    <span>Edit Mata Kuliah</span>
+                    <span>Rekap Nilai Kelas</span>
                 </a>
+            @endif
 
-                @can('delete', $course)
-                <form action="{{ route('courses.destroy', $course) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus mata kuliah {{ $course->name }}?')" class="inline">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn-danger-soft text-xs py-2 px-3" aria-label="Hapus mata kuliah {{ $course->name }}">
-                        <svg class="w-4 h-4 text-rose-700" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+            @can('update', $course)
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('courses.edit', $course) }}" class="btn-secondary text-xs py-2">
+                        <svg class="w-4 h-4 text-slate-700" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                         </svg>
-                        <span>Hapus</span>
-                    </button>
-                </form>
-                @endcan
-            </div>
-        @else
-            <div class="flex items-center gap-2">
-                <span class="badge-mint text-xs py-1.5 px-3 font-semibold">🎓 Mahasiswa Terdaftar</span>
-            </div>
-        @endif
+                        <span>Edit Mata Kuliah</span>
+                    </a>
+
+                    @can('delete', $course)
+                    <form action="{{ route('courses.destroy', $course) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus mata kuliah {{ $course->name }}?')" class="inline">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn-danger-soft text-xs py-2 px-3" aria-label="Hapus mata kuliah {{ $course->name }}">
+                            <svg class="w-4 h-4 text-rose-700" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                            </svg>
+                            <span>Hapus</span>
+                        </button>
+                    </form>
+                    @endcan
+                </div>
+            @endcan
+        </div>
     </div>
 
     {{-- Card Header Detail Mata Kuliah --}}
@@ -49,20 +52,34 @@
                 {{ $course->name }}
             </h1>
 
-            <div class="flex items-center gap-2">
-                <span class="font-mono text-xs font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
-                    {{ $course->code }}
-                </span>
-                <span class="text-xs font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 border border-slate-200 font-mono">
-                    {{ $course->sks }} SKS
-                </span>
-                @if ($course->status === 'active')
-                    <span class="badge-mint text-[11px]">Aktif</span>
-                @elseif ($course->status === 'draft')
-                    <span class="badge-amber text-[11px]">Draft</span>
-                @else
-                    <span class="badge-dark text-[11px]">Diarsipkan</span>
-                @endif
+            <div class="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+                {{-- In-Component Hero: Compact Reading Doodle with Contact Shadow --}}
+                <div class="relative flex-shrink-0 flex flex-col items-center select-none" id="course-reading-hero">
+                    <img src="{{ asset('images/illustrations/opendoodles-reading.svg') }}"
+                         alt=""
+                         aria-hidden="true"
+                         class="w-14 sm:w-16 h-auto diorama-doodle object-contain filter drop-shadow-2xs"
+                         loading="lazy"
+                         decoding="async">
+                    <div class="w-11 sm:w-13 h-1 rounded-full pointer-events-none -mt-0.5"
+                         style="background: radial-gradient(ellipse at center, rgba(47, 52, 55, 0.2) 0%, rgba(47, 52, 55, 0) 70%);"></div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="font-mono text-xs font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
+                        {{ $course->code }}
+                    </span>
+                    <span class="text-xs font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 border border-slate-200 font-mono">
+                        {{ $course->sks }} SKS
+                    </span>
+                    @if ($course->status === 'active')
+                        <span class="status status-active"><span class="status-dot" aria-hidden="true"></span>Aktif</span>
+                    @elseif ($course->status === 'draft')
+                        <span class="status status-draft"><span class="status-dot" aria-hidden="true"></span>Draft</span>
+                    @else
+                        <span class="status status-archived"><span class="status-dot" aria-hidden="true"></span>Diarsipkan</span>
+                    @endif
+                </div>
             </div>
         </div>
 
@@ -92,14 +109,14 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-2.5">
-                        <span class="badge-sky text-[11px]">
+                        <span class="font-mono text-[11px] font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
                             {{ $course->materials->count() }} Materi
                         </span>
 
                         @can('create', [\App\Models\Material::class, $course])
                             <a href="{{ route('courses.materials.create', $course) }}"
-                               class="inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50/70 text-sky-800 text-xs font-semibold px-3 py-1.5 hover:bg-sky-100 transition-colors">
-                                <svg class="w-4 h-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                               class="btn-outline text-xs py-1.5 px-3">
+                                <svg class="w-3.5 h-3.5" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                                 </svg>
                                 Tambah Materi
@@ -126,7 +143,16 @@
                                     <p class="text-xs text-slate-600 mt-0.5 font-normal leading-relaxed">
                                         {{ $material->description ?? 'Tidak ada keterangan materi.' }}
                                     </p>
-                                    @if ($material->external_url)
+                                    @if ($material->type === 'file' && $material->file_path)
+                                        <div class="mt-1.5 flex items-center gap-2">
+                                            <a href="{{ route('materials.download', $material) }}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-700 hover:text-sky-900 hover:underline">
+                                                <svg class="w-3.5 h-3.5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                                </svg>
+                                                <span>Unduh Berkas ({{ $material->file_size ? \Illuminate\Support\Number::fileSize($material->file_size) : 'PDF' }})</span>
+                                            </a>
+                                        </div>
+                                    @elseif ($material->external_url)
                                         <a href="{{ $material->external_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-xs font-semibold text-sky-800 mt-1.5 hover:underline focus:outline-none focus:underline">
                                             <span>Buka Tautan Materi</span>
                                             <span class="sr-only">(buka di tab baru)</span>
@@ -136,7 +162,7 @@
                                         </a>
                                     @endif
                                 </div>
-                                <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 uppercase font-mono border border-slate-200 shrink-0">
+                                <span class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-mono border border-slate-200 shrink-0">
                                     {{ $material->type }}
                                 </span>
                             </div>
@@ -164,14 +190,14 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-2.5">
-                        <span class="badge-amber text-[11px]">
+                        <span class="font-mono text-[11px] font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
                             {{ $course->assignments->count() }} Tugas
                         </span>
 
                         @can('create', [\App\Models\Assignment::class, $course])
                             <a href="{{ route('courses.assignments.create', $course) }}"
-                               class="inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50/70 text-sky-800 text-xs font-semibold px-3 py-1.5 hover:bg-sky-100 transition-colors">
-                                <svg class="w-4 h-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                               class="btn-outline text-xs py-1.5 px-3">
+                                <svg class="w-3.5 h-3.5" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                                 </svg>
                                 Tambah Tugas
@@ -189,8 +215,8 @@
                                         <a href="{{ route('assignments.show', $assignment) }}" class="text-sm font-semibold text-slate-900 hover:text-sky-700 transition-colors">
                                             {{ $assignment->title }}
                                         </a>
-                                        <span class="text-[11px] font-bold px-2 py-0.5 rounded {{ $assignment->status === 'published' ? 'badge-mint' : 'badge-dark' }}">
-                                            {{ ucfirst($assignment->status) }}
+                                        <span class="status {{ $assignment->status === 'published' ? 'status-active' : 'status-archived' }}">
+                                            <span class="status-dot" aria-hidden="true"></span>{{ ucfirst($assignment->status) }}
                                         </span>
                                         @can('update', $assignment)
                                             <a href="{{ route('assignments.edit', $assignment) }}" class="text-xs text-slate-500 hover:text-slate-800 font-medium ml-1">
@@ -221,8 +247,8 @@
             <div class="lms-card p-6">
                 {{-- Dosen Pengampu --}}
                 <div class="pb-5 border-b border-slate-100">
-                    <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3.5">
-                        Dosen Pengampu
+                    <h3 class="section-title mb-3.5">
+                        Dosen pengampu
                     </h3>
 
                     @if ($course->lecturer)
@@ -249,46 +275,92 @@
                     @endif
                 </div>
 
-                {{-- Peserta Perkuliahan --}}
-                <div class="py-5 border-b border-slate-100">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Peserta Kuliah</span>
-                        <span class="text-xs font-bold text-slate-900 font-mono">
-                            {{ $course->students_count ?? ($course->students ? $course->students->count() : 0) }} / 30
+                {{-- Peserta Perkuliahan (Tanpa Kapasitas Palsu /30 atau Timestamp Mentah) --}}
+                @php
+                    $stdCount = $course->students_count ?? ($course->students ? $course->students->count() : 0);
+                @endphp
+                <div class="pt-5">
+                    <div class="flex items-center justify-between">
+                        <span class="section-title">Peserta kuliah</span>
+                        <span class="text-xs font-bold text-slate-900 font-mono bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded">
+                            {{ $stdCount }} Mahasiswa
                         </span>
                     </div>
 
-                    @php
-                        $stdCount = $course->students_count ?? ($course->students ? $course->students->count() : 0);
-                        $enrollPct = min(100, max(15, ($stdCount / 30) * 100));
-                    @endphp
+                    {{-- Form Daftarkan Mahasiswa & Daftar Peserta (Hanya Admin / Dosen Pengampu) --}}
+                    @can('manageContent', $course)
+                        <div class="mt-4 pt-4 border-t border-slate-100">
+                            <h4 class="text-xs font-bold text-slate-900 mb-2 flex items-center justify-between">
+                                <span>Daftarkan Mahasiswa</span>
+                                <span class="text-[10px] text-slate-500 font-normal">{{ $availableStudents->count() }} belum terdaftar</span>
+                            </h4>
 
-                    <div 
-                        class="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-2"
-                        role="progressbar"
-                        aria-valuenow="{{ $stdCount }}"
-                        aria-valuemin="0"
-                        aria-valuemax="30"
-                        aria-label="Kapasitas mahasiswa terdaftar pada mata kuliah ini"
-                    >
-                        <div class="h-full bg-slate-900 rounded-full transition-all duration-500" style="width: {{ $enrollPct }}%"></div>
-                    </div>
+                            @if ($availableStudents->isNotEmpty())
+                                <form action="{{ route('courses.enrollments.store', $course) }}" method="POST" class="space-y-3">
+                                    @csrf
+                                    <div>
+                                        <select name="student_id" required class="w-full text-xs py-1.5 px-2.5 rounded-lg border border-slate-200 bg-white text-slate-800 focus:outline-none focus:border-slate-900">
+                                            <option value="">-- Pilih Mahasiswa --</option>
+                                            @foreach ($availableStudents as $mhs)
+                                                <option value="{{ $mhs->id }}">
+                                                    {{ $mhs->name }} ({{ $mhs->nim_nip ?? 'MHS' }})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="w-full btn-primary text-xs py-1.5 flex items-center justify-center gap-1.5 cursor-pointer">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                        </svg>
+                                        <span>Daftarkan ke Kelas</span>
+                                    </button>
+                                </form>
+                            @else
+                                <p class="text-[11px] text-slate-500 italic py-1 text-center">
+                                    Semua mahasiswa telah terdaftar pada mata kuliah ini.
+                                </p>
+                            @endif
+                        </div>
 
-                    <p class="text-[11px] text-slate-600 font-normal">
-                        Kapasitas kelas reguler aktif (maksimal 30 mahasiswa).
-                    </p>
-                </div>
+                        {{-- Daftar Peserta Terdaftar --}}
+                        <div class="mt-4 pt-4 border-t border-slate-100">
+                            <h4 class="text-xs font-bold text-slate-900 mb-2">
+                                Daftar Peserta ({{ $course->students->count() }})
+                            </h4>
 
-                {{-- Metadata Sistem --}}
-                <div class="pt-4 text-xs text-slate-600 space-y-1.5 font-normal">
-                    <div class="flex justify-between">
-                        <span>Dibuat:</span>
-                        <span class="font-mono font-semibold text-slate-800">{{ $course->created_at->format('d M Y') }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>Pembaruan:</span>
-                        <span class="font-mono font-semibold text-slate-800">{{ $course->updated_at->format('d M Y, H:i') }}</span>
-                    </div>
+                            @if ($course->students->isNotEmpty())
+                                <div class="max-h-52 overflow-y-auto space-y-2 pr-1 divide-y divide-slate-100">
+                                    @foreach ($course->students as $student)
+                                        <div class="pt-2 first:pt-0 flex items-center justify-between gap-2 text-xs">
+                                            <div class="min-w-0 flex items-center gap-2">
+                                                <div class="w-6 h-6 rounded bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-[10px] flex-shrink-0">
+                                                    {{ strtoupper(substr($student->name, 0, 1)) }}
+                                                </div>
+                                                <div class="truncate">
+                                                    <p class="font-semibold text-slate-900 truncate">{{ $student->name }}</p>
+                                                    <p class="text-[10px] text-slate-500 font-mono">{{ $student->nim_nip ?? $student->email }}</p>
+                                                </div>
+                                            </div>
+
+                                            <form action="{{ route('courses.enrollments.destroy', [$course, $student]) }}" method="POST" onsubmit="return confirm('Keluarkan {{ $student->name }} dari mata kuliah ini?')" class="flex-shrink-0">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" title="Keluarkan mahasiswa" class="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer" aria-label="Keluarkan {{ $student->name }}">
+                                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <p class="text-[11px] text-slate-500 italic py-2 text-center">
+                                    Belum ada mahasiswa yang terdaftar di kelas ini.
+                                </p>
+                            @endif
+                        </div>
+                    @endcan
                 </div>
             </div>
 

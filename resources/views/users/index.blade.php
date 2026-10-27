@@ -40,9 +40,7 @@
             <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true">
                 <kbd class="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono text-slate-600 bg-white border border-slate-200 rounded">↵</kbd>
             </div>
-        </form>
-
-        <div class="flex items-center gap-1" id="role-filter-buttons" role="group" aria-label="Filter berdasarkan peran pengguna">
+        </form>                    <div class="flex flex-wrap items-center gap-1" id="role-filter-buttons" role="group" aria-label="Filter berdasarkan peran pengguna">
             @php $curRole = request('role'); @endphp
             <a href="{{ route('users.index', array_filter(['q' => request('q')])) }}" 
                class="role-filter-btn px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all {{ empty($curRole) ? 'bg-[#111111] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">
@@ -66,15 +64,15 @@
     {{-- Tabel Pengguna Modern Utilitarian --}}
     <div class="lms-card overflow-hidden mb-6">
         <div class="px-5 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-            <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                Daftar Akun Pengguna
+            <h3 class="section-title">
+                Daftar akun pengguna
             </h3>
             <span class="text-xs text-slate-600 font-mono">Halaman {{ $users->currentPage() }} dari {{ $users->lastPage() }}</span>
         </div>
 
         <div class="overflow-x-auto">
             <table class="w-full text-left text-xs" id="users-table" aria-label="Tabel daftar akun pengguna">
-                <thead class="bg-slate-50/50 text-[11px] font-bold text-slate-700 uppercase tracking-wider border-b border-slate-200">
+                <thead class="bg-slate-50/50 text-[11px] font-semibold text-slate-600 border-b border-slate-200">
                     <tr>
                         <th scope="col" class="px-5 py-2.5">Pengguna</th>
                         <th scope="col" class="px-5 py-2.5">Role</th>
@@ -105,11 +103,11 @@
                             {{-- Kolom Role --}}
                             <td class="px-5 py-3">
                                 @if ($user->role === 'admin')
-                                    <span class="badge-coral text-[11px]">Admin</span>
+                                    <span class="status status-admin"><span class="status-dot" aria-hidden="true"></span>Admin</span>
                                 @elseif ($user->role === 'dosen')
-                                    <span class="badge-sky text-[11px]">Dosen</span>
+                                    <span class="status status-dosen"><span class="status-dot" aria-hidden="true"></span>Dosen</span>
                                 @else
-                                    <span class="badge-mint text-[11px]">Mahasiswa</span>
+                                    <span class="status status-mahasiswa"><span class="status-dot" aria-hidden="true"></span>Mahasiswa</span>
                                 @endif
                             </td>
 

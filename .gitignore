@@ -21,4 +21,14 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+DESIGN.md
 /.freebuff
+
+# Internal agent & dev documentation
+/.agents
+/.impeccable
+/storage/backups
+PRODUCT.md
+PROJECT.md
+TEST_INFRA.md
+TEST_READY.md

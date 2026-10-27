@@ -1,24 +1,24 @@
-<x-layout title="Akses Ditolak">
+<x-layout title="Akses Ditolak" scene="error">
 
-    <div class="min-h-[65vh] flex flex-col items-center justify-center text-center px-4 py-8">
+    <div class="min-h-[70vh] flex flex-col items-center justify-center text-center px-4 py-12 relative z-10">
 
-        {{-- Inline SVG: kunci terkunci, satu bobot garis, tanpa aset placeholder --}}
-        <div class="w-16 h-16 rounded-2xl bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center mb-5" aria-hidden="true">
-            <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
-            </svg>
+        {{-- Open Doodles Clumsy (Mahasiswa terpeleset karena akses terkunci) --}}
+        <div class="relative mb-2">
+            <x-diorama.doodle name="clumsy" size="240" class="w-44 sm:w-52 h-auto mx-auto filter drop-shadow-xs" />
+            <div class="w-40 h-2 mx-auto rounded-full mt-1 pointer-events-none" style="background: radial-gradient(ellipse at center, rgba(47, 52, 55, 0.2) 0%, rgba(47, 52, 55, 0) 70%);"></div>
         </div>
 
-        <span class="status status-late mb-3">
-            <span class="status-dot" aria-hidden="true"></span>Error 403 <span aria-hidden="true">·</span> Akses ditolak
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-mono font-medium bg-amber-50 border border-amber-200 text-amber-800 mb-3">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500" aria-hidden="true"></span>
+            Error 403 <span aria-hidden="true">·</span> Akses Dibatasi
         </span>
 
         <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-2">
-            Anda tidak memiliki izin
+            Anda Tidak Memiliki Izin
         </h1>
 
-        <p class="text-sm text-slate-600 max-w-md font-normal mb-8 leading-relaxed">
-            Halaman ini hanya dapat diakses oleh peran pengguna tertentu. Ganti peran tampilan pada bilah navigasi atau kembali ke dashboard untuk melanjutkan.
+        <p class="text-xs sm:text-sm text-slate-600 max-w-md mx-auto font-normal mb-8 leading-relaxed">
+            Ruang perkuliahan atau data ini memerlukan hak akses khusus (peran dosen atau administrator). Silakan kembali ke dashboard atau hubungi dosen pengampu.
         </p>
 
         <div class="flex flex-wrap items-center justify-center gap-3">
@@ -29,6 +29,9 @@
                 <span>Kembali ke dashboard</span>
             </a>
             <a href="{{ route('courses.index') }}" class="btn-outline">
+                <svg class="w-4 h-4 text-slate-600" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+                </svg>
                 <span>Lihat mata kuliah</span>
             </a>
         </div>

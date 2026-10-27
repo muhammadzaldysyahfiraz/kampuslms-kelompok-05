@@ -49,51 +49,65 @@
             {{-- Editorial Greeting & Swiss KPI Ledger (Role Tailored) --}}
             <div class="lms-card overflow-hidden">
                 <div class="p-6 pb-5 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/80">
-                    <div>
-                        <h2 class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight mt-0.5">
-                            @if ($activeRole === 'dosen')
-                                Selamat datang, {{ $currentUser->name ?? 'Bapak/Ibu Dosen' }}
-                            @elseif ($activeRole === 'admin')
-                                Selamat datang, Administrator {{ $currentUser->name ?? '' }}
-                            @else
-                                Selamat datang, {{ $currentUser->name ?? 'Mahasiswa' }}
-                            @endif
-                        </h2>
-                        <p class="text-xs text-slate-500 mt-0.5">
-                            @if ($activeRole === 'dosen')
-                                Manajemen silabus, penugasan kelas, dan evaluasi mahasiswa.
-                            @elseif ($activeRole === 'admin')
-                                Manajemen master data pengguna dan kurikulum akademik.
-                            @else
-                                Kurikulum aktif, materi bahan ajar, dan status penugasan.
-                            @endif
-                        </p>
+                    <div class="flex items-center gap-4 sm:gap-5 min-w-0">
+                        {{-- In-Component Hero: Open Doodles Coffee with Grounding Shadow --}}
+                        <div class="relative flex-shrink-0 flex flex-col items-center select-none" id="dashboard-coffee-hero">
+                            <img src="{{ asset('images/illustrations/opendoodles-coffee.svg') }}"
+                                 alt=""
+                                 aria-hidden="true"
+                                 class="w-20 sm:w-24 md:w-28 h-auto diorama-doodle object-contain filter drop-shadow-2xs"
+                                 loading="lazy"
+                                 decoding="async">
+                            <div class="w-16 sm:w-20 md:w-24 h-1.5 rounded-full pointer-events-none -mt-1"
+                                 style="background: radial-gradient(ellipse at center, rgba(47, 52, 55, 0.22) 0%, rgba(47, 52, 55, 0) 70%);"></div>
+                        </div>
+
+                        <div class="min-w-0">
+                            <h2 class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight mt-0.5">
+                                @if ($activeRole === 'dosen')
+                                    Selamat datang, {{ $currentUser->name ?? 'Bapak/Ibu Dosen' }}
+                                @elseif ($activeRole === 'admin')
+                                    Selamat datang, Administrator {{ $currentUser->name ?? '' }}
+                                @else
+                                    Selamat datang, {{ $currentUser->name ?? 'Mahasiswa' }}
+                                @endif
+                            </h2>
+                            <p class="text-xs text-slate-500 mt-0.5">
+                                @if ($activeRole === 'dosen')
+                                    Manajemen silabus, penugasan kelas, dan evaluasi mahasiswa.
+                                @elseif ($activeRole === 'admin')
+                                    Manajemen master data pengguna dan kurikulum akademik.
+                                @else
+                                    Kurikulum aktif, materi bahan ajar, dan status penugasan.
+                                @endif
+                            </p>
+                        </div>
                     </div>
 
                     {{-- Role Specific Quick Action Buttons --}}
                     <div class="flex items-center gap-2 flex-shrink-0">
                         @if ($activeRole === 'dosen')
-                            <a href="{{ route('courses.index') }}" class="btn-outline text-xs py-2">
+                            <a href="{{ route('courses.index') }}" class="btn-outline text-xs py-2 greeting-action-btn" data-tactile="spring">
                                 <span>Kelas Saya</span>
                             </a>
                         @elseif ($activeRole === 'admin')
-                            <a href="{{ route('users.create') }}" class="btn-primary text-xs py-2">
+                            <a href="{{ route('users.create') }}" class="btn-primary text-xs py-2 greeting-action-btn" data-tactile="spring">
                                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                                 </svg>
                                 <span>Tambah Pengguna</span>
                             </a>
-                            <a href="{{ route('courses.create') }}" class="btn-outline text-xs py-2">
+                            <a href="{{ route('courses.create') }}" class="btn-outline text-xs py-2 greeting-action-btn" data-tactile="spring">
                                 <span>+ Mata Kuliah</span>
                             </a>
                         @else
-                            <a href="{{ route('courses.index') }}" class="btn-primary text-xs py-2">
+                            <a href="{{ route('courses.index') }}" class="btn-primary text-xs py-2 greeting-action-btn" data-tactile="spring">
                                 <span>Mata Kuliah Saya</span>
                                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
                                 </svg>
                             </a>
-                            <a href="{{ route('tentang') }}" class="btn-outline text-xs py-2">
+                            <a href="{{ route('tentang') }}" class="btn-outline text-xs py-2 greeting-action-btn" data-tactile="spring">
                                 <span>Info LMS</span>
                             </a>
                         @endif

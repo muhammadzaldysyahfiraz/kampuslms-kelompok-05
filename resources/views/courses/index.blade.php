@@ -155,16 +155,30 @@
                 </div> {{-- Menutup kartu course. --}}
 
             @empty {{-- Menangani kondisi ketika hasil query tidak memiliki data. --}}
-                <div class="col-span-full lms-card p-8 text-center"> {{-- Membuka pesan kosong. --}}
+                <div class="col-span-full lms-card p-10 text-center flex flex-col items-center justify-center"> {{-- Membuka pesan kosong. --}}
+                    <div class="w-36 h-auto mb-3 flex flex-col items-center select-none" id="course-empty-float-hero">
+                        <img src="{{ asset('images/illustrations/opendoodles-float.svg') }}"
+                             alt=""
+                             aria-hidden="true"
+                             data-anime="float"
+                             class="w-32 h-auto diorama-doodle anime-float-character"
+                             loading="lazy"
+                             decoding="async">
+                        <div class="w-24 h-1.5 rounded-full pointer-events-none -mt-1 anime-float-shadow"
+                             data-anime="float-shadow"
+                             style="background: radial-gradient(ellipse at center, rgba(47, 52, 55, 0.2) 0%, rgba(47, 52, 55, 0) 70%);"></div>
+                    </div>
                     @if (request()->filled('q') || request('status', 'all') !== 'all') {{-- Memeriksa apakah kosong karena search atau filter. --}}
-                        <p class="text-xs text-slate-600 mb-3">Tidak ada mata kuliah yang sesuai dengan pencarian atau filter.</p> {{-- Menampilkan pesan hasil filter kosong. --}}
-                        <a href="{{ route('courses.index') }}" class="btn-outline text-xs">Reset Pencarian & Filter</a> {{-- Menyediakan tombol untuk menghapus state query string. --}}
+                        <h3 class="text-sm font-bold text-slate-900 mb-1">Tidak ada mata kuliah ditemukan</h3>
+                        <p class="text-xs text-slate-600 mb-4 max-w-sm">Tidak ada mata kuliah yang sesuai dengan kata kunci atau filter status yang dipilih.</p>
+                        <a href="{{ route('courses.index') }}" class="btn-outline text-xs">Reset Pencarian & Filter</a>
                     @else {{-- Menangani kondisi database memang belum memiliki course. --}}
-                        <p class="text-xs text-slate-600 mb-3">Belum ada mata kuliah yang terdaftar.</p> {{-- Menampilkan pesan bahwa belum ada course. --}}
-                        @can('create', \App\Models\Course::class) {{-- Memeriksa izin create untuk tampilan. --}}
-                            <a href="{{ route('courses.create') }}" class="btn-primary text-xs">Tambah Mata Kuliah Baru</a> {{-- Menyediakan tombol tambah course. --}}
-                        @endcan {{-- Mengakhiri pemeriksaan izin create. --}}
-                    @endif {{-- Mengakhiri kondisi pesan kosong. --}}
+                        <h3 class="text-sm font-bold text-slate-900 mb-1">Belum ada mata kuliah</h3>
+                        <p class="text-xs text-slate-600 mb-4 max-w-sm">Daftar perkuliahan semester ini masih kosong atau belum diterbitkan.</p>
+                        @can('create', \App\Models\Course::class)
+                            <a href="{{ route('courses.create') }}" class="btn-primary text-xs">Tambah Mata Kuliah Baru</a>
+                        @endcan
+                    @endif
                 </div> {{-- Menutup pesan kosong. --}}
             @endforelse {{-- Mengakhiri perulangan course. --}}
 

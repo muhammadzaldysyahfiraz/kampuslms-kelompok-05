@@ -1,20 +1,24 @@
-<x-layout title="Halaman Tidak Ditemukan">
+<x-layout title="Halaman Tidak Ditemukan" scene="error">
 
-    <div class="min-h-[65vh] flex flex-col items-center justify-center text-center px-4 py-8">
+    <div class="min-h-[70vh] flex flex-col items-center justify-center text-center px-4 py-12 relative z-10">
         
-        {{-- Flat Vector SVG Illustration --}}
-        <img src="{{ asset('illustrations/not-found-404.svg') }}" alt="Ilustrasi kesalahan 404 halaman perkuliahan tidak ditemukan" class="w-64 h-48 mb-4 object-contain">
+        {{-- Open Doodles Zombieing (Mahasiswa tersesat di koridor kampus) --}}
+        <div class="relative mb-2">
+            <x-diorama.doodle name="zombieing" size="240" class="w-48 sm:w-56 h-auto mx-auto filter drop-shadow-xs" />
+            <div class="w-44 h-2 mx-auto rounded-full mt-1 pointer-events-none" style="background: radial-gradient(ellipse at center, rgba(47, 52, 55, 0.2) 0%, rgba(47, 52, 55, 0) 70%);"></div>
+        </div>
 
-        <span class="status status-archived mb-3">
-            <span class="status-dot" aria-hidden="true"></span>Error 404 <span aria-hidden="true">·</span> Halaman tidak ditemukan
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-mono font-medium bg-slate-100 border border-slate-200 text-slate-700 mb-3">
+            <span class="w-1.5 h-1.5 rounded-full bg-slate-400" aria-hidden="true"></span>
+            Error 404 <span aria-hidden="true">·</span> Tidak Ditemukan
         </span>
 
         <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-2">
-            Halaman tidak ditemukan
+            Tersesat di Koridor Kampus
         </h1>
 
-        <p class="text-sm text-slate-600 max-w-md font-normal mb-8 leading-relaxed">
-            Halaman atau tautan akademik yang Anda tuju tidak tersedia atau telah dipindahkan ke direktori lain.
+        <p class="text-xs sm:text-sm text-slate-600 max-w-md mx-auto font-normal mb-8 leading-relaxed">
+            Halaman atau tautan materi perkuliahan yang Anda tuju tidak tersedia atau telah dipindahkan ke direktori lain.
         </p>
 
         <div class="flex flex-wrap items-center justify-center gap-3">

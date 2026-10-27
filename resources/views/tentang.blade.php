@@ -25,8 +25,16 @@
             </div>
         </div>
 
-        <div class="flex-shrink-0">
-            <img src="{{ asset('illustrations/team-collaboration.svg') }}" alt="Ilustrasi tim pengembang KampusLMS berkolaborasi di lingkungan modern" class="w-52 h-28 object-contain">
+        <div class="flex-shrink-0 flex flex-col items-center select-none" id="tentang-loving-hero">
+            <img src="{{ asset('images/illustrations/opendoodles-loving.svg') }}" 
+                 alt="Ilustrasi kolaborasi tim pengembang KampusLMS" 
+                 data-anime="loving"
+                 class="w-40 sm:w-48 h-auto object-contain diorama-doodle anime-loving-character"
+                 loading="lazy"
+                 decoding="async">
+            <div class="w-28 sm:w-36 h-1.5 rounded-full pointer-events-none -mt-1 anime-loving-shadow"
+                 data-anime="loving-shadow"
+                 style="background: radial-gradient(ellipse at center, rgba(47, 52, 55, 0.2) 0%, rgba(47, 52, 55, 0) 70%);"></div>
         </div>
     </div>
 

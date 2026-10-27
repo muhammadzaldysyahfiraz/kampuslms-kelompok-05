@@ -41,20 +41,34 @@
                 {{ $course->name }}
             </h1>
 
-            <div class="flex items-center gap-2">
-                <span class="font-mono text-xs font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
-                    {{ $course->code }}
-                </span>
-                <span class="text-xs font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 border border-slate-200 font-mono">
-                    {{ $course->sks }} SKS
-                </span>
-                @if ($course->status === 'active')
-                    <span class="status status-active"><span class="status-dot" aria-hidden="true"></span>Aktif</span>
-                @elseif ($course->status === 'draft')
-                    <span class="status status-draft"><span class="status-dot" aria-hidden="true"></span>Draft</span>
-                @else
-                    <span class="status status-archived"><span class="status-dot" aria-hidden="true"></span>Diarsipkan</span>
-                @endif
+            <div class="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+                {{-- In-Component Hero: Compact Reading Doodle with Contact Shadow --}}
+                <div class="relative flex-shrink-0 flex flex-col items-center select-none" id="course-reading-hero">
+                    <img src="{{ asset('images/illustrations/opendoodles-reading.svg') }}"
+                         alt=""
+                         aria-hidden="true"
+                         class="w-14 sm:w-16 h-auto diorama-doodle object-contain filter drop-shadow-2xs"
+                         loading="lazy"
+                         decoding="async">
+                    <div class="w-11 sm:w-13 h-1 rounded-full pointer-events-none -mt-0.5"
+                         style="background: radial-gradient(ellipse at center, rgba(47, 52, 55, 0.2) 0%, rgba(47, 52, 55, 0) 70%);"></div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="font-mono text-xs font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
+                        {{ $course->code }}
+                    </span>
+                    <span class="text-xs font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 border border-slate-200 font-mono">
+                        {{ $course->sks }} SKS
+                    </span>
+                    @if ($course->status === 'active')
+                        <span class="status status-active"><span class="status-dot" aria-hidden="true"></span>Aktif</span>
+                    @elseif ($course->status === 'draft')
+                        <span class="status status-draft"><span class="status-dot" aria-hidden="true"></span>Draft</span>
+                    @else
+                        <span class="status status-archived"><span class="status-dot" aria-hidden="true"></span>Diarsipkan</span>
+                    @endif
+                </div>
             </div>
         </div>
 

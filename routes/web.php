@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route; // Mengimpor facade Route Laravel.
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\CourseController; // Mengimpor CourseController.
 use App\Http\Controllers\UserController; // Mengimpor UserController.
 use App\Http\Controllers\SubmissionController; // Mengimpor SubmissionController untuk route submission.
@@ -24,10 +23,6 @@ Route::get('/tentang', function () { // Membuat route halaman tentang.
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
-    Route::get('/forgot-password', [PasswordResetController::class, 'requestForm'])->name('password.request');
-    Route::post('/forgot-password', [PasswordResetController::class, 'sendLink'])->middleware('throttle:3,1')->name('password.email');
-    Route::get('/reset-password/{token}', [PasswordResetController::class, 'resetForm'])->name('password.reset');
-    Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:5,1')->name('password.update');
 });
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
@@ -281,6 +276,13 @@ Route::get('/register', function () {
 
 // Seluruh route di bawah ini membutuhkan pengguna yang sudah terautentikasi.
 Route::middleware('auth')->group(function () {
+    // Pusat Pemberitahuan / Notifikasi Mahasiswa, Dosen, dan Admin (Minggu 10)
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/{notification}', [NotificationController::class, 'show'])->name('notifications.show');
+    Route::patch('/notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])->name('notifications.markAllRead');
+    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+
     // Rute manajemen course: didefinisikan sebelum route model binding courses/{course}
     // agar URL /courses/create tidak tertangkap sebagai parameter {course} (mencegah 404).
     Route::middleware('role:admin,dosen')->group(function () {

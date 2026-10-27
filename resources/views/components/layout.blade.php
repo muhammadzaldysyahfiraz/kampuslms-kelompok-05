@@ -1,3 +1,9 @@
+@props([
+    'title' => null,
+    'scene' => null,
+    'showBackdrop' => true,
+])
+
 <!DOCTYPE html>
 <html lang="id" class="h-full">
 <head>
@@ -18,7 +24,9 @@
 <body class="min-h-full bg-[#FAF8F5] font-sans antialiased text-slate-900 flex flex-col selection:bg-[#111111] selection:text-white">
 
     {{-- Latar Belakang Ilustrasi Kampus Minimalis (Multi-Scene per Halaman) --}}
-    <x-campus-sketch />
+    @if ($showBackdrop)
+        <x-campus-sketch :scene="$scene" />
+    @endif
 
     {{-- Accessible Skip to Content Link (WCAG 2.4.1 Bypass Blocks) --}}
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-[#111111] focus:text-white focus:font-semibold focus:text-xs focus:rounded-md focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 transition-all">
@@ -40,7 +48,7 @@
                         </svg>
                     </div>
                     <span class="text-sm font-bold text-slate-900 tracking-tight">
-                        Kampus<span class="text-slate-600 font-normal">LMS</span><span class="text-[#FE774C]" aria-hidden="true">.</span>
+                        Kampus<span class="text-slate-600 font-normal">LMS</span><span class="text-[#8FA895]" aria-hidden="true">.</span>
                     </span>
                 </a>
 
@@ -74,6 +82,94 @@
             {{-- Right Context: Profile & Auth Action --}}
             <div class="flex items-center gap-3">
                 @auth
+                    @php
+                        $navUnreadCount = auth()->user()->unreadNotifications()->count();
+                        $navRecentNotifications = auth()->user()->notifications()->latest()->take(5)->get();
+                    @endphp
+
+                    {{-- Notification Bell Dropdown (Minggu 10) --}}
+                    <div class="relative" id="notif-dropdown-wrapper">
+                        <button 
+                            type="button" 
+                            id="notif-bell-btn" 
+                            onclick="toggleNotifDropdown()" 
+                            class="relative p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                            aria-expanded="false" 
+                            aria-controls="notif-dropdown" 
+                            aria-label="Pemberitahuan {{ $navUnreadCount > 0 ? "($navUnreadCount belum dibaca)" : '' }}"
+                        >
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                            </svg>
+                            <span 
+                                id="notif-badge" 
+                                class="{{ $navUnreadCount > 0 ? 'inline-flex' : 'hidden' }} absolute -top-0.5 -right-0.5 items-center justify-center min-w-4 h-4 px-1 rounded-full text-[10px] font-bold font-mono bg-[#FE774C] text-white ring-2 ring-white"
+                            >
+                                {{ $navUnreadCount > 9 ? '9+' : $navUnreadCount }}
+                            </span>
+                        </button>
+
+                        {{-- Dropdown Panel --}}
+                        <div 
+                            id="notif-dropdown" 
+                            class="hidden absolute right-0 mt-2 w-80 sm:w-96 rounded-xl bg-white border border-slate-200 shadow-lg z-50 overflow-hidden divide-y divide-slate-100 transition-all"
+                        >
+                            <div class="px-4 py-3 flex items-center justify-between bg-slate-50/70">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-bold text-slate-900">Pemberitahuan</span>
+                                    <span id="notif-count-text" class="text-[10px] font-bold font-mono px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-700">
+                                        {{ $navUnreadCount }} baru
+                                    </span>
+                                </div>
+                                @if ($navUnreadCount > 0)
+                                    <form action="{{ route('notifications.markAllRead') }}" method="POST" class="inline">
+                                        @csrf
+                                        <button type="submit" class="text-[11px] font-semibold text-[#FE774C] hover:underline cursor-pointer">
+                                            Tandai semua dibaca
+                                        </button>
+                                    </form>
+                                @endif
+                            </div>
+
+                            <div class="max-h-72 overflow-y-auto divide-y divide-slate-100" id="notif-items-container">
+                                @forelse ($navRecentNotifications as $notif)
+                                    @php
+                                        $isItemUnread = is_null($notif->read_at);
+                                        $itemData = $notif->data ?? [];
+                                        $itemTitle = $itemData['title'] ?? 'Pemberitahuan';
+                                        $itemCourse = $itemData['course_name'] ?? null;
+                                    @endphp
+                                    <a href="{{ route('notifications.show', $notif) }}" class="block px-4 py-3 hover:bg-slate-50 transition-colors {{ $isItemUnread ? 'bg-[#FFFDFB]' : '' }}">
+                                        <div class="flex items-start gap-2.5">
+                                            <span class="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 {{ $isItemUnread ? 'bg-[#FE774C]' : 'bg-transparent' }}"></span>
+                                            <div class="min-w-0 flex-1">
+                                                <p class="text-xs font-bold text-slate-900 truncate">
+                                                    {{ $itemTitle }}
+                                                </p>
+                                                @if ($itemCourse)
+                                                    <p class="text-[11px] text-slate-500 truncate mt-0.5">{{ $itemCourse }}</p>
+                                                @endif
+                                                <p class="text-[10px] text-slate-400 font-mono mt-1">
+                                                    {{ $notif->created_at->diffForHumans() }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </a>
+                                @empty
+                                    <div class="px-4 py-8 text-center text-xs text-slate-500">
+                                        Belum ada pemberitahuan baru
+                                    </div>
+                                @endforelse
+                            </div>
+
+                            <div class="p-2 bg-slate-50 text-center">
+                                <a href="{{ route('notifications.index') }}" class="block py-1.5 text-xs font-semibold text-slate-700 hover:text-slate-950 transition-colors">
+                                    Buka Semua Pemberitahuan &rarr;
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="flex items-center gap-2.5">
                         <div class="w-7 h-7 rounded-lg bg-slate-900 text-white font-bold text-[11px] flex items-center justify-center font-mono flex-shrink-0" aria-hidden="true">
                             {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
@@ -143,6 +239,17 @@
             <a href="{{ route('tentang') }}" aria-current="{{ request()->routeIs('tentang') ? 'page' : 'false' }}" class="flex items-center min-h-11 px-3 rounded-lg text-xs font-semibold {{ request()->routeIs('tentang') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
                 Tentang Kelompok
             </a>
+
+            @auth
+                <a href="{{ route('notifications.index') }}" aria-current="{{ request()->routeIs('notifications.*') ? 'page' : 'false' }}" class="flex items-center justify-between min-h-11 px-3 rounded-lg text-xs font-semibold {{ request()->routeIs('notifications.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
+                    <span>Pemberitahuan</span>
+                    @if ($navUnreadCount > 0)
+                        <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold font-mono bg-[#FE774C] text-white">
+                            {{ $navUnreadCount }}
+                        </span>
+                    @endif
+                </a>
+            @endauth
 
             @auth
                 <div class="pt-2 mt-2 border-t border-slate-100 flex items-center justify-between px-3">
@@ -220,6 +327,64 @@
 
     {{-- Global Script: Navigasi, Keyboard Shortcuts, & Auto-dismiss Flash --}}
     <script>
+        function toggleNotifDropdown() {
+            const dropdown = document.getElementById('notif-dropdown');
+            const btn = document.getElementById('notif-bell-btn');
+            if (!dropdown || !btn) return;
+            const isHidden = dropdown.classList.contains('hidden');
+            if (isHidden) {
+                dropdown.classList.remove('hidden');
+                btn.setAttribute('aria-expanded', 'true');
+            } else {
+                dropdown.classList.add('hidden');
+                btn.setAttribute('aria-expanded', 'false');
+            }
+        }
+
+        // Close dropdown when clicked outside
+        document.addEventListener('click', (e) => {
+            const wrapper = document.getElementById('notif-dropdown-wrapper');
+            const dropdown = document.getElementById('notif-dropdown');
+            const btn = document.getElementById('notif-bell-btn');
+            if (wrapper && dropdown && !wrapper.contains(e.target)) {
+                dropdown.classList.add('hidden');
+                if (btn) btn.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        @auth
+        // Polling status notifikasi berkala (setiap 30 detik)
+        setInterval(() => {
+            fetch('{{ route('notifications.index') }}', {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data && typeof data.unread_count !== 'undefined') {
+                    const badge = document.getElementById('notif-badge');
+                    const countText = document.getElementById('notif-count-text');
+                    if (badge) {
+                        if (data.unread_count > 0) {
+                            badge.textContent = data.unread_count > 9 ? '9+' : data.unread_count;
+                            badge.classList.remove('hidden');
+                            badge.classList.add('inline-flex');
+                        } else {
+                            badge.classList.add('hidden');
+                            badge.classList.remove('inline-flex');
+                        }
+                    }
+                    if (countText) {
+                        countText.textContent = data.unread_count + ' baru';
+                    }
+                }
+            })
+            .catch(() => {});
+        }, 30000);
+        @endauth
+
         function toggleMobileNav() {
 
             const drawer = document.getElementById('mobile-nav-drawer');

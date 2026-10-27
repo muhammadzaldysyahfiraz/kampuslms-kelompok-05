@@ -51,6 +51,13 @@
                        class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors {{ request()->routeIs('courses.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-50' }}">
                         {{ $activeRole === 'dosen' ? 'Mata Kuliah Diampu' : 'Mata Kuliah' }}
                     </a>
+                    @if ($activeRole === 'mahasiswa')
+                        <a href="{{ route('mahasiswa.grades.index') }}" class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors {{ request()->routeIs('mahasiswa.grades.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-50' }}">Nilai Saya</a>
+                    @elseif ($activeRole === 'dosen')
+                        <a href="{{ route('dosen.submissions.index') }}" class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors {{ request()->routeIs('dosen.submissions.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-50' }}">Pengumpulan</a>
+                    @elseif ($activeRole === 'admin')
+                        <a href="{{ route('admin.submissions.index') }}" class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors {{ request()->routeIs('admin.submissions.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-50' }}">Pengumpulan</a>
+                    @endif
                     @if ($activeRole === 'admin')
                         <a href="{{ route('users.index') }}" 
                            class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors {{ request()->routeIs('users.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-50' }}">
@@ -69,6 +76,24 @@
                 <span class="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold capitalize text-slate-800">
                     {{ $activeRole }}
                 </span>
+                @auth
+                    @php($navUnreadCount = auth()->user()->unreadNotifications()->count())
+                    <a
+                        href="{{ route('notifications.index') }}"
+                        id="notification-bell"
+                        aria-label="Notifikasi, {{ $navUnreadCount }} belum dibaca"
+                        title="Notifikasi"
+                        class="relative inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+                    >
+                        <svg class="h-5 w-5" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.311 6.022 23.848 23.848 0 0 0 5.454 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                        </svg>
+                        <span
+                            id="notification-unread-count"
+                            class="{{ $navUnreadCount ? '' : 'hidden' }} absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-rose-600 px-1 text-center text-[10px] font-bold leading-4 text-white"
+                        >{{ $navUnreadCount > 9 ? '9+' : $navUnreadCount }}</span>
+                    </a>
+                @endauth
                 {{-- User Avatar Pill & Auth Action --}}
                 @auth
                     <div class="hidden sm:flex items-center gap-2 pl-3 border-l border-slate-200">
@@ -125,6 +150,13 @@
             <a href="{{ route('courses.index') }}" class="block px-3 py-2 rounded-md text-xs font-semibold {{ request()->routeIs('courses.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
                 {{ $activeRole === 'dosen' ? 'Mata Kuliah Diampu' : 'Mata Kuliah' }}
             </a>
+            @if ($activeRole === 'mahasiswa')
+                <a href="{{ route('mahasiswa.grades.index') }}" class="block px-3 py-2 rounded-md text-xs font-semibold {{ request()->routeIs('mahasiswa.grades.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">Nilai Saya</a>
+            @elseif ($activeRole === 'dosen')
+                <a href="{{ route('dosen.submissions.index') }}" class="block px-3 py-2 rounded-md text-xs font-semibold {{ request()->routeIs('dosen.submissions.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">Pengumpulan</a>
+            @elseif ($activeRole === 'admin')
+                <a href="{{ route('admin.submissions.index') }}" class="block px-3 py-2 rounded-md text-xs font-semibold {{ request()->routeIs('admin.submissions.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">Pengumpulan</a>
+            @endif
             @if ($activeRole === 'admin')
                 <a href="{{ route('users.index') }}" class="block px-3 py-2 rounded-md text-xs font-semibold {{ request()->routeIs('users.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
                     Pengguna
@@ -251,6 +283,25 @@
                 }
             }
         });
+
+        @auth
+            const notificationCount = document.getElementById('notification-unread-count');
+            const notificationBell = document.getElementById('notification-bell');
+
+            const refreshNotificationCount = () => fetch('{{ route('notifications.index') }}', {
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            })
+                .then((response) => response.ok ? response.json() : null)
+                .then((data) => {
+                    if (!data || typeof data.unread_count !== 'number' || !notificationCount) return;
+                    notificationCount.textContent = data.unread_count > 9 ? '9+' : data.unread_count;
+                    notificationCount.classList.toggle('hidden', data.unread_count === 0);
+                    notificationBell?.setAttribute('aria-label', `Notifikasi, ${data.unread_count} belum dibaca`);
+                })
+                .catch(() => {});
+
+            window.setInterval(refreshNotificationCount, 30000);
+        @endauth
     </script>
 
 </body>

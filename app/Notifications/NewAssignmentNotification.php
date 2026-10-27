@@ -23,10 +23,7 @@ class NewAssignmentNotification extends Notification
     {
         return [
             'assignment_id' => $this->assignment->id,
-            'course_name' => $this->assignment->course->name,
             'title' => $this->assignment->title,
-            'due_at' => $this->assignment->due_at->toIso8601String(),
-            'url' => route('assignments.show', $this->assignment),
         ];
     }
 }

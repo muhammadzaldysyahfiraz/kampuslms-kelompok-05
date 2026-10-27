@@ -108,9 +108,7 @@ class WeekTenNotificationTest extends TestCase
         Notification::assertNotSentTo($outsider, NewAssignmentNotification::class);
 
         $payload = (new NewAssignmentNotification($assignment->load('course')))->toDatabase($student);
-        $this->assertArrayHasKey('assignment_id', $payload);
-        $this->assertArrayNotHasKey('score', $payload);
-        $this->assertArrayNotHasKey('feedback', $payload);
+        $this->assertSame(['assignment_id', 'title'], array_keys($payload));
     }
 
     public function test_grade_event_queues_listener_and_payload_does_not_include_grade_details(): void
@@ -138,9 +136,7 @@ class WeekTenNotificationTest extends TestCase
         );
 
         $payload = (new GradeReleasedNotification($grade))->toDatabase($student);
-        $this->assertArrayHasKey('grade_id', $payload);
-        $this->assertArrayNotHasKey('score', $payload);
-        $this->assertArrayNotHasKey('feedback', $payload);
+        $this->assertSame(['grade_id', 'assignment_id', 'assignment_title'], array_keys($payload));
         $this->assertStringNotContainsString('88', json_encode($payload));
         $this->assertStringNotContainsString('Feedback privat', json_encode($payload));
     }
@@ -203,5 +199,102 @@ class WeekTenNotificationTest extends TestCase
             ->assertNotFound();
 
         $this->assertNull($notification->fresh()->read_at);
+    }
+
+    public function test_notification_page_shows_own_messages_and_can_mark_all_read(): void
+    {
+        $student = $this->createUser('mahasiswa');
+        $student->notifications()->create([
+            'id' => (string) Str::uuid(),
+            'type' => NewAssignmentNotification::class,
+            'data' => ['title' => 'Tugas Basis Data'],
+        ]);
+
+        $this->actingAs($student)
+            ->get(route('notifications.index'))
+            ->assertOk()
+            ->assertViewIs('notifications.index')
+            ->assertSee('Tugas Basis Data')
+            ->assertSee('1 belum dibaca');
+
+        $this->actingAs($student)
+            ->post(route('notifications.markAllRead'))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_id' => $student->id,
+            'read_at' => now()->toDateTimeString(),
+        ]);
+    }
+
+    public function test_notification_poll_endpoint_returns_unread_count(): void
+    {
+        $student = $this->createUser('mahasiswa');
+        $student->notifications()->create([
+            'id' => (string) Str::uuid(),
+            'type' => NewAssignmentNotification::class,
+            'data' => ['title' => 'Tugas Pemrograman'],
+        ]);
+
+        $this->actingAs($student)
+            ->getJson(route('notifications.index'))
+            ->assertOk()
+            ->assertJsonPath('unread_count', 1);
+    }
+
+    public function test_lecturer_can_open_gradebook_and_submission_grade_form(): void
+    {
+        $lecturer = $this->createUser('dosen');
+        $student = $this->createUser('mahasiswa');
+        $course = Course::factory()->create(['lecturer_id' => $lecturer->id]);
+        $course->students()->attach($student->id, ['enrolled_at' => now()]);
+        $assignment = Assignment::factory()->create(['course_id' => $course->id]);
+        $submission = Submission::factory()->create([
+            'assignment_id' => $assignment->id,
+            'user_id' => $student->id,
+        ]);
+
+        $this->actingAs($lecturer)
+            ->get(route('dosen.courses.grades.index', $course))
+            ->assertOk()
+            ->assertViewIs('grades.course')
+            ->assertSee($student->name)
+            ->assertSee($assignment->title)
+            ->assertSee('Nilai');
+
+        $this->get(route('courses.show', $course))
+            ->assertOk()
+            ->assertSee('Rekap Nilai Kelas');
+
+        $this->get(route('submissions.show', $submission))
+            ->assertOk()
+            ->assertSee('Simpan nilai')
+            ->assertSee('Feedback');
+    }
+
+    public function test_student_can_view_grade_and_feedback_in_web_transcript(): void
+    {
+        $lecturer = $this->createUser('dosen');
+        $student = $this->createUser('mahasiswa');
+        $course = Course::factory()->create(['lecturer_id' => $lecturer->id]);
+        $assignment = Assignment::factory()->create(['course_id' => $course->id]);
+        $submission = Submission::factory()->create([
+            'assignment_id' => $assignment->id,
+            'user_id' => $student->id,
+        ]);
+        Grade::factory()->create([
+            'submission_id' => $submission->id,
+            'graded_by' => $lecturer->id,
+            'score' => 93,
+            'feedback' => 'Struktur jawaban sudah jelas.',
+        ]);
+
+        $this->actingAs($student)
+            ->get(route('mahasiswa.grades.index'))
+            ->assertOk()
+            ->assertViewIs('grades.mine')
+            ->assertSee('Nilai Saya')
+            ->assertSee('93')
+            ->assertSee('Struktur jawaban sudah jelas.');
     }
 }

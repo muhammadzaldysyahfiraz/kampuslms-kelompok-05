@@ -9,6 +9,10 @@
             <span>Kembali ke Daftar</span>
         </a>
 
+        @if (auth()->user()?->role === 'dosen' && (int) $course->lecturer_id === (int) auth()->id())
+            <a href="{{ route('dosen.courses.grades.index', $course) }}" class="btn-secondary text-xs py-2">Rekap Nilai Kelas</a>
+        @endif
+
         @can('update', $course)
             <div class="flex items-center gap-2">
                 <a href="{{ route('courses.edit', $course) }}" class="btn-secondary text-xs py-2">

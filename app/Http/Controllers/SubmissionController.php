@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Gate;
 class SubmissionController extends Controller // Membuat controller untuk menangani submission.
 {
     /** List submissions filtered to the authenticated user's access scope. */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): mixed
     {
         $user = $request->user();
         abort_unless($user, 401);
@@ -27,7 +27,13 @@ class SubmissionController extends Controller // Membuat controller untuk menang
             abort(403);
         }
 
-        return response()->json(['submissions' => $query->latest()->paginate(20)]);
+        $submissions = $query->latest('submitted_at')->paginate(20)->withQueryString();
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['submissions' => $submissions]);
+        }
+
+        return view('submissions.index', compact('submissions'));
     }
 
     public function show(Request $request, Submission $submission) // Menampilkan satu submission menggunakan route model binding.

@@ -21,15 +21,13 @@ class GradeReleasedNotification extends Notification
 
     public function toDatabase(object $notifiable): array
     {
-        $this->grade->loadMissing('submission.assignment.course');
+        $this->grade->loadMissing('submission.assignment');
         $assignment = $this->grade->submission->assignment;
 
         return [
             'grade_id' => $this->grade->id,
             'assignment_id' => $assignment->id,
             'assignment_title' => $assignment->title,
-            'course_name' => $assignment->course->name,
-            'url' => route('mahasiswa.grades.index'),
         ];
     }
 }

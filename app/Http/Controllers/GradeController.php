@@ -25,29 +25,87 @@ class GradeController extends Controller
         ]);
     }
 
-    public function indexForCourse(Request $request, Course $course): JsonResponse
+    public function indexForCourse(Request $request, Course $course): mixed
     {
         Gate::authorize('view', $course);
         Gate::authorize('viewAny', Grade::class);
 
-        return response()->json([
-            'course' => ['id' => $course->id, 'name' => $course->name],
-            'grades' => Grade::with(['submission.assignment', 'submission.student', 'grader'])
+        $gradeQuery = Grade::with(['submission.assignment', 'submission.student', 'grader'])
                 ->whereHas('submission.assignment', fn ($query) => $query->where('course_id', $course->id))
-                ->latest()->paginate(20),
-        ]);
+                ->latest();
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'course' => ['id' => $course->id, 'name' => $course->name],
+                'grades' => $gradeQuery->paginate(20),
+            ]);
+        }
+
+        $assignments = $course->assignments()->orderBy('due_at')->get();
+        $students = $course->students()->orderBy('name')->get();
+        $submissions = Submission::with(['grade.grader', 'student'])
+            ->whereIn('assignment_id', $assignments->pluck('id'))
+            ->get();
+
+        $submissionMatrix = [];
+        foreach ($submissions as $submission) {
+            $submissionMatrix[$submission->user_id][$submission->assignment_id] = $submission;
+        }
+
+        $studentAverages = [];
+        foreach ($students as $student) {
+            $scores = [];
+            foreach ($assignments as $assignment) {
+                $grade = $submissionMatrix[$student->id][$assignment->id]->grade ?? null;
+                if ($grade) {
+                    $scores[] = (float) $grade->score;
+                }
+            }
+            $studentAverages[$student->id] = $scores ? round(array_sum($scores) / count($scores), 1) : null;
+        }
+
+        $assignmentAverages = [];
+        foreach ($assignments as $assignment) {
+            $scores = [];
+            foreach ($students as $student) {
+                $grade = $submissionMatrix[$student->id][$assignment->id]->grade ?? null;
+                if ($grade) {
+                    $scores[] = (float) $grade->score;
+                }
+            }
+            $assignmentAverages[$assignment->id] = $scores ? round(array_sum($scores) / count($scores), 1) : null;
+        }
+
+        $totalGraded = $submissions->filter(fn ($submission) => $submission->grade !== null)->count();
+        $scoredAverages = array_filter($studentAverages, fn ($average) => $average !== null);
+        $classAverage = $scoredAverages ? round(array_sum($scoredAverages) / count($scoredAverages), 1) : null;
+
+        return view('grades.course', compact(
+            'course',
+            'assignments',
+            'students',
+            'submissionMatrix',
+            'studentAverages',
+            'assignmentAverages',
+            'submissions',
+            'totalGraded',
+            'classAverage'
+        ));
     }
 
-    public function indexMine(Request $request): JsonResponse
+    public function indexMine(Request $request): mixed
     {
         Gate::authorize('viewAny', Grade::class);
         $user = $request->user();
+        $grades = Grade::with(['submission.assignment.course', 'grader'])
+            ->whereHas('submission', fn ($query) => $query->where('user_id', $user->id))
+            ->latest();
 
-        return response()->json([
-            'grades' => Grade::with(['submission.assignment.course', 'grader'])
-                ->whereHas('submission', fn ($query) => $query->where('user_id', $user->id))
-                ->latest()->paginate(20),
-        ]);
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['grades' => $grades->paginate(20)]);
+        }
+
+        return view('grades.mine', ['grades' => $grades->paginate(20)]);
     }
 
     public function show(Request $request, Grade $grade): JsonResponse
@@ -56,7 +114,7 @@ class GradeController extends Controller
         return response()->json(['grade' => $grade->load(['submission.assignment.course', 'submission.student', 'grader'])]);
     }
 
-    public function store(Request $request, Submission $submission): JsonResponse
+    public function store(Request $request, Submission $submission): mixed
     {
         $this->ensureGrader($request, $submission);
         $data = $request->validate([

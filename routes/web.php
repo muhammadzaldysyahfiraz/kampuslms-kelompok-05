@@ -121,6 +121,12 @@ Route::get('/dashboard', function () { // Membuat route dashboard.
 
 // Seluruh route di bawah ini membutuhkan pengguna yang sudah terautentikasi.
 Route::middleware('auth')->group(function () {
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/{notification}', [NotificationController::class, 'show'])->name('notifications.show');
+    Route::patch('/notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])->name('notifications.markAllRead');
+    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+
     // Dashboard umum, dengan role tampilan yang dipilih pada simulasi lokal.
     // Daftar/detail course umum tetap memakai nama route lama agar tautan dashboard stabil.
     Route::resource('courses', CourseController::class)
@@ -253,4 +259,8 @@ Route::middleware('auth')->group(function () {
         SubmissionController::class, 'show',
     ])->middleware('role:mahasiswa,dosen,admin')
         ->name('submissions.show');
+
+    Route::post('/submissions/{submission}/grade', [GradeController::class, 'store'])
+        ->middleware('role:dosen')
+        ->name('submissions.grade.store');
 });

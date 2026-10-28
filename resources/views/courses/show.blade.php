@@ -215,7 +215,7 @@
                                         <a href="{{ route('assignments.show', $assignment) }}" class="text-sm font-semibold text-slate-900 hover:text-sky-700 transition-colors">
                                             {{ $assignment->title }}
                                         </a>
-                                        <span class="status {{ $assignment->status === 'published' ? 'status-active' : 'status-archived' }}">
+                                        <span class="status {{ $assignment->status === 'published' ? 'status-active' : 'status-draft' }}">
                                             <span class="status-dot" aria-hidden="true"></span>{{ ucfirst($assignment->status) }}
                                         </span>
                                         @can('update', $assignment)

@@ -143,7 +143,10 @@
                                     @php
                                         $isItemUnread = is_null($notif->read_at);
                                         $itemData = $notif->data ?? [];
-                                        $itemTitle = $itemData['title'] ?? 'Pemberitahuan';
+                                        $itemTitle = $itemData['title'] ?? ($itemData['assignment_title'] ?? 'Pemberitahuan');
+                                        if (isset($itemData['assignment_title']) && !isset($itemData['title'])) {
+                                            $itemTitle = 'Nilai: ' . $itemData['assignment_title'];
+                                        }
                                         $itemCourse = $itemData['course_name'] ?? null;
                                     @endphp
                                     <a href="{{ route('notifications.show', $notif) }}" class="block px-4 py-3 hover:bg-slate-50 transition-colors {{ $isItemUnread ? 'bg-[#FFFDFB]' : '' }}">

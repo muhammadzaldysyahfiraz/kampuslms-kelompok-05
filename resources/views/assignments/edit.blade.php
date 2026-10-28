@@ -93,6 +93,33 @@
                     @enderror
                 </div>
 
+                {{-- Status Publikasi --}}
+                <div>
+                    <label for="status" class="block text-sm font-semibold text-slate-800 mb-1.5">
+                        Status Publikasi <span class="text-rose-600">*</span>
+                    </label>
+                    <select
+                        id="status"
+                        name="status"
+                        class="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 ring-focus transition-shadow focus:border-sky-600 focus:ring-sky-600 cursor-pointer"
+                    >
+                        <option value="published" {{ old('status', $assignment->status) === 'published' ? 'selected' : '' }}>
+                            Diterbitkan (Published — Mahasiswa dapat melihat & menerima notifikasi)
+                        </option>
+                        <option value="draft" {{ old('status', $assignment->status) === 'draft' ? 'selected' : '' }}>
+                            Draf (Draft — Disimpan sementara, belum terlihat oleh mahasiswa)
+                        </option>
+                    </select>
+                    @error('status')
+                        <p class="mt-1.5 text-xs text-rose-700 font-medium flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                            </svg>
+                            {{ $message }}
+                        </p>
+                    @enderror
+                </div>
+
                 {{-- Izinkan terlambat --}}
                 <label class="inline-flex items-center gap-2.5 cursor-pointer select-none rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 hover:border-slate-300 transition-colors">
                     <input type="hidden" name="allow_late" value="0" />

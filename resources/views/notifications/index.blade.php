@@ -79,9 +79,12 @@
                 @php
                     $isUnread = is_null($notification->read_at);
                     $data = $notification->data ?? [];
-                    $title = $data['title'] ?? 'Pemberitahuan Sistem';
+                    $title = $data['title'] ?? ($data['assignment_title'] ?? 'Pemberitahuan Sistem');
+                    if (isset($data['assignment_title']) && !isset($data['title'])) {
+                        $title = 'Nilai Dirilis: ' . $data['assignment_title'];
+                    }
                     $courseName = $data['course_name'] ?? null;
-                    $message = $data['message'] ?? ($data['instructions'] ?? 'Terdapat pembaruan data perkuliahan pada akun Anda.');
+                    $message = $data['message'] ?? (isset($data['grade_id']) ? 'Dosen telah merilis nilai dan umpan balik tugas Anda.' : ($data['instructions'] ?? 'Terdapat pembaruan data perkuliahan pada akun Anda.'));
                     $url = $data['url'] ?? route('notifications.show', $notification);
                     $type = class_basename($notification->type);
                 @endphp

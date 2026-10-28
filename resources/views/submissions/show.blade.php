@@ -10,14 +10,7 @@
             </a>
         </div>
 
-        @if (session('success'))
-            <div class="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2">
-                <svg class="w-4 h-4 text-emerald-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                <span>{{ session('success') }}</span>
-            </div>
-        @endif
+
 
         <div class="lms-card p-6 sm:p-8 space-y-6">
             <div class="border-b border-slate-100 pb-4">

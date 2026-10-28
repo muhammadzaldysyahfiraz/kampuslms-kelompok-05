@@ -14,6 +14,19 @@
 
         @can('update', $assignment)
             <div class="flex items-center gap-2">
+                @if (($assignment->status ?? 'draft') === 'draft')
+                    <form action="{{ route('assignments.update', $assignment) }}" method="POST">
+                        @csrf
+                        @method('PUT')
+                        <input type="hidden" name="status" value="published" />
+                        <button type="submit" class="btn-primary text-xs inline-flex items-center gap-1.5 py-2 px-3 cursor-pointer" title="Publikasikan tugas agar mahasiswa menerima notifikasi dan dapat mengumpulkan tugas">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                            </svg>
+                            Terbitkan Tugas
+                        </button>
+                    </form>
+                @endif
                 <a
                     href="{{ route('assignments.edit', $assignment) }}"
                     class="btn-secondary text-xs inline-flex items-center gap-2"
@@ -34,17 +47,9 @@
         @endcan
     </div>
 
-    {{-- Notifikasi Flash --}}
-    @if (session('success'))
-        <div class="mb-6 p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2">
-            <svg class="w-4 h-4 text-emerald-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            <span>{{ session('success') }}</span>
-        </div>
-    @endif
 
-    @if (session('error') || $errors->any())
+
+    @if ($errors->any())
         <div class="mb-6 p-4 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium space-y-1">
             <div class="flex items-center gap-2 font-semibold">
                 <svg class="w-4 h-4 text-rose-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -53,9 +58,6 @@
                 <span>Terjadi kendala pada formulir:</span>
             </div>
             <ul class="list-disc list-inside pl-5 space-y-0.5">
-                @if (session('error'))
-                    <li>{{ session('error') }}</li>
-                @endif
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach

@@ -51,20 +51,24 @@ Route::get('/dashboard', function () { // Membuat route dashboard.
     };
     $courseIds = (clone $accessibleCourses)->select('courses.id');
 
-    $courses = (clone $accessibleCourses)->with(['lecturer', 'students', 'materials', 'assignments']) // Mengambil course beserta relasi dashboard.
+    $courses = (clone $accessibleCourses)->with(['lecturer', 'materials', 'assignments']) // Mengambil course beserta relasi dashboard.
         ->where('status', 'active') // Membatasi course aktif.
         ->latest('courses.id') // Mengurutkan course terbaru lebih dulu.
         ->take(3) // Membatasi tiga course.
         ->get(); // Menjalankan query.
 
     if ($courses->isEmpty()) {
-        $courses = (clone $accessibleCourses)->with(['lecturer', 'students', 'materials', 'assignments'])->latest('courses.id')->take(3)->get();
+        $courses = (clone $accessibleCourses)->with(['lecturer', 'materials', 'assignments'])->latest('courses.id')->take(3)->get();
     }
 
     $allCourses = (clone $accessibleCourses)->with('lecturer')->withCount(['students', 'materials', 'assignments'])->orderBy('code')->get();
     $totalCourses = (clone $accessibleCourses)->count();
     $totalLecturers = (clone $accessibleCourses)->distinct()->count('lecturer_id');
-    $totalStudents = \App\Models\Course::whereIn('courses.id', $courseIds)->with('students')->get()->flatMap->students->unique('id')->count();
+    // Hitung mahasiswa unik langsung di database, tanpa memuat seluruh modelnya.
+    $totalStudents = \Illuminate\Support\Facades\DB::table('course_user')
+        ->whereIn('course_id', $courseIds)
+        ->distinct()
+        ->count('user_id');
     $totalAssignments = \App\Models\Assignment::whereIn('course_id', $courseIds)->count();
     $totalMaterials = \App\Models\Material::whereIn('course_id', $courseIds)->count();
     $totalSubmissions = \App\Models\Submission::whereHas('assignment', fn ($q) => $q->whereIn('course_id', $courseIds))->count();
@@ -183,12 +187,22 @@ Route::get('/dashboard', function () { // Membuat route dashboard.
         ->take(4)
         ->get();
 
-    $totalUsersCount = \App\Models\User::count();
-    $totalMahasiswaUsersCount = \App\Models\User::where('role', 'mahasiswa')->count();
-    $totalDosenUsersCount = \App\Models\User::where('role', 'dosen')->count();
+    // Statistik global: sama untuk semua pengguna, jarang berubah, dan aman basi
+    // beberapa menit. Dibersihkan otomatis lewat event model (lihat User::booted).
+    $globalCounts = \Illuminate\Support\Facades\Cache::remember('dashboard.global_counts', now()->addMinutes(10), function () {
+        return [
+            'users' => \App\Models\User::count(),
+            'mahasiswa' => \App\Models\User::where('role', 'mahasiswa')->count(),
+            'dosen' => \App\Models\User::where('role', 'dosen')->count(),
+            'enrollments' => \Illuminate\Support\Facades\DB::table('course_user')->count(),
+        ];
+    });
+    $totalUsersCount = $globalCounts['users'];
+    $totalMahasiswaUsersCount = $globalCounts['mahasiswa'];
+    $totalDosenUsersCount = $globalCounts['dosen'];
     $draftCoursesCount = (clone $accessibleCourses)->where('status', 'draft')->count();
     $archivedCoursesCount = (clone $accessibleCourses)->where('status', 'archived')->count();
-    $totalEnrollmentsCount = \Illuminate\Support\Facades\DB::table('course_user')->count();
+    $totalEnrollmentsCount = $globalCounts['enrollments'];
 
     // Panel Kanan: Murni Jadwal & Tenggat Waktu Terdekat (Tanpa Duplikasi dengan Urgent Assignment)
     $urgentAssignment = \App\Models\Assignment::with('course')

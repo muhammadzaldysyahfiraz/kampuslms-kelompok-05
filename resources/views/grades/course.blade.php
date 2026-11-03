@@ -191,12 +191,12 @@
         </div>
 
         @if ($students->isNotEmpty() && $assignments->isNotEmpty())
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto overscroll-x-contain focus:outline-none focus:ring-1 focus:ring-slate-300 rounded-b-xl" tabindex="0" role="region" aria-label="Tabel Matriks Rekap Nilai Kelas">
                 <table class="w-full text-left text-xs border-collapse">
                     <thead>
-                        <tr class="border-b border-slate-200 bg-slate-100/70 text-slate-700 font-semibold uppercase tracking-wider text-[11px]">
+                        <tr class="border-b border-slate-200 bg-slate-100/90 text-slate-700 font-semibold uppercase tracking-wider text-[11px]">
                             {{-- Kolom Mahasiswa --}}
-                            <th scope="col" class="py-3.5 px-4 sticky left-0 bg-slate-100/90 backdrop-blur-xs z-10 min-w-[220px] border-r border-slate-200/80">
+                            <th scope="col" class="py-3.5 px-4 sticky left-0 bg-slate-100 z-20 min-w-[220px] border-r border-slate-200/80">
                                 Mahasiswa
                             </th>
 

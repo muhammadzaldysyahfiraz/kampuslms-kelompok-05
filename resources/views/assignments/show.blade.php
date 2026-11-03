@@ -122,8 +122,8 @@
                 @if (auth()->user()->role === 'mahasiswa' || auth()->user()->role === 'student')
                     @php
                         $user = auth()->user();
-                        $isEnrolled = $assignment->course->hasStudent($user);
-                        $submission = $mySubmission ?? ($assignment->submissions()->where('user_id', $user->id)->first());
+                        $isEnrolled = $isEnrolled ?? ($assignment->course->relationLoaded('students') ? $assignment->course->students->contains('id', $user->id) : $assignment->course->hasStudent($user));
+                        $submission = $mySubmission ?? ($assignment->relationLoaded('submissions') ? $assignment->submissions->firstWhere('user_id', $user->id) : $assignment->submissions()->where('user_id', $user->id)->first());
                         $isPastDue = now()->gt($assignment->due_at);
                         $canSubmit = $isEnrolled && (! $isPastDue || $assignment->allow_late);
                     @endphp

@@ -11,7 +11,7 @@
 
 # READ: Optimisasi Performa Aplikasi Web dari Perspektif Frontend Developer
 
-Pada Minggu ke-11 ini, perkuliahan Pemrograman Web berfokus pada **Optimisasi Performa**. Sebagai Frontend Developer yang berkolaborasi dalam tim (bersama Nova di Frontend, Farin di Database, serta Zaldy dan Yuspa di Backend), tanggung jawab utama saya adalah memastikan sisi antarmuka (*client-side runtime*) dan template Blade berjalan dengan efisiensi maksimal:
+Pada Minggu ke-11 ini, perkuliahan Pemrograman Web berfokus pada **Optimisasi Performa**. Sebagai Frontend Developer yang berkolaborasi dalam tim (bersama Nova di Frontend, serta Zaldy, Yuspa, dan Farin di Backend yang mengurus database dan logika server), tanggung jawab utama saya adalah memastikan sisi antarmuka (*client-side runtime*) dan template Blade berjalan dengan efisiensi maksimal:
 
 ---
 
@@ -58,7 +58,7 @@ Berdasarkan 7 percobaan modul 11.3, berikut hasil pengamatan saya pada domain ha
 | **1** | Pasang `Model::preventLazyLoading()` | Mengetahui bahwa Blade view yang memanggil relasi tanpa eager load akan langsung memicu error di local. | Memastikan Blade di domain saya tidak pernah memanggil properti relasi yang belum dimuat controller. |
 | **2** | Mematikan eager loading | Tampilan daftar tugas terasa lebih lambat saat data kartu tugas bertambah banyak. | Berkoordinasi dengan tim backend (Zaldy) agar endpoint penugasan selalu menyediakan data dosen dan course secara lengkap. |
 | **3** | `withCount()` vs `count()` koleksi | Menampilkan badge jumlah pengumpulan pada header penugasan (`$assignment->submissions_count`). | Di Blade, selalu gunakan `$assignment->submissions_count` alih-alih `count($assignment->submissions)`. |
-| **4** | Efisiensi Index Database | Memahami bahwa riwayat pengumpulan tugas mahasiswa (`submissions`) membutuhkan index `user_id` agar filter tugas belum selesai cepat direspon. | Memberikan rekomendasi index ini ke Farin (Database) agar dicantumkan di migrasi database tim. |
+| **4** | Efisiensi Index Database | Memahami bahwa riwayat pengumpulan tugas mahasiswa (`submissions`) membutuhkan index `user_id` agar filter tugas belum selesai cepat direspon. | Memberikan rekomendasi index ini ke tim Backend (Zaldy, Yuspa, Farin) agar dicantumkan di migrasi database tim. |
 | **5** | Uji Seeder Skala Besar | Dengan 125 submission, tabel penugasan dosen tetap responsif karena menggunakan pagination dan scroll container terisolasi. | Mengunci tinggi tabel dan membatasi baris per halaman agar DOM tidak melebihi 1.500 node per halaman. |
 | **6** | `config:cache` dan `env()` | Memastikan tidak ada satu pun tag Blade yang memanggil fungsi `env()`. | Seluruh link atau nama aplikasi di Blade diakses melalui `config('app.name')`. |
 | **7** | Caching Data Basi | Mengamati bahwa status keterlambatan pengumpulan (`is_late`) dan form feedback nilai tidak boleh di-cache. | Desain UI penugasan dan formulir penyerahan berkas selalu menampilkan status terkini langsung dari server. |
@@ -95,8 +95,8 @@ Berdasarkan 7 percobaan modul 11.3, berikut hasil pengamatan saya pada domain ha
    * Waktu build: **4.15 detik**. Seluruh modul teroptimasi tanpa pesan error maupun peringatan bundle berlebih.
 2. **Penerapan Lazy Loading & Async Decoding:**
    * Seluruh ilustrasi pendukung (*OpenDoodles*) pada halaman tugas dan materi telah diverifikasi memiliki atribut `loading="lazy"` dan `decoding="async"`.
-3. **Penyelarasan Kolaborasi dengan Tim Backend & Database:**
-   * Menyerahkan catatan teknis migrasi index database kepada Farin (Database) dan pola eager loading kepada Zaldy & Yuspa (Backend) agar arsitektur menyeluruh KampusLMS selaras.
+3. **Penyelarasan Kolaborasi dengan Tim Backend:**
+   * Menyerahkan catatan teknis rekomendasi migrasi index database dan pola eager loading kepada tim Backend (Zaldy, Yuspa, dan Farin) agar arsitektur menyeluruh KampusLMS selaras.
 
 ---
 

@@ -164,3 +164,40 @@ Schema::table('notifications', function (Blueprint $table) {
 > **Jawaban:**  
 > Setelah perintah `php artisan config:cache` dijalankan, Laravel mengompilasi seluruh konfigurasi ke dalam satu berkas tunggal (`bootstrap/cache/config.php`) dan **berhenti memuat berkas `.env`**. Akibatnya, seluruh pemanggilan fungsi `env()` di luar direktori `config/` akan **mengembalikan nilai `null`**.  
 > Ini adalah penyebab paling umum kenapa aplikasi berjalan sempurna di lokal namun mengalami error 500 fatal saat di-deploy ke server produksi minggu depan (Minggu 12).
+>
+> ---
+
+### 7. Catatan Audit (Minggu 11)
+
+Setelah audit silang antara dokumen bagian 1–6 dengan kode di branch `feat/optimisasi-performa`, isinya bukan koreksi terhadap tulisan bagian 1–6, melainkan klarifikasi yang muncul saat verifikasi angka dan klaim terhadap kode final.
+
+#### 7.1 Angka ukur yang dipakai di dokumen
+
+Angka "sebelum" untuk dashboard diambil langsung dari Debugbar pada commit sebelum perubahan minggu 11 diterapkan (bukan dari asumsi atau contoh modul):
+- Dashboard dosen SEBELUM: **56 query, 329 ms, 4 MB**
+- Dashboard mahasiswa SEBELUM: **54 query, 297 ms, 4 MB**
+
+Catatan untuk baris **Rekap Nilai** di bagian 1: angka "87 query, 1.400 ms" adalah angka contoh dari modul Minggu 11 (Prompt A). Angka hasil ukur tim untuk halaman ini setelah refactor: **13 query (dosen)** dan **13 query (mahasiswa)**. Target modul **< 15 query tercapai**.
+
+#### 7.2 Cache yang benar-benar diterapkan
+
+Setelah audit kode di branch minggu 11, cache yang aktif adalah:
+- Key: `dashboard.global_counts` (TTL 10 menit), didefinisikan di `routes/web.php`.
+- Pembersihan otomatis dipicu oleh: `User::booted()` (event `saved`, `deleted`, `restored`) dan `EnrollmentController::store()`/`destroy()`.
+Belum ada Model Observer untuk `Course` di kode saat ini.
+
+#### 7.3 Audit index
+
+Migrasi `2026_11_03_000001_add_performance_indexes.php` menambahkan **5 index**. Setelah audit, **1 index dihapus** karena duplikat, menyisakan 4:
+- **Dihapus:** `idx_users_role` — duplikat dengan `users_role_index` dari migrasi awal.
+- **Dipertahankan:** `idx_submissions_user_id` (sekarang jadi *supporting index* untuk FK), `idx_courses_status`, `idx_assignments_status`, `idx_notifications_unread`.
+Migrasi penghapus: `drop_duplicate_users_role_index`, memakai `Schema::hasIndex()` agar idempoten.
+
+
+#### 7.4 Data yang tidak boleh di-cache
+
+Sama dengan bagian 4, dengan tambahan satu poin:
+- **Nilai & Feedback Tugas Mahasiswa** — tidak di-cache.
+- **Status Keterlambatan Pengumpulan** — tidak di-cache.
+- **Notifikasi Belum Dibaca** — tidak di-cache.
+- **Rekap Nilai Kelas** — tidak di-cache. Target query < 15 sudah tercapai (13 query) tanpa perlu cache.

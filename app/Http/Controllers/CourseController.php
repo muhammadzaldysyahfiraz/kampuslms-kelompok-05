@@ -90,12 +90,12 @@ class CourseController extends Controller // Membuat controller untuk mengelola 
 
         $course->load([
             'lecturer',
-            'materials',
+            'materials.course', // Eager load course agar MaterialPolicy tidak lazy load
             'students',
             'assignments' => fn ($query) => $query->when(
                 $user->role === 'mahasiswa',
                 fn ($query) => $query->where('status', 'published')
-            ),
+            )->with('course'), // Eager load course pada assignments untuk AssignmentPolicy
         ]); // Mahasiswa hanya menerima tugas terbit di payload halaman.
         $course->loadCount('students'); // Menghitung jumlah mahasiswa yang terdaftar pada course.
 

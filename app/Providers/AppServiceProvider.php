@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -15,6 +16,11 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Di lingkungan pengembangan, akses relasi tanpa eager loading melempar
+        // exception (N+1 jadi terlihat). Di produksi tetap berjalan agar pengguna
+        // tidak melihat halaman rusak.
+        Model::preventLazyLoading(! app()->isProduction());
+
         View::composer('*', function ($view) {
             // Role akun login adalah sumber kebenaran; guest hanya mendapat tampilan default.
             $activeUser = auth()->user();

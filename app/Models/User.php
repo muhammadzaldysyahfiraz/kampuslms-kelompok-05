@@ -33,6 +33,15 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    
+        protected static function booted(): void
+    {
+        // Akun berubah, jadi statistik global dashboard harus dihitung ulang.
+        $forget = fn () => \Illuminate\Support\Facades\Cache::forget('dashboard.global_counts');
+        static::saved($forget);
+        static::deleted($forget);
+        static::restored($forget);
+    }
 
     public function taughtCourses(): HasMany
     {

@@ -50,6 +50,8 @@ class EnrollmentController extends Controller
         $alreadyEnrolled = $course->students()->whereKey($studentId)->exists();
         if (!$alreadyEnrolled) {
             $course->students()->attach($studentId, ['enrolled_at' => now()]);
+            // Jumlah pendaftaran berubah, jadi statistik global dashboard harus dihitung ulang.
+            \Illuminate\Support\Facades\Cache::forget('dashboard.global_counts');
         }
 
         if ($request->wantsJson()) {
@@ -71,6 +73,8 @@ class EnrollmentController extends Controller
 
         $detached = $course->students()->detach($student->id);
         abort_unless($detached > 0, 404);
+        // Jumlah pendaftaran berubah, jadi statistik global dashboard harus dihitung ulang.
+        \Illuminate\Support\Facades\Cache::forget('dashboard.global_counts');
 
         if ($request->wantsJson()) {
             return response()->noContent();

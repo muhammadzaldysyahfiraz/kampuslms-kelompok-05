@@ -169,55 +169,35 @@ Schema::table('notifications', function (Blueprint $table) {
 
 ### 7. Catatan Audit (Minggu 11)
 
-Setelah audit silang antara dokumen dengan kode di branch `feat/optimisasi-performa`, isinya bukan koreksi
-terhadap bagian 1–6, melainkan klarifikasi yang muncul saat verifikasi.
+Setelah audit silang antara dokumen bagian 1–6 dengan kode di branch `feat/optimisasi-performa`, isinya bukan koreksi terhadap tulisan bagian 1–6, melainkan klarifikasi yang muncul saat verifikasi angka dan klaim terhadap kode final.
 
 #### 7.1 Angka ukur yang dipakai di dokumen
 
-Angka "sebelum" untuk dashboard diambil ulang dengan Debugbar:
-- Dashboard dosen SEBELUM: 56 query, 329 ms, 4 MB
-- Dashboard mahasiswa SEBELUM: 54 query, 297 ms, 4 MB
+Angka "sebelum" untuk dashboard diambil langsung dari Debugbar pada commit sebelum perubahan minggu 11 diterapkan (bukan dari asumsi atau contoh modul):
+- Dashboard dosen SEBELUM: **56 query, 329 ms, 4 MB**
+- Dashboard mahasiswa SEBELUM: **54 query, 297 ms, 4 MB**
 
-Angka "sesudah" diisi setelah perubahan minggu 11 diterapkan:
-- Dashboard dosen SESUDAH: [UKUR]
-- Dashboard mahasiswa SESUDAH: [UKUR]
-
-Angka "87 query, 1.400 ms" pada bagian 1 untuk Rekap Nilai adalah angka
-contoh dari modul. Angka hasil ukur tim: [UKUR] query, target < 15.
+Catatan untuk baris **Rekap Nilai** di bagian 1: angka "87 query, 1.400 ms" adalah angka contoh dari modul Minggu 11 (Prompt A). Angka hasil ukur tim untuk halaman ini setelah refactor: **13 query (dosen)** dan **13 query (mahasiswa)**. Target modul **< 15 query tercapai**.
 
 #### 7.2 Cache yang benar-benar diterapkan
 
-Section 4 menyebut pembersihan `Cache::forget` lewat "Model Observer" untuk
-Course. Setelah audit kode, cache yang ada di branch minggu 11 adalah:
-
-- Key: `dashboard.global_counts` (TTL 10 menit) di `routes/web.php`.
-- Pembersihan otomatis dipicu oleh:
-  - `User::booted()` → event `saved`, `deleted`, `restored`
-  - `EnrollmentController::store()` dan `destroy()`
-
-Tidak ada Model Observer untuk Course. Kalau nanti ditambahkan, bagian 4
-perlu diperbarui.
+Setelah audit kode di branch minggu 11, cache yang aktif adalah:
+- Key: `dashboard.global_counts` (TTL 10 menit), didefinisikan di `routes/web.php`.
+- Pembersihan otomatis dipicu oleh: `User::booted()` (event `saved`, `deleted`, `restored`) dan `EnrollmentController::store()`/`destroy()`.
+Belum ada Model Observer untuk `Course` di kode saat ini.
 
 #### 7.3 Audit index
 
-Migrasi awal menambahkan 5 index. Setelah audit, 1 dihapus karena duplikat:
-- `idx_users_role` dihapus (duplikat dengan `users_role_index` dari migrasi
-  awal `0001_01_01_000000_create_users_table.php`).
-- `idx_submissions_user_id` dipertahankan karena MySQL memakainya sebagai
-  supporting index untuk FK `submissions_user_id_foreign` (dibuktikan lewat
-  `information_schema.KEY_COLUMN_USAGE`).
+Migrasi `2026_11_03_000001_add_performance_indexes.php` menambahkan **5 index**. Setelah audit, **1 index dihapus** karena duplikat, menyisakan 4:
+- **Dihapus:** `idx_users_role` — duplikat dengan `users_role_index` dari migrasi awal.
+- **Dipertahankan:** `idx_submissions_user_id` (sekarang jadi *supporting index* untuk FK), `idx_courses_status`, `idx_assignments_status`, `idx_notifications_unread`.
+Migrasi penghapus: `drop_duplicate_users_role_index`, memakai `Schema::hasIndex()` agar idempoten.
 
-Bukti EXPLAIN:
-- `EXPLAIN SELECT * FROM submissions WHERE user_id = 5` → `type=ref,
-  key=idx_submissions_user_id, rows=8`.
-- `EXPLAIN SELECT * FROM notifications WHERE notifiable_type='App\\Models\\User'
-  AND notifiable_id=6 AND read_at IS NULL` → `type=ref,
-  key=notifications_notifiable_type_notifiable_id_index, rows=1`. MySQL
-  memilih index 2 kolom karena data kecil; index composite 3 kolom
-  dipertahankan untuk skala.
 
 #### 7.4 Data yang tidak boleh di-cache
 
-Sama dengan bagian 4, dengan tambahan satu: **Rekap Nilai Kelas** tidak boleh
-di-cache karena perubahan nilai oleh dosen dan pengumpulan baru harus langsung
-tercermin saat dosen dan mahasiswa membuka halaman.
+Sama dengan bagian 4, dengan tambahan satu poin:
+- **Nilai & Feedback Tugas Mahasiswa** — tidak di-cache.
+- **Status Keterlambatan Pengumpulan** — tidak di-cache.
+- **Notifikasi Belum Dibaca** — tidak di-cache.
+- **Rekap Nilai Kelas** — tidak di-cache. Target query < 15 sudah tercapai (13 query) tanpa perlu cache.

@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class WeekTwelveSecurityTest extends TestCase
@@ -72,5 +74,23 @@ class WeekTwelveSecurityTest extends TestCase
         $response->assertOk();
         $this->assertTrue(request()->isSecure());
         $this->assertSame('kampuslms.up.railway.app', request()->getHost());
+    }
+
+    /**
+     * Produksi memakai SESSION_DRIVER=database sementara phpunit.xml memakai
+     * array. Pastikan tabel sessions tersedia dan rute web dapat menyimpan
+     * sesi tanpa error 500.
+     */
+    public function test_database_session_driver_can_serve_web_routes(): void
+    {
+        $this->assertTrue(Schema::hasTable('sessions'));
+
+        config(['session.driver' => 'database']);
+        app('session')->forgetDrivers();
+
+        $response = $this->get('/login');
+
+        $response->assertOk();
+        $this->assertSame(1, DB::table('sessions')->count());
     }
 }

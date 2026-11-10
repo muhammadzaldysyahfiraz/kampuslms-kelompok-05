@@ -119,7 +119,7 @@
                         {{-- Dropdown Panel --}}
                         <div 
                             id="notif-dropdown" 
-                            class="hidden absolute right-0 mt-2 w-80 sm:w-96 rounded-xl bg-white border border-slate-200 shadow-lg z-50 overflow-hidden divide-y divide-slate-100 transition-all"
+                            class="hidden fixed left-4 right-4 top-16 rounded-xl bg-white border border-slate-200 shadow-lg z-50 overflow-hidden divide-y divide-slate-100 transition-all sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96"
                         >
                             <div class="px-4 py-3 flex items-center justify-between bg-slate-50/70">
                                 <div class="flex items-center gap-2">

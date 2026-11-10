@@ -6,13 +6,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
+    libicu-dev \
     zip \
     unzip \
     git \
     curl \
     libzip-dev \
     supervisor \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip intl opcache \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # 2. Konfigurasi Apache: aktifkan mod_rewrite & mpm_prefork saja (hindari konflik MPM ganda), AllowOverride All untuk .htaccess
@@ -26,8 +27,9 @@ ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
     && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# 4. Konfigurasi PHP produksi (batas unggahan 25M dan matikan expose_php)
+# 4. Konfigurasi PHP produksi (batas unggahan 25M, matikan expose_php, dan aktifkan OPcache)
 COPY docker/php/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
+COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 
 # 5. Install Composer resmi & dependensi PHP produksi (--no-dev)
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer

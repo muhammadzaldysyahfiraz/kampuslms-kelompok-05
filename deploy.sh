@@ -1,22 +1,48 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Track whether the deployment has successfully entered maintenance mode.
+MAINTENANCE_ENABLED=0
+
 # Report failed deployment commands so the operator knows the release did not finish.
 on_exit() {
     # Read the command's status before executing anything else in the exit trap.
     local status=$?
+    # Remove the temporary bypass cookie jar so it cannot be reused after deployment.
+    if [ -n "${HEALTH_COOKIE_JAR:-}" ]; then
+        rm -f "$HEALTH_COOKIE_JAR"
+    fi
     # Warn on failure so a nonzero deployment cannot look successful.
     if [ "$status" -ne 0 ]; then
-        # Include the failure code but never expose environment credentials.
-        printf 'Deployment failed with exit code %s; inspect the logs before retrying.\n' "$status" >&2
+        # Explain whether maintenance remains active to avoid serving an unhealthy release.
+        if [ "$MAINTENANCE_ENABLED" -eq 1 ]; then
+            printf 'Deployment failed with exit code %s; the application remains in maintenance mode. Inspect logs before recovery.\n' "$status" >&2
+        else
+            printf 'Deployment failed with exit code %s before maintenance mode was enabled. Inspect logs before retrying.\n' "$status" >&2
+        fi
     fi
 }
 
 # Ensure failures anywhere in the deployment are reported when the script exits.
 trap on_exit EXIT
 
-# Enable maintenance mode while the application code and dependencies are updated.
-php artisan down --retry=60
+# Select the local health endpoint by default; HEALTH_URL must point to the Laravel /up route.
+HEALTH_URL="${HEALTH_URL:-http://127.0.0.1/up}"
+
+# Derive the application origin so the maintenance bypass can be set for the health request.
+HEALTH_ORIGIN="${HEALTH_URL%/up}"
+
+# Generate a one-time bypass secret without printing it to deployment logs.
+HEALTH_SECRET=$(php -r 'echo bin2hex(random_bytes(32));')
+
+# Create a private temporary cookie jar for the maintenance-mode health check.
+HEALTH_COOKIE_JAR=$(mktemp)
+
+# Enable maintenance mode while allowing only the health check with its one-time bypass secret.
+php artisan down --retry=60 --secret="$HEALTH_SECRET"
+
+# Record that maintenance is active so failures leave the application closed to normal traffic.
+MAINTENANCE_ENABLED=1
 
 # Fetch the latest production code; omitting this leaves the deployed checkout stale.
 git pull origin main
@@ -51,14 +77,11 @@ php artisan event:cache
 # Ask long-lived queue workers to reload application code after finishing their current job.
 php artisan queue:restart
 
-# Leave maintenance mode only after code, schema, assets, and caches are ready.
-php artisan up
+# Obtain Laravel's maintenance bypass cookie without following its redirect.
+curl -sS -c "$HEALTH_COOKIE_JAR" -o /dev/null "${HEALTH_ORIGIN}/${HEALTH_SECRET}"
 
-# Select the local health endpoint by default; HEALTH_URL can target a different deployment endpoint.
-HEALTH_URL="${HEALTH_URL:-http://127.0.0.1/up}"
-
-# Request the health endpoint and capture its HTTP status for the final deployment check.
-HTTP_STATUS=$(curl -sS -o /dev/null -w '%{http_code}' "$HEALTH_URL")
+# Request the health endpoint with the bypass cookie and capture its HTTP status.
+HTTP_STATUS=$(curl -sS -b "$HEALTH_COOKIE_JAR" -o /dev/null -w '%{http_code}' "$HEALTH_URL")
 
 # Fail deployments for non-HTTP responses or status codes outside the accepted 200-399 range.
 if [[ ! "$HTTP_STATUS" =~ ^[0-9]{3}$ ]] || (( 10#$HTTP_STATUS < 200 || 10#$HTTP_STATUS >= 400 )); then
@@ -67,6 +90,12 @@ if [[ ! "$HTTP_STATUS" =~ ^[0-9]{3}$ ]] || (( 10#$HTTP_STATUS < 200 || 10#$HTTP_
     # Return failure so automation does not mark an unhealthy deployment successful.
     exit 1
 fi
+
+# Leave maintenance mode only after the newly deployed application passes its health check.
+php artisan up
+
+# Record that the application has left maintenance mode successfully.
+MAINTENANCE_ENABLED=0
 
 # Report the successful health check status to the operator.
 printf 'Health check passed for %s (HTTP %s).\n' "$HEALTH_URL" "$HTTP_STATUS"

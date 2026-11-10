@@ -214,11 +214,12 @@ php artisan route:cache
 php artisan view:cache
 php artisan event:cache
 php artisan queue:restart          # worker memuat kode lama di memori
-php artisan up
-curl -sS -o /dev/null -w '%{http_code}' "${HEALTH_URL:-http://127.0.0.1/up}"
+# deploy.sh meminta health check memakai cookie bypass sementara saat maintenance masih aktif
+php artisan up                     # hanya dijalankan setelah health check lolos
 ```
 
 Skrip gagal untuk respons health check di luar HTTP 200–399. Skrip ini ditujukan untuk deployment VPS/SSH; deployment Railway yang dibangun dari commit `main` tetap berjalan melalui pipeline Railway.
+Untuk menjalankan `/up` sebelum maintenance berakhir, skrip membuat secret bypass sekali pakai, menyimpan cookie di berkas sementara, memeriksa endpoint, lalu menghapus cookie dan mengakhiri maintenance hanya setelah pemeriksaan berhasil. Bila perintah gagal, skrip memberi peringatan dan membiarkan maintenance aktif agar versi yang belum sehat tidak melayani pengguna.
 
 ### 3.3 Queue Worker (Supervisor)
 

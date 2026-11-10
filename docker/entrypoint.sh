@@ -35,6 +35,22 @@ until php artisan migrate --force; do
     sleep 3
 done
 
+# Hook Seeding Aman (Urutan 2 - Farin):
+# 1. Jalankan db:seed penuh HANYA jika database kosong (first boot, User::count() == 0).
+USER_COUNT=$(php -r "require 'vendor/autoload.php'; \$app = require_once 'bootstrap/app.php'; \$kernel = \$app->make(Illuminate\Contracts\Console\Kernel::class); \$kernel->bootstrap(); echo App\Models\User::count();" 2>/dev/null || echo "0")
+if [ "$USER_COUNT" = "0" ]; then
+    echo "Database kosong terdeteksi (User count: 0). Menjalankan seeder awal..."
+    php artisan db:seed --force
+else
+    echo "Database sudah berisi data (User count: ${USER_COUNT}). Melewati seeding awal."
+fi
+
+# 2. Perbarui kredensial akun demo jika variabel DEMO_*_PASSWORD disetel di server produksi
+if [ -n "${DEMO_ADMIN_PASSWORD:-}" ] && [ -n "${DEMO_DOSEN_PASSWORD:-}" ] && [ -n "${DEMO_MAHASISWA_PASSWORD:-}" ]; then
+    echo "Kredensial demo produksi terdeteksi. Menjalankan DemoAccountSeeder..."
+    php artisan db:seed --class=DemoAccountSeeder --force
+fi
+
 # Terapkan optimisasi produksi setelah variabel runtime tersedia
 php artisan config:cache
 php artisan route:cache

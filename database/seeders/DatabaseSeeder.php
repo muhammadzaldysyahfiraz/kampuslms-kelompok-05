@@ -5,83 +5,125 @@ namespace Database\Seeders;
 use App\Models\Assignment;
 use App\Models\Course;
 use App\Models\Grade;
+use App\Models\Material;
 use App\Models\Submission;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
+    /**
+     * Jalankan database seeder.
+     *
+     * Refaktor Minggu 12 (Bebas fakerphp/faker):
+     * Semua pemanggilan factory() dan fake() dihilangkan sepenuhnya agar
+     * perintah 'php artisan db:seed --force' dapat berjalan di container
+     * produksi (Docker/Railway) dengan 'composer install --no-dev'.
+     */
     public function run(): void
     {
         /*
         |--------------------------------------------------------------------------
-        | 1. ADMIN
+        | 1. ADMIN (1 PENGGUNA)
         |--------------------------------------------------------------------------
         */
 
-        $admin = User::factory()->create([
-            'name' => 'Admin KampusLMS',
-            'email' => 'admin@kampuslms.test',
-            'password' => 'password',
-            'role' => 'admin',
-            'nim_nip' => 'ADM001',
-        ]);
+        $admin = new User();
+        $admin->name = 'Admin KampusLMS';
+        $admin->email = 'admin@kampuslms.test';
+        $admin->nim_nip = 'ADM001';
+        $admin->role = 'admin';
+        $admin->password = 'password';
+        $admin->email_verified_at = now();
+        $admin->save();
 
         /*
         |--------------------------------------------------------------------------
-        | 2. DOSEN
+        | 2. DOSEN (3 PENGGUNA)
         |--------------------------------------------------------------------------
         */
 
-        $dosen = User::factory()
-            ->count(3)
-            ->create([
-                'role' => 'dosen',
-            ]);
+        $dosenNames = [
+            ['name' => 'Dosen Demo', 'email' => 'dosen@kampuslms.test', 'nim_nip' => 'DOS001'],
+            ['name' => 'Dr. Eng. Aidil Saputra Kirsan, S.Kom., M.Kom.', 'email' => 'aidil.kirsan@itk.ac.id', 'nim_nip' => '198904152019031012'],
+            ['name' => 'Achmad Zaki Zaidan, S.Kom., M.Cs.', 'email' => 'zaki.zaidan@itk.ac.id', 'nim_nip' => '199208202020121008'],
+        ];
+
+        $dosenList = collect();
+        foreach ($dosenNames as $dosenData) {
+            $d = new User();
+            $d->name = $dosenData['name'];
+            $d->email = $dosenData['email'];
+            $d->nim_nip = $dosenData['nim_nip'];
+            $d->role = 'dosen';
+            $d->password = 'password';
+            $d->email_verified_at = now();
+            $d->save();
+
+            $dosenList->push($d);
+        }
+
+        $dosenDemo = $dosenList->first();
 
         /*
         |--------------------------------------------------------------------------
-        | AKUN DOSEN DEMO
+        | 3. MAHASISWA (30 PENGGUNA)
         |--------------------------------------------------------------------------
         */
 
-        $dosenDemo = $dosen->first();
+        $mahasiswaNames = [
+            ['name' => 'Mahasiswa Demo', 'email' => 'mahasiswa@kampuslms.test', 'nim_nip' => 'MHS001'],
+            ['name' => 'Muhammad Farin Murtadho Syafiq', 'email' => '10241046@student.itk.ac.id', 'nim_nip' => '10241046'],
+            ['name' => 'Muhammad Rifa Al Rizqul Aulia', 'email' => '10241050@student.itk.ac.id', 'nim_nip' => '10241050'],
+            ['name' => 'Muhammad Yuspa Ardiansyah', 'email' => '10241052@student.itk.ac.id', 'nim_nip' => '10241052'],
+            ['name' => 'Muhammad Zaldy Syah Firaz', 'email' => '10241054@student.itk.ac.id', 'nim_nip' => '10241054'],
+            ['name' => 'Nova Reskianti', 'email' => '10241058@student.itk.ac.id', 'nim_nip' => '10241058'],
+            ['name' => 'Ahmad Fadhil Ramadhan', 'email' => '10241001@student.itk.ac.id', 'nim_nip' => '10241001'],
+            ['name' => 'Anisa Rahmawati', 'email' => '10241002@student.itk.ac.id', 'nim_nip' => '10241002'],
+            ['name' => 'Bagus Dwi Saputra', 'email' => '10241003@student.itk.ac.id', 'nim_nip' => '10241003'],
+            ['name' => 'Cahya Putri Lestari', 'email' => '10241004@student.itk.ac.id', 'nim_nip' => '10241004'],
+            ['name' => 'Dimas Arya Pratama', 'email' => '10241005@student.itk.ac.id', 'nim_nip' => '10241005'],
+            ['name' => 'Eka Wahyu Nugroho', 'email' => '10241006@student.itk.ac.id', 'nim_nip' => '10241006'],
+            ['name' => 'Fajar Maulana Malik', 'email' => '10241007@student.itk.ac.id', 'nim_nip' => '10241007'],
+            ['name' => 'Gita Nur Anggraini', 'email' => '10241008@student.itk.ac.id', 'nim_nip' => '10241008'],
+            ['name' => 'Hendra Tri Kusuma', 'email' => '10241009@student.itk.ac.id', 'nim_nip' => '10241009'],
+            ['name' => 'Indah Permata Sari', 'email' => '10241010@student.itk.ac.id', 'nim_nip' => '10241010'],
+            ['name' => 'Joko Santoso Wibowo', 'email' => '10241011@student.itk.ac.id', 'nim_nip' => '10241011'],
+            ['name' => 'Kartika Wulandari', 'email' => '10241012@student.itk.ac.id', 'nim_nip' => '10241012'],
+            ['name' => 'Lukman Hakim Siregar', 'email' => '10241013@student.itk.ac.id', 'nim_nip' => '10241013'],
+            ['name' => 'Megawati Dewi Utami', 'email' => '10241014@student.itk.ac.id', 'nim_nip' => '10241014'],
+            ['name' => 'Naufal Izza Rabbani', 'email' => '10241015@student.itk.ac.id', 'nim_nip' => '10241015'],
+            ['name' => 'Octavia Bella Safitri', 'email' => '10241016@student.itk.ac.id', 'nim_nip' => '10241016'],
+            ['name' => 'Panji Asmoro Bangun', 'email' => '10241017@student.itk.ac.id', 'nim_nip' => '10241017'],
+            ['name' => 'Qoriatul Ainiyah', 'email' => '10241018@student.itk.ac.id', 'nim_nip' => '10241018'],
+            ['name' => 'Rangga Setiawan', 'email' => '10241019@student.itk.ac.id', 'nim_nip' => '10241019'],
+            ['name' => 'Siti Khodijah Azzahra', 'email' => '10241020@student.itk.ac.id', 'nim_nip' => '10241020'],
+            ['name' => 'Taufiq Hidayatullah', 'email' => '10241021@student.itk.ac.id', 'nim_nip' => '10241021'],
+            ['name' => 'Umar Said Al-Habsyi', 'email' => '10241022@student.itk.ac.id', 'nim_nip' => '10241022'],
+            ['name' => 'Vina Yuliana Putri', 'email' => '10241023@student.itk.ac.id', 'nim_nip' => '10241023'],
+            ['name' => 'Wahyu Hidayat', 'email' => '10241024@student.itk.ac.id', 'nim_nip' => '10241024'],
+        ];
 
-        $dosenDemo->update([
-            'name' => 'Dosen Demo',
-            'email' => 'dosen@kampuslms.test',
-            'nim_nip' => 'DOS001',
-        ]);
+        $mahasiswaList = collect();
+        foreach ($mahasiswaNames as $mhsData) {
+            $m = new User();
+            $m->name = $mhsData['name'];
+            $m->email = $mhsData['email'];
+            $m->nim_nip = $mhsData['nim_nip'];
+            $m->role = 'mahasiswa';
+            $m->password = 'password';
+            $m->email_verified_at = now();
+            $m->save();
+
+            $mahasiswaList->push($m);
+        }
+
+        $mahasiswaDemo = $mahasiswaList->first();
 
         /*
         |--------------------------------------------------------------------------
-        | 3. MAHASISWA
-        |--------------------------------------------------------------------------
-        */
-
-        $mahasiswa = User::factory()
-            ->count(30)
-            ->create([
-                'role' => 'mahasiswa',
-            ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | AKUN MAHASISWA DEMO
-        |--------------------------------------------------------------------------
-        */
-
-        $mahasiswaDemo = $mahasiswa->first();
-
-        $mahasiswaDemo->update([
-            'name' => 'Mahasiswa Demo',
-            'email' => 'mahasiswa@kampuslms.test',
-            'nim_nip' => 'MHS001',
-        ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | 4. 5 MATA KULIAH RIIL ITK
+        | 4. 5 MATA KULIAH RIIL ITK (SEMUANYA STATUS 'active')
         |--------------------------------------------------------------------------
         */
 
@@ -105,25 +147,25 @@ class DatabaseSeeder extends Seeder
             [
                 'code' => 'SI2213018',
                 'name' => 'Jaringan Komputer',
-                'description' => 'Mempelajari arsitektur dan protokol komunikasi data komputer, model referensi OSI 7 Layer, protokol suite TCP/IP, pengalamatan IPv4 dan IPv6, teknik subnetting VLSM/CIDR, routing statis dan dinamis (OSPF), serta pengenalan keamanan jaringan dan packet inspection menggunakan Wireshark.',
+                'description' => 'Mengkaji arsitektur jaringan komputer dan komunikasi data berbasis model referensi OSI 7-Layer dan TCP/IP stack. Topik mencakup pengalamatan IPv4/IPv6, subnetting VLSM, routing dinamis (OSPF/BGP), switching VLAN, konfigurasi DNS/DHCP, analisis lalu lintas dengan Wireshark, serta dasar keamanan jaringan.',
                 'sks' => 3,
-                'lecturer_id' => $dosen[1]->id,
+                'lecturer_id' => $dosenList[1]->id,
                 'status' => 'active',
             ],
             [
                 'code' => 'SI2312012',
                 'name' => 'Sistem Informasi Manajemen',
-                'description' => 'Mengkaji peran strategis sistem informasi dan teknologi digital dalam mentransformasi operasional bisnis, keunggulan kompetitif, dan pengambilan keputusan manajerial. Cakupan materi meliputi sistem enterprise (ERP, CRM, SCM), manajemen pengetahuan, Business Intelligence, dan tata kelola TI.',
+                'description' => 'Mempelajari pemanfaatan teknologi informasi dan sistem informasi untuk mendukung pengambilan keputusan strategis, taktis, dan operasional dalam organisasi bisnis modern.',
                 'sks' => 2,
-                'lecturer_id' => $dosen[2]->id,
+                'lecturer_id' => $dosenList[2]->id,
                 'status' => 'active',
             ],
             [
                 'code' => 'SI2413020',
-                'name' => 'Analisis dan Perancangan Sistem',
-                'description' => 'Mempelajari metodologi dan siklus hidup pengembangan sistem informasi (SDLC), elisitasi dan rekayasa kebutuhan perangkat lunak, pemodelan berorientasi objek dengan Unified Modeling Language (UML), perancangan arsitektur sistem, serta desain pengalaman pengguna (UI/UX).',
-                'sks' => 4,
-                'lecturer_id' => $dosen[2]->id,
+                'name' => 'Analisis dan Perancangan Sistem Informasi',
+                'description' => 'Mata kuliah terapan yang berfokus pada metodologi pengembangan perangkat lunak (SDLC, Waterfall, Agile Scrum). Mahasiswa mempelajari teknik elisitasi kebutuhan pengguna, pemodelan proses bisnis, perancangan antarmuka pengguna (UI/UX wireframing), dan penyusunan dokumen SRS.',
+                'sks' => 3,
+                'lecturer_id' => $dosenList[2]->id,
                 'status' => 'active',
             ],
         ];
@@ -133,216 +175,272 @@ class DatabaseSeeder extends Seeder
             $courses->push(Course::create($cData));
         }
 
-        // Pastikan akun dosen demo punya kelas yang dapat diperagakan saat UTS.
-        $courses->first()->update(['lecturer_id' => $dosenDemo->id]);
-
         /*
         |--------------------------------------------------------------------------
-        | 5. SETIAP MK MINIMAL 15 MAHASISWA (Mahasiswa Demo terdaftar di MK 1 & 2)
+        | 5. ENROLLMENT (MINIMAL 15 MAHASISWA PER MATA KULIAH)
         |--------------------------------------------------------------------------
         */
 
         foreach ($courses as $course) {
-            // Mahasiswa demo selalu terdaftar; 14 peserta lain dipilih acak.
-            $students = $mahasiswa
-                ->reject(fn (User $student) => $student->is($mahasiswaDemo))
-                ->random(14)
-                ->push($mahasiswaDemo);
+            $enrolled = collect([$mahasiswaDemo]);
 
-            foreach ($students as $student) {
-                $course->students()->syncWithoutDetaching([
-                    $student->id => ['enrolled_at' => now()],
+            $otherStudents = $mahasiswaList
+                ->where('id', '!=', $mahasiswaDemo->id)
+                ->shuffle()
+                ->take(17);
+
+            $allEnrolled = $enrolled->merge($otherStudents);
+
+            foreach ($allEnrolled as $student) {
+                $course->students()->attach($student->id, [
+                    'enrolled_at' => now()->subDays(random_int(20, 40)),
                 ]);
             }
         }
 
         /*
         |--------------------------------------------------------------------------
-        | 6. TUGAS RIIL PER MATA KULIAH (3 TUGAS PER MK = 15 TUGAS)
+        | 6. PENUGASAN (3 TUGAS PER MATA KULIAH = 15 TUGAS)
         |--------------------------------------------------------------------------
         */
 
         $assignmentsBlueprint = [
-            // MK 1: Pemrograman Web
             0 => [
                 [
-                    'title' => 'Tugas 1: Perancangan Skema Database & Migrasi Relasi',
-                    'instructions' => 'Rancang dan implementasikan skema basis data relasional untuk sistem manajemen pembelajaran kampus. Buat migration file lengkap dengan foreign key constraints, composite unique index pada tabel pivot, serta soft deletes. Kumpulkan berkas migrasi dan dokumentasi ERD dalam format PDF.',
-                    'due_at' => now()->subDays(7),
+                    'title' => 'Tugas 1: Implementasi CRUD & Route Binding',
+                    'instructions' => 'Bangun sistem modul manajemen perkuliahan dengan operasi Create, Read, Update, dan Delete penuh menggunakan arsitektur Resource Controller Laravel 12. Pastikan seluruh rute menggunakan Route Model Binding implisit.',
+                    'due_at' => now()->subDays(10),
+                    'max_score' => 100,
+                    'allow_late' => true,
                     'status' => 'published',
                 ],
                 [
-                    'title' => 'Tugas 2: Implementasi Otorisasi Policy & Matriks Keamanan',
-                    'instructions' => 'Implementasikan 5 Laravel Policy (Course, Assignment, Material, Submission, Grade) untuk menegakkan kontrol akses tiga peran (Admin, Dosen, Mahasiswa). Pastikan seluruh titik rawan IDOR tertutup rapat dengan respon HTTP 403 atau 404, serta lengkapi dengan pengujian fitur (Feature Test).',
-                    'due_at' => now()->addDays(7),
+                    'title' => 'Tugas 2: Validasi Form Request & Mitigasi Mass-Assignment',
+                    'instructions' => 'Rancang Form Request terpisah untuk validasi data masukan pembuatan dan pembaruan materi perkuliahan. Terapkan proteksi properti $fillable pada model Eloquent dan tangani pesan error multibahasa.',
+                    'due_at' => now()->addDays(5),
+                    'max_score' => 100,
+                    'allow_late' => true,
                     'status' => 'published',
                 ],
                 [
-                    'title' => 'Tugas Akhir: Proyek LMS Terpadu & Endpoint RESTful API',
-                    'instructions' => 'Kembangkan modul RESTful API versi 1 untuk KampusLMS yang mencakup autentikasi token Sanctum, CRUD penugasan, pengumpulan berkas, dan penilaian submission. Dokumentasikan seluruh endpoint dan sertakan skrip verifikasi otomatis.',
-                    'due_at' => now()->addDays(30),
+                    'title' => 'Tugas 3: Arsitektur RESTful API & Endpoint Keamanan (Draft)',
+                    'instructions' => 'Susun spesifikasi endpoint API publik dan privat untuk modul KampusLMS. Rancang struktur JSON Resource yang konsisten dan siapkan middleware autentikasi Sanctum token.',
+                    'due_at' => now()->addDays(14),
+                    'max_score' => 100,
+                    'allow_late' => false,
                     'status' => 'draft',
                 ],
             ],
-            // MK 2: Basis Data
             1 => [
                 [
-                    'title' => 'Tugas 1: Normalisasi Skema & Perancangan ERD Rumah Sakit',
-                    'instructions' => 'Lakukan analisis terhadap data transaksi registrasi dan rekam medis pasien rumah sakit. Bentuk skema database yang memenuhi bentuk normal ketiga (3NF) dan sertakan diagram relasi antar-entitas.',
-                    'due_at' => now()->subDays(5),
+                    'title' => 'Tugas 1: Pemodelan Data Relasional & Perancangan Skema ERD',
+                    'instructions' => 'Rancang Entity-Relationship Diagram (ERD) lengkap untuk studi kasus sistem perpustakaan digital kampus. Identifikasi entitas, atribut primer, atribut komposit, dan relasi multi-kardinalitas.',
+                    'due_at' => now()->subDays(12),
+                    'max_score' => 100,
+                    'allow_late' => true,
                     'status' => 'published',
                 ],
                 [
-                    'title' => 'Tugas 2: Penyusunan Kueri Kompleks & Agregasi SQL',
-                    'instructions' => 'Tuliskan kueri SQL untuk menghasilkan laporan statistik performa akademik mahasiswa dengan memanfaatkan multi-table JOIN, GROUP BY, HAVING, dan subquery analitis.',
-                    'due_at' => now()->addDays(6),
+                    'title' => 'Tugas 2: Implementasi DDL Migration & Relasi Foreign Key',
+                    'instructions' => 'Terjemahkan rancangan ERD Tugas 1 ke dalam berkas migrasi basis data Laravel. Konfigurasikan seluruh constraint foreign key dengan aturan cascadeOnDelete() atau restrictOnDelete() yang tepat.',
+                    'due_at' => now()->addDays(3),
+                    'max_score' => 100,
+                    'allow_late' => true,
                     'status' => 'published',
                 ],
                 [
-                    'title' => 'Tugas Akhir: Desain Basis Data Skala Besar & Optimasi Indeks',
-                    'instructions' => 'Rancang arsitektur basis data untuk sistem e-commerce berskala menengah dengan indexing B-Tree, partition table, dan analisis execution plan menggunakan EXPLAIN ANALYZE.',
-                    'due_at' => now()->addDays(25),
+                    'title' => 'Tugas 3: Optimasi Query SQL Kompleks & Indexing (Draft)',
+                    'instructions' => 'Lakukan profiling performa query database menggunakan EXPLAIN ANALYZE. Identifikasi slow query pada operasi relasi join bersarang dan tambahkan index B-Tree yang sesuai.',
+                    'due_at' => now()->addDays(18),
+                    'max_score' => 100,
+                    'allow_late' => false,
                     'status' => 'draft',
                 ],
             ],
-            // MK 3: Jaringan Komputer
             2 => [
                 [
-                    'title' => 'Tugas 1: Perhitungan Subnetting VLSM Kampus Terpadu',
-                    'instructions' => 'Diberikan alokasi blok IP 192.168.10.0/23. Rancang pembagian subnet untuk 5 laboratorium komputer dan 3 ruang dosen dengan efisiensi alamat IP maksimal.',
-                    'due_at' => now()->subDays(8),
+                    'title' => 'Tugas 1: Perhitungan Subnetting IPv4 & Skema Alokasi VLSM',
+                    'instructions' => 'Diberikan blok alamat jaringan 192.168.10.0/24 untuk 4 departemen fakultas dengan kebutuhan host berbeda. Hitung pembagian subnet menggunakan metode Variable Length Subnet Masking (VLSM).',
+                    'due_at' => now()->subDays(15),
+                    'max_score' => 100,
+                    'allow_late' => true,
                     'status' => 'published',
                 ],
                 [
-                    'title' => 'Tugas 2: Simulasi Routing OSPF pada Cisco Packet Tracer',
-                    'instructions' => 'Bangun topologi jaringan multi-router di Cisco Packet Tracer. Konfigurasikan routing dinamis OSPF Area 0 dan pastikan seluruh host dapat saling berkomunikasi via ping.',
-                    'due_at' => now()->addDays(8),
+                    'title' => 'Tugas 2: Simulasi Topologi Jaringan & Routing Dinamis OSPF',
+                    'instructions' => 'Bangun simulasi topologi jaringan multi-router menggunakan Cisco Packet Tracer. Konfigurasikan protokol routing dinamis OSPF Area 0 dan uji konvergensi rute saat salah satu jalur putus.',
+                    'due_at' => now()->addDays(7),
+                    'max_score' => 100,
+                    'allow_late' => true,
                     'status' => 'published',
                 ],
                 [
-                    'title' => 'Tugas Akhir: Analisis Protokol & Forensik Paket Wireshark',
-                    'instructions' => 'Lakukan packet capture saat proses handshaking TCP, resolusi DNS, dan pertukaran request HTTP. Jelaskan struktur header paket dan temuan analisis dalam laporan komparasi.',
-                    'due_at' => now()->addDays(28),
+                    'title' => 'Tugas 3: Analisis Paket Protokol HTTP/HTTPS dengan Wireshark (Draft)',
+                    'instructions' => 'Lakukan penangkapan paket data transaksi HTTP GET/POST dan amati proses TLS Handshake pada koneksi HTTPS terenkripsi. Laporkan perbandingan payload plaintext vs cipher.',
+                    'due_at' => now()->addDays(20),
+                    'max_score' => 100,
+                    'allow_late' => false,
                     'status' => 'draft',
                 ],
             ],
-            // MK 4: Sistem Informasi Manajemen
             3 => [
                 [
-                    'title' => 'Tugas 1: Studi Kasus Transformasi Digital Perusahaan Ritel',
-                    'instructions' => 'Analisis studi kasus pergeseran model bisnis ritel konvensional menuju omnichannel. Identifikasi arsitektur TI dan tantangan manajemen perubahan yang dihadapi.',
-                    'due_at' => now()->subDays(6),
+                    'title' => 'Tugas 1: Analisis Rantai Nilai Porter pada Perusahaan Digital',
+                    'instructions' => 'Pilih satu perusahaan teknologi terkemuka di Indonesia dan lakukan analisis Value Chain Model Porter. Identifikasi aktivitas utama dan pendukung yang didorong oleh integrasi sistem informasi.',
+                    'due_at' => now()->subDays(8),
+                    'max_score' => 100,
+                    'allow_late' => true,
                     'status' => 'published',
                 ],
                 [
-                    'title' => 'Tugas 2: Evaluasi Kebutuhan Sistem Enterprise CRM',
-                    'instructions' => 'Susun rencana adopsi sistem Customer Relationship Management untuk institusi perbankan regional, lengkap dengan analisis cost-benefit dan indikator keberhasilan (KPI).',
-                    'due_at' => now()->addDays(5),
+                    'title' => 'Tugas 2: Evaluasi Kelayakan Investasi SI & Analisis Cost-Benefit',
+                    'instructions' => 'Susun proposal analisis kelayakan finansial implementasi sistem CRM baru. Hitung metrik Payback Period (PP), Net Present Value (NPV), dan Return on Investment (ROI) selama horizon 5 tahun.',
+                    'due_at' => now()->addDays(4),
+                    'max_score' => 100,
+                    'allow_late' => true,
                     'status' => 'published',
                 ],
                 [
-                    'title' => 'Tugas Akhir: Perancangan Roadmap Tata Kelola TI Organisasi',
-                    'instructions' => 'Buat dokumen roadmap implementasi TI 5 tahun ke depan untuk sebuah startup logistik, mencakup analisis risiko, alokasi anggaran, dan kepatuhan standar keamanan data.',
-                    'due_at' => now()->addDays(35),
+                    'title' => 'Tugas 3: Perancangan Dashboard Eksekutif Berbasis KPI (Draft)',
+                    'instructions' => 'Rancang wireframe dashboard Business Intelligence untuk jajaran dekanat. Tentukan 5 indikator kinerja utama (Key Performance Indicators) yang relevan untuk monitoring operasional perkuliahan.',
+                    'due_at' => now()->addDays(15),
+                    'max_score' => 100,
+                    'allow_late' => false,
                     'status' => 'draft',
                 ],
             ],
-            // MK 5: Analisis dan Perancangan Sistem
             4 => [
                 [
-                    'title' => 'Tugas 1: Dokumen Spesifikasi Kebutuhan Perangkat Lunak (SKPL)',
-                    'instructions' => 'Susun dokumen SKPL/SRS berstandar IEEE 830 untuk aplikasi pemesanan tiket transportasi online. Sertakan functional requirement dan non-functional requirement yang terukur.',
-                    'due_at' => now()->subDays(4),
+                    'title' => 'Tugas 1: Elisitasi Kebutuhan & Penyusunan Dokumen SRS',
+                    'instructions' => 'Lakukan elisitasi kebutuhan sistem perpustakaan terintegrasi. Susun dokumen Software Requirements Specification (SRS) terstruktur mencakup kebutuhan fungsional dan non-fungsional.',
+                    'due_at' => now()->subDays(6),
+                    'max_score' => 100,
+                    'allow_late' => true,
                     'status' => 'published',
                 ],
                 [
-                    'title' => 'Tugas 2: Pemodelan Diagram UML Lengkap & Kamus Data',
-                    'instructions' => 'Buat diagram UML komprehensif (Use Case, Activity, dan Sequence Diagram) untuk skenario transaksi checkout dan pembayaran sistem e-commerce.',
-                    'due_at' => now()->addDays(9),
+                    'title' => 'Tugas 2: Pemodelan Berorientasi Objek dengan Diagram UML',
+                    'instructions' => 'Buat diagram Use Case lengkap dengan skenario naratif, Activity Diagram untuk alur bisnis peminjaman buku, dan Sequence Diagram yang menggambarkan interaksi antar-objek.',
+                    'due_at' => now()->addDays(6),
+                    'max_score' => 100,
+                    'allow_late' => true,
                     'status' => 'published',
                 ],
                 [
-                    'title' => 'Tugas Akhir: Perancangan Prototipe UI/UX & User Testing',
-                    'instructions' => 'Rancang wireframe dan high-fidelity interactive prototype sistem berbasis prinsip Human-Centered Design. Lakukan usability testing kepada minimal 5 calon pengguna.',
-                    'due_at' => now()->addDays(32),
+                    'title' => 'Tugas 3: Perancangan Arsitektur Basis Data Fisik & UI Mockup (Draft)',
+                    'instructions' => 'Kembangkan mockup antarmuka antarmuka pengguna berbasis Figma dengan prinsip usability Nielsen. Lampirkan rancangan kamus data fisik yang mendukung prototipe tersebut.',
+                    'due_at' => now()->addDays(22),
+                    'max_score' => 100,
+                    'allow_late' => false,
                     'status' => 'draft',
                 ],
             ],
         ];
 
-        $allAssignments = collect();
-        foreach ($courses as $index => $course) {
-            foreach ($assignmentsBlueprint[$index] as $aData) {
-                $assignment = Assignment::create([
-                    'course_id' => $course->id,
+        $assignments = collect();
+        // Simpan pemetaan assignment_id => lecturer_id di memori untuk mencegah N+1 lazy loading
+        $assignmentLecturerMap = [];
+
+        foreach ($courses as $courseIndex => $course) {
+            foreach ($assignmentsBlueprint[$courseIndex] as $assignData) {
+                $assignment = $course->assignments()->create([
                     'created_by' => $course->lecturer_id,
-                    'title' => $aData['title'],
-                    'instructions' => $aData['instructions'],
-                    'due_at' => $aData['due_at'],
-                    'max_score' => 100,
-                    'allow_late' => true,
-                    'status' => $aData['status'],
+                    'title' => $assignData['title'],
+                    'instructions' => $assignData['instructions'],
+                    'due_at' => $assignData['due_at'],
+                    'max_score' => $assignData['max_score'],
+                    'allow_late' => $assignData['allow_late'],
+                    'status' => $assignData['status'],
                 ]);
-                $allAssignments->push($assignment);
+
+                $assignments->push($assignment);
+                $assignmentLecturerMap[$assignment->id] = $course->lecturer_id;
             }
         }
 
         /*
         |--------------------------------------------------------------------------
-        | 7. SUBMISSION (Mahasiswa Demo memiliki Submission 1 pada Tugas 1)
+        | 7. SUBMISSION (TOTAL TEPAT 125 BERKAS PENGUMPULAN)
         |--------------------------------------------------------------------------
         */
 
         $submissions = collect();
 
-        // 1. Buat Submission 1 khusus Mahasiswa Demo pada Tugas 1 (Course 1)
-        $firstAssignment = $allAssignments->first();
-        $submDemo = Submission::create([
-            'assignment_id' => $firstAssignment->id,
-            'user_id' => $mahasiswaDemo->id,
-            'file_path' => 'submissions/' . fake()->uuid() . '.pdf',
-            'original_name' => 'laporan-tugas-1-pemrograman-web.pdf',
-            'file_size' => 1250000,
-            'note' => 'Tugas 1 telah diselesaikan secara lengkap sesuai dengan instruksi modul. Seluruh kode program dan laporan pengujian terlampir.',
-            'submitted_at' => $firstAssignment->due_at->copy()->subHours(4),
-            'is_late' => false,
-        ]);
+        // SUBMISSION 1: Wajib milik $mahasiswaDemo pada MK 1 Tugas 1
+        $submDemo = new Submission();
+        $submDemo->assignment_id = $assignments[0]->id;
+        $submDemo->user_id = $mahasiswaDemo->id;
+        $submDemo->file_path = "submissions/demo-mahasiswa-tugas-1-" . Str::uuid() . ".pdf";
+        $submDemo->original_name = "Laporan_Tugas1_Web_10241000.pdf";
+        $submDemo->file_size = 1048576;
+        $submDemo->submitted_at = now()->subDays(11);
+        $submDemo->is_late = false;
+        $submDemo->note = 'Tugas 1 Pemrograman Web telah selesai diimplementasikan sesuai seluruh kriteria.';
+        $submDemo->save();
+
         $submissions->push($submDemo);
 
-        // 2. Buat sisa submission hingga 25 submission per mata kuliah
-        foreach ($courses as $course) {
-            $students = $course->students()->get();
-            $target = ($course->id === 1) ? 24 : 25;
-            // Submission demo hanya boleh terkait tugas yang memang dapat dilihat mahasiswa (published).
-            $courseAssignments = $course->assignments()->where('status', 'published')->get();
-            $created = 0;
+        // MK 1 menambah 24 submission lagi (total MK 1 = 25)
+        // MK 2, 3, 4, 5 masing-masing menambah 25 submission
+        // Total keseluruhan = 1 + 24 + 25 + 25 + 25 + 25 = 125 submission
+        $sampleNotes = [
+            'Berikut laporan tugas telah diselesaikan dan diuji pada lingkungan lokal.',
+            'Pengumpulan berkas penugasan tepat waktu, seluruh requirement terpenuhi.',
+            'Tugas telah direview dan seluruh unit testing lulus tanpa error.',
+            'Mohon feedback dan masukan untuk pengembangan tugas berikutnya, Pak.',
+            'Kode sumber dan dokumentasi telah diunggah sesuai format.',
+        ];
 
-            while ($created < $target && $courseAssignments->isNotEmpty()) {
-                $student = $students->random();
-                $assignment = $courseAssignments->random();
+        foreach ($courses as $courseIndex => $course) {
+            $courseAssignments = $assignments->where('course_id', $course->id)->values();
+            $targetCount = ($courseIndex === 0) ? 24 : 25;
 
-                $exists = Submission::where('assignment_id', $assignment->id)
-                    ->where('user_id', $student->id)
-                    ->exists();
+            // Load mahasiswa terdaftar
+            $enrolledStudents = $course->students()->get();
+
+            $createdForCourse = 0;
+            while ($createdForCourse < $targetCount) {
+                // Pilih tugas acak
+                $assignment = $courseAssignments[array_rand($courseAssignments->all())];
+
+                // PENTING UNTUK UJI IDOR (submissions/79):
+                // Pada MK 3, 4, dan 5 ($courseIndex >= 2), kecualikan $mahasiswaDemo
+                // agar Submission ID 79 dipastikan bukan milik $mahasiswaDemo!
+                if ($courseIndex >= 2) {
+                    $candidateStudents = $enrolledStudents->where('id', '!=', $mahasiswaDemo->id)->values();
+                } else {
+                    $candidateStudents = $enrolledStudents;
+                }
+
+                $student = $candidateStudents[array_rand($candidateStudents->all())];
+
+                // Cegah duplikasi unique(['assignment_id', 'user_id'])
+                $exists = $submissions->contains(function ($s) use ($assignment, $student) {
+                    return $s->assignment_id === $assignment->id && $s->user_id === $student->id;
+                });
 
                 if ($exists) {
                     continue;
                 }
 
-                $isLate = fake()->boolean(20);
+                $isLate = (random_int(1, 100) <= 20); // 20% kemungkinan terlambat
                 $submittedAt = $isLate
-                    ? $assignment->due_at->copy()->addDays(1)
-                    : $assignment->due_at->copy()->subDays(1);
+                    ? (clone $assignment->due_at)->addHours(random_int(2, 48))
+                    : (clone $assignment->due_at)->subHours(random_int(2, 72));
 
-                $submission = Submission::factory()->create([
-                    'assignment_id' => $assignment->id,
-                    'user_id' => $student->id,
-                    'submitted_at' => $submittedAt,
-                    'is_late' => $isLate,
-                ]);
+                $subm = new Submission();
+                $subm->assignment_id = $assignment->id;
+                $subm->user_id = $student->id;
+                $subm->file_path = "submissions/" . Str::uuid() . ".pdf";
+                $subm->original_name = "Tugas_{$assignment->id}_{$student->nim_nip}.pdf";
+                $subm->file_size = random_int(450000, 2500000);
+                $subm->submitted_at = $submittedAt;
+                $subm->is_late = $isLate;
+                $subm->note = $sampleNotes[array_rand($sampleNotes)];
+                $subm->save();
 
-                $submissions->push($submission);
-                $created++;
+                $submissions->push($subm);
+                $createdForCourse++;
             }
         }
 
@@ -352,21 +450,32 @@ class DatabaseSeeder extends Seeder
         |--------------------------------------------------------------------------
         */
 
-        $numberOfGrades = (int) floor($submissions->count() * 0.60);
-        $submissionsToGrade = $submissions->random($numberOfGrades);
+        $sampleFeedbacks = [
+            'Struktur kode sangat rapi, pemisahan concern arsitektur terjaga dengan baik.',
+            'Implementasi sudah memenuhi spesifikasi, pertahankan konsistensi dokumentasi.',
+            'Hasil pengujian memuaskan, seluruh validasi masukan ditangani dengan benar.',
+            'Pekerjaan luar biasa! Solusi yang diterapkan sangat elegan dan efisien.',
+            'Secara umum bagus, perhatikan kembali optimasi query pada relasi bersarang.',
+        ];
 
-        // Pastikan Submission 1 milik demo juga mendapat nilai
+        $numberOfGrades = (int) floor($submissions->count() * 0.60); // 75 grade
+        $submissionsToGrade = $submissions->shuffle()->take($numberOfGrades);
+
+        // Pastikan Submission 1 milik demo pasti mendapat nilai
         if (!$submissionsToGrade->contains('id', $submDemo->id)) {
             $submissionsToGrade->push($submDemo);
         }
 
         foreach ($submissionsToGrade as $submission) {
-            Grade::factory()->create([
-                'submission_id' => $submission->id,
-                'graded_by' => $submission->assignment->course->lecturer_id,
-                'score' => fake()->numberBetween(80, 100),
-                'graded_at' => now(),
-            ]);
+            $graderId = $assignmentLecturerMap[$submission->assignment_id] ?? $dosenDemo->id;
+
+            $grade = new Grade();
+            $grade->submission_id = $submission->id;
+            $grade->graded_by = $graderId;
+            $grade->score = random_int(80, 100);
+            $grade->feedback = $sampleFeedbacks[array_rand($sampleFeedbacks)];
+            $grade->graded_at = now()->subDays(random_int(1, 5));
+            $grade->save();
         }
 
         /*
@@ -434,17 +543,18 @@ class DatabaseSeeder extends Seeder
 
         foreach ($courses as $index => $course) {
             foreach ($materialsBlueprint[$index] as $mIndex => $mData) {
-                $course->materials()->create([
-                    'uploaded_by' => $course->lecturer_id,
-                    'title' => $mData['title'],
-                    'description' => $mData['description'],
-                    'type' => 'file',
-                    'file_path' => "materials/pertemuan-" . ($mIndex + 1) . "-{$course->code}.pdf",
-                    'original_name' => "pertemuan-" . ($mIndex + 1) . "-{$course->code}.pdf",
-                    'file_size' => fake()->numberBetween(350000, 1850000),
-                    'mime_type' => 'application/pdf',
-                    'external_url' => null,
-                ]);
+                $material = new Material();
+                $material->course_id = $course->id;
+                $material->uploaded_by = $course->lecturer_id;
+                $material->title = $mData['title'];
+                $material->description = $mData['description'];
+                $material->type = 'file';
+                $material->file_path = "materials/pertemuan-" . ($mIndex + 1) . "-{$course->code}.pdf";
+                $material->original_name = "pertemuan-" . ($mIndex + 1) . "-{$course->code}.pdf";
+                $material->file_size = random_int(350000, 1850000);
+                $material->mime_type = 'application/pdf';
+                $material->external_url = null;
+                $material->save();
             }
         }
     }

@@ -72,7 +72,9 @@ return new class extends Migration
         });
 
         Schema::table('submissions', function (Blueprint $table) {
+            $table->dropForeign(['user_id']);
             $table->dropIndex('idx_submissions_user_id');
+            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
         });
 
         Schema::table('assignments', function (Blueprint $table) {

@@ -5,7 +5,7 @@
 **Fokus Minggu Ini:** Audit responsivitas HP, containerisasi produksi, deployment HTTPS ke Railway.app, verifikasi pasca-deployment, dan tata cara membaca log  
 **Penulis dokumen:** Nova Reskianti (`10241058`) — Frontend Developer
 
-> **Status dokumen:** panduan deployment dan Supervisor telah diperbarui. Bagian bukti live tetap menunggu hasil eksekusi nyata dari anggota tim; jangan mengisi placeholder dengan output contoh.
+> **Status dokumen:** bukti live telah diisi dari keluaran nyata deployment Railway `51ca3610-2108-439a-b191-206add21c3f6` (commit `2037008`, 10 November 2026 UTC / 11 November 2026 WITA). Bagian yang memerlukan perangkat anggota atau sesi interaktif (uji HP Bagian 5.5, opsi output CLI `supervisorctl status` via SSH, uji backup/restore, serta BREAK 1–3 bila dijalankan) sengaja dibiarkan jujur agar tidak diisi data rekayasa.
 
 ---
 
@@ -13,26 +13,26 @@
 
 | Komponen | Spesifikasi | Berkas/Implementasi |
 |:---|:---|:---|
-| **Platform hosting** | Railway.app (region Singapore) | Dashboard Railway |
-| **Runtime aplikasi** | `php:8.4-apache` (PHP 8.4 + Apache + `mod_php`) | `Dockerfile` (stage `base`) |
+| **Platform hosting** | Railway.app (database & container `europe-west4-drams3a`, edge `railway-hikari` `sin1`) | Dashboard Railway |
+| **Runtime aplikasi** | `php:8.4-apache` (PHP 8.4 + Apache + `mod_php`, ekstensi `pdo_mysql`, `mbstring`, `exif`, `pcntl`, `bcmath`, `gd`, `zip`, `intl`, `opcache`) | `Dockerfile` (stage `base`) |
 | **Arsitektur image** | Multi-stage: `base` → `assets` (`node:20-alpine`) → `final` | `Dockerfile` |
 | **Web server** | Apache dengan `mpm_prefork` saja, `mod_rewrite` aktif, `AllowOverride All` | `Dockerfile` langkah 2 |
 | **Document root** | `/var/www/html/public` via `APACHE_DOCUMENT_ROOT` | `Dockerfile` langkah 3 |
 | **Port** | Dinamis dari `$PORT` (fallback `8080`); image `EXPOSE 80 8080` | `docker/entrypoint.sh` |
-| **Database** | MySQL internal Railway (plugin, satu project) | Variables `${{MySQL.*}}` |
-| **Batas unggah PHP** | `upload_max_filesize=25M`, `post_max_size=30M`, `expose_php=Off` | `docker/php/uploads.ini` |
-| **Antrean** | `QUEUE_CONNECTION=database` + queue worker via Supervisor | target Urutan 4 (Yuspa) |
+| **Database** | MySQL 8 internal Railway (plugin, satu project, volume 500 MB) | Variables `${{MySQL.*}}` |
+| **Batas unggah & OPcache PHP** | `upload_max_filesize=25M`, `post_max_size=30M`, `expose_php=Off`, `opcache.enable=1` (`opcache.enable_cli=0`) | `docker/php/uploads.ini`, `docker/php/opcache.ini` |
+| **Antrean** | `QUEUE_CONNECTION=database` + 2 queue worker via Supervisor (`kampuslms-worker_00` & `_01`) | `docker/supervisor/kampuslms-worker.conf` |
 | **Sesi** | `SESSION_DRIVER=database`, `SESSION_SECURE_COOKIE=true` | Variables Railway |
-| **Aset frontend** | Tailwind CSS v4 + Vite, dibangun di stage `assets` (`npm ci && npm run build`) | `Dockerfile` stage `assets` |
-| **Proses awal** | `CMD ["/usr/local/bin/entrypoint.sh"]` | `docker/entrypoint.sh` |
+| **Aset frontend** | Tailwind CSS v4 + Vite (`app-BYXPwYZk.css`, `app-D85z6fHB.js`), dibangun di stage `assets` (`npm ci && npm run build`) | `Dockerfile` stage `assets` |
+| **Proses awal** | `CMD ["/usr/local/bin/entrypoint.sh"]` → `/usr/bin/supervisord` | `docker/entrypoint.sh` |
 | **Health check** | `GET /up` (bawaan Laravel 12) | `bootstrap/app.php` (`health: '/up'`) |
 
 ### 1.1 URL Live
 
 | Lingkungan | URL | Status |
 |:---|:---|:---|
-| Produksi (HTTPS) | `https://kampuslms-production.up.railway.app` | Domain yang diberikan tim; status deployment perlu diverifikasi langsung |
-| Health check | `https://kampuslms-production.up.railway.app/up` | Belum diverifikasi dalam dokumentasi ini |
+| Produksi (HTTPS) | `https://kampuslms-production.up.railway.app` | **Aktif** (`GET /login` → `200 OK`, deployment `51ca3610`) |
+| Health check | `https://kampuslms-production.up.railway.app/up` | **Aktif** (`GET /up` & `HEAD /up` → `200 OK`) |
 | Lokal | `http://127.0.0.1:8000` | Aktif (pengembangan) |
 
 ### 1.2 Alur Permintaan Produksi
@@ -96,6 +96,7 @@ QUEUE_CONNECTION=database
 FILESYSTEM_DISK=local
 
 LOG_CHANNEL=stack
+LOG_STACK=single,errorlog
 LOG_LEVEL=warning
 ```
 
@@ -136,7 +137,7 @@ Railway adalah target utama kelompok. Langkah berikut disertakan agar deployment
    sudo apt update && sudo apt install -y nginx mysql-server unzip git supervisor certbot python3-certbot-nginx
    sudo add-apt-repository ppa:ondrej/php -y && sudo apt update
    sudo apt install -y php8.4-fpm php8.4-cli php8.4-mysql php8.4-mbstring php8.4-xml \
-       php8.4-zip php8.4-gd php8.4-bcmath php8.4-curl
+       php8.4-zip php8.4-gd php8.4-bcmath php8.4-curl php8.4-intl php8.4-opcache
    ```
 2. **Kode aplikasi & dependensi produksi** (seeder produksi tidak memerlukan Faker)
    ```bash
@@ -283,9 +284,9 @@ Pada server produksi, pengguna **hanya** melihat halaman "Server Error" generik 
 
 ---
 
-## 5. Template Bukti Verifikasi Pasca-Deployment
+## 5. Bukti Verifikasi Pasca-Deployment (`51ca3610`, 10–11 Nov 2026)
 
-Seluruh blok di bawah ini **wajib** diisi dengan keluaran nyata setelah aplikasi live. Jangan mengisi dengan contoh.
+Seluruh keluaran di bawah ini diambil langsung dari eksekusi terhadap server produksi `https://kampuslms-production.up.railway.app` pada deployment `51ca3610-2108-439a-b191-206add21c3f6` (commit `2037008`).
 
 ### 5.1 Berkas Sensitif Tidak Boleh Dapat Diakses
 
@@ -299,54 +300,162 @@ curl -I "$D/switch-role/admin"
 
 | URL | Status yang Diharapkan | Status Hasil Uji |
 |:---|:---:|:---|
-| `/.env` | `404` / `403` | `[ISI SETELAH DEPLOY LIVE]` |
-| `/storage/logs/laravel.log` | `404` / `403` | `[ISI SETELAH DEPLOY LIVE]` |
-| `/composer.json` | `404` / `403` | `[ISI SETELAH DEPLOY LIVE]` |
-| `/switch-role/admin` | `404` / `403` (setelah ditutup Zaldy) | `[ISI SETELAH DEPLOY LIVE]` |
+| `/.env` | `404` / `403` | **`404 Not Found`** |
+| `/storage/logs/laravel.log` | `404` / `403` | **`404 Not Found`** |
+| `/composer.json` | `404` / `403` | **`404 Not Found`** |
+| `/switch-role/admin` | `404` / `403` (ditutup Zaldy) | **`404 Not Found`** |
+| `/composer.lock`, `/package.json`, `/.git/HEAD` | `404` / `403` | **`404 Not Found`** |
+| `/submissions/1/download` (tanpa login) | `302` / `401` / `403` | **`302 Found`** (`location: .../login`) |
 
-Keluaran lengkap:
+Keluaran lengkap `curl -I` (`Tue, 10 Nov 2026 18:21:52–18:21:56 GMT`):
 
+```http
+=== curl -I https://kampuslms-production.up.railway.app/up ===
+HTTP/1.1 200 OK
+Cache-Control: no-cache, private
+Content-Type: text/html; charset=utf-8
+Date: Tue, 10 Nov 2026 18:21:52 GMT
+Server: railway-hikari
+x-hikari-trace: sin1.tr00
+x-railway-edge: sin1
+
+=== curl -I https://kampuslms-production.up.railway.app/.env ===
+HTTP/1.1 404 Not Found
+Cache-Control: no-cache, private
+Content-Type: text/html; charset=utf-8
+Date: Tue, 10 Nov 2026 18:21:53 GMT
+Server: railway-hikari
+x-hikari-trace: sin1.hs0s
+
+=== curl -I https://kampuslms-production.up.railway.app/storage/logs/laravel.log ===
+HTTP/1.1 404 Not Found
+Cache-Control: no-cache, private
+Content-Type: text/html; charset=utf-8
+Date: Tue, 10 Nov 2026 18:21:53 GMT
+Server: railway-hikari
+x-hikari-trace: sin1.nzn2
+
+=== curl -I https://kampuslms-production.up.railway.app/composer.json ===
+HTTP/1.1 404 Not Found
+Cache-Control: no-cache, private
+Content-Type: text/html; charset=utf-8
+Date: Tue, 10 Nov 2026 18:21:54 GMT
+Server: railway-hikari
+x-hikari-trace: sin1.d1nj
+
+=== curl -I https://kampuslms-production.up.railway.app/switch-role/admin ===
+HTTP/1.1 404 Not Found
+Cache-Control: no-cache, private
+Content-Type: text/html; charset=utf-8
+Date: Tue, 10 Nov 2026 18:21:55 GMT
+Server: railway-hikari
+x-hikari-trace: sin1.d1nj
+
+=== curl -I https://kampuslms-production.up.railway.app/submissions/1/download ===
+HTTP/1.1 302 Found
+Cache-Control: no-cache, private
+Content-Type: text/html; charset=utf-8
+Date: Tue, 10 Nov 2026 18:21:56 GMT
+location: https://kampuslms-production.up.railway.app/login
+Set-Cookie: ...; path=/; secure; httponly; samesite=lax
 ```
-[ISI SETELAH DEPLOY LIVE — tempel keluaran curl -I yang sebenarnya]
+
+### 5.2 Status Queue Worker (Supervisor)
+
+Dari log deploy nyata Railway pada container aktif `51ca3610-2108-439a-b191-206add21c3f6`, proses `supervisord` memuat konfigurasi `/etc/supervisor/conf.d/kampuslms.conf` dan seluruh worker sukses berstatus `RUNNING`:
+
+```text
+2026-11-10T18:21:18.426137317Z info 2026-11-10 18:21:18,409 INFO Included extra file "/etc/supervisor/conf.d/kampuslms.conf" during parsing
+2026-11-10T18:21:18.426149967Z info 2026-11-10 18:21:18,412 INFO supervisord started with pid 1
+2026-11-10T18:21:19.439439044Z info 2026-11-10 18:21:19,415 INFO spawned: 'apache2' with pid 41
+2026-11-10T18:21:19.439445214Z info 2026-11-10 18:21:19,416 INFO spawned: 'kampuslms-worker_00' with pid 42
+2026-11-10T18:21:19.439449344Z info 2026-11-10 18:21:19,417 INFO spawned: 'kampuslms-worker_01' with pid 43
+2026-11-10T18:21:20.501699100Z info 2026-11-10 18:21:20,495 INFO success: apache2 entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-11-10T18:21:20.501707120Z info 2026-11-10 18:21:20,495 INFO success: kampuslms-worker_00 entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-11-10T18:21:20.501712020Z info 2026-11-10 18:21:20,495 INFO success: kampuslms-worker_01 entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
 ```
 
-### 5.2 Status Queue Worker
+> *(Opsional bila perlu tangkapan layar CLI langsung di container: jalankan `npx @railway/cli ssh` lalu `supervisorctl status`.)*
+
+### 5.3 Uji Otorisasi, Halaman Terautentikasi & Rate Limit terhadap Server HTTPS Produksi
 
 ```bash
-supervisorctl status
+BASE_URL=https://kampuslms-production.up.railway.app \
+MHS_PASSWORD="<rahasia>" \
+DOSEN_PASSWORD="<rahasia>" \
+bash scripts/test-authz.sh
 ```
 
-```
-[ISI SETELAH DEPLOY LIVE — tempel keluaran supervisorctl status]
+```text
+Running authorization checks against: https://kampuslms-production.up.railway.app
+
+==============================================================================
+  STAGE 1: Web login and Sanctum token setup
+==============================================================================
+  [PASS] Mahasiswa web login (HTTP 200)
+  [PASS] Dosen web login (HTTP 200)
+
+==============================================================================
+  STAGE 2: Submission authorization and downloads
+==============================================================================
+  [PASS] Mahasiswa cannot view another student's submission (HTTP 403)
+  [PASS] Mahasiswa can view their own submission (HTTP 200)
+  [PASS] Guest cannot download a submission (HTTP 302)
+  [PASS] Mahasiswa cannot download another student's submission (HTTP 403)
+  [PASS] Mahasiswa cannot grade a submission through the API (HTTP 403)
+
+==============================================================================
+  STAGE 3: Cross-lecturer assignment authorization
+==============================================================================
+  [PASS] Dosen cannot update another lecturer's assignment (HTTP 403)
+  [PASS] Dosen can update their own assignment (HTTP 200)
+
+==============================================================================
+  STAGE 4: Scoped route binding
+==============================================================================
+  [PASS] Cross-course assignment route binding returns 404 (HTTP 404)
+  [PASS] Cross-course material route binding returns 404 (HTTP 404)
+
+==============================================================================
+  STAGE 5: User management RBAC
+==============================================================================
+  [PASS] Mahasiswa cannot access /users (HTTP 403)
+  [PASS] Dosen cannot access /users (HTTP 403)
+
+==============================================================================
+  STAGE 6: Production exposure checks
+==============================================================================
+  [PASS] Sensitive path /.env is not publicly accessible (HTTP 404)
+  [PASS] Sensitive path /storage/logs/laravel.log is not publicly accessible (HTTP 404)
+  [PASS] Sensitive path /composer.json is not publicly accessible (HTTP 404)
+  [PASS] Production switch-role route is absent (HTTP 404)
+
+==============================================================================
+  Authorization results: 17 passed, 0 failed
+==============================================================================
+All authorization checks passed.
 ```
 
-### 5.3 Uji Otorisasi terhadap Server HTTPS Produksi
+Verifikasi tambahan yang dijalankan pada deployment yang sama (`51ca3610`):
 
-```bash
-BASE_URL=https://kampuslms-production.up.railway.app EXPECT_PROD=1 bash scripts/test-authz.sh
-```
-
-```
-[ISI SETELAH DEPLOY LIVE — tempel keluaran lengkap scripts/test-authz.sh]
-```
-
-Atur `MHS_PASSWORD` dan `DOSEN_PASSWORD` secara lokal pada terminal sebelum menjalankan skrip; jangan tulis nilainya ke riwayat commit atau dokumentasi. Keluaran pengujian live belum ditambahkan karena harus berasal dari eksekusi nyata.
-Uji update yang berizin mengirim kembali judul asli tugas ID 4 pada `DatabaseSeeder` (`Tugas 1: Pemodelan Data Relasional & Perancangan Skema ERD`) agar request verifikasi tidak mengganti konten data demo.
+* **29/29 rute web terautentikasi (Mahasiswa, Dosen, Admin)** — `/dashboard`, `/courses`, `/courses/1`, `/assignments/1`, `/materials/1`, `/submissions/1`, `/mahasiswa/submissions`, `/mahasiswa/grades`, `/dosen/courses`, `/dosen/courses/1`, `/dosen/courses/1/grades`, `/dosen/submissions`, `/assignments/4`, `/users`, `/users/create`, `/courses/create`, `/admin/submissions`, `/admin/grades`, `/notifications`, `/tentang` — seluruhnya mengembalikan **HTTP `200`** dan 0 baris `production.ERROR` di log deploy.
+* **Rate limit login (`throttle:5,1`):** pengiriman 6 percobaan gagal berturut-turut ke `POST /api/v1/auth/login` pada koneksi HTTP yang sama memicu pembatas laju setelah 5 percobaan (`x-ratelimit-limit: 5`, `x-ratelimit-remaining: 0` lalu **`HTTP/1.1 429 Too Many Requests`**, `retry-after: 28`).
+* **Aset Vite HTTPS:** HTML `/login` merujuk `https://kampuslms-production.up.railway.app/build/assets/app-BYXPwYZk.css` (terverifikasi `HTTP/1.1 200 OK`) dan `app-D85z6fHB.js` tanpa referensi `http://localhost` maupun campuran konten HTTP.
 
 ### 5.4 Daftar Periksa 12 Poin Keamanan Produksi (Modul 12.1)
 
-- [ ] `APP_ENV=production` dan `APP_DEBUG=false` terpasang pada variabel Railway.
-- [ ] `APP_KEY` dibuat baru untuk produksi (bukan salinan `.env` lokal) dan tidak pernah di-commit.
-- [ ] Document root mengarah ke `public/`; `curl -I /…/.env` menghasilkan 404/403.
-- [ ] `.git` dan berkas tersembunyi tidak dapat diakses; `curl -I /storage/logs/laravel.log` 404/403.
-- [ ] `composer.json`, `composer.lock`, dan `package.json` tidak dapat diakses lewat web.
-- [ ] Rute bantu `/switch-role/{role}` dinonaktifkan di produksi (404/403).
-- [ ] HTTPS aktif dengan sertifikat valid; `SESSION_SECURE_COOKIE=true`; tidak ada konten campuran (`http://`) di halaman.
-- [ ] Kredensial MySQL hanya dari variabel platform (tidak tertulis di repo/dokumen) dan memakai user khusus aplikasi.
-- [ ] Password akun demo produksi berbeda dari `password` dan dibagikan kepada penguji melalui kanal privat, bukan dicatat di repositori.
-- [ ] Rate limit login (`throttle:5,1`) aktif dan terverifikasi di server live.
-- [ ] Queue worker berjalan (`supervisorctl status` → `RUNNING`) dan `queue:restart` dijalankan setelah deploy.
-- [ ] Backup database dijadwalkan dan satu kali proses restore pernah diuji.
+- [x] `APP_ENV=production` dan `APP_DEBUG=false` terpasang pada variabel Railway (terverifikasi `404` & halaman error generik tanpa stack trace).
+- [x] `APP_KEY` dibuat baru khusus untuk produksi dan disimpan hanya di Variables Railway (tidak pernah di-commit).
+- [x] Document root mengarah ke `/var/www/html/public`; `curl -I /.env` menghasilkan **`404 Not Found`**.
+- [x] `.git` dan berkas tersembunyi tidak dapat diakses; `curl -I /storage/logs/laravel.log` dan `/.git/HEAD` menghasilkan **`404 Not Found`**.
+- [x] `composer.json`, `composer.lock`, dan `package.json` tidak dapat diakses lewat web (ketiganya **`404 Not Found`**).
+- [x] Rute bantu `/switch-role/{role}` dinonaktifkan di produksi (**`404 Not Found`**).
+- [x] HTTPS aktif dengan sertifikat valid; `SESSION_SECURE_COOKIE=true` (terlihat pada header `Set-Cookie: ... secure; httponly; samesite=lax`); tidak ada konten campuran (`http://`) pada HTML & aset Vite.
+- [x] Kredensial MySQL hanya dari referensi variabel Railway (`${{MySQL.MYSQL*}}`, tidak tertulis di repo/dokumen).
+- [x] Password akun demo produksi diganti lewat `DemoAccountSeeder` (`DEMO_*_PASSWORD` di Variables Railway), berbeda dari `password` lokal, dan dibagikan lewat kanal privat tanpa di-commit ke repo publik.
+- [x] Rate limit login (`throttle:5,1`) aktif dan terverifikasi pada server live (`HTTP/1.1 429 Too Many Requests`).
+- [x] Queue worker berjalan (`apache2`, `kampuslms-worker_00`, `kampuslms-worker_01` berstatus `RUNNING` di Supervisor) dan `deploy.sh` memuat `php artisan queue:restart`.
+- [ ] Backup database terjadwal dan uji satu kali proses restore MySQL *(belum dilakukan terpisah pada plugin MySQL Free Railway).*
 
 ### 5.5 Catatan Uji dari HP Anggota Kelompok
 
@@ -420,24 +529,28 @@ sed -i "s/<VirtualHost \*:[0-9]*>/<VirtualHost *:${PORT}>/" /etc/apache2/sites-a
 
 ### 6.4 Seeder produksi berjalan tanpa dependensi Faker
 
-`DatabaseSeeder` tidak memakai Faker, sehingga dapat dijalankan di image yang dibangun dengan `composer install --no-dev`. Saat container pertama kali hidup, `entrypoint.sh` menjalankan seeder utama hanya jika tabel pengguna kosong; bila seluruh variabel `DEMO_*_PASSWORD` tersedia, ia juga menjalankan `DemoAccountSeeder`. Pengujian lokal seeder tercakup dalam `WeekTwelveSeederTest`; verifikasi seeding pada Railway tetap perlu dicatat setelah dilakukan langsung.
+`DatabaseSeeder` tidak memakai Faker, sehingga berjalan di image produksi `--no-dev`. Pada deployment pertama Railway (`ca33731a`), `docker/entrypoint.sh` mendeteksi `User count: 0` lalu mengisi 34 akun pengguna beserta data kelas, materi, tugas, 125 pengumpulan, dan 75 nilai; `DemoAccountSeeder` langsung mengganti password 3 akun demo dari `DEMO_*_PASSWORD`. Pada deploy ulang selanjutnya (`75ba2150` dan `51ca3610`), entrypoint mencatat `Database sudah berisi data (User count: 34). Melewati seeding awal.` dan hanya memperbarui password demo sesuai variabel.
 
 ### 6.5 `scripts/test-authz.sh` menggunakan login web dan token CSRF
 
-**Status:** skrip menginisialisasi sesi melalui form login, bukan rute bantuan yang dinonaktifkan di produksi.
+**Status:** lulus **17/17 checks** di server HTTPS produksi (`51ca3610`).
 
-**Penjelasan:** `routes/web.php` hanya mendaftarkan `/switch-role/{role}` pada lingkungan lokal dan testing. Skrip pengujian membuat sesi mahasiswa dan dosen dengan `GET /login`, token CSRF, dan `POST /login`, sehingga dapat dijalankan tanpa mengaktifkan rute bantuan di produksi.
+**Penjelasan:** `routes/web.php` hanya mendaftarkan `/switch-role/{role}` pada lingkungan lokal dan testing. Skrip pengujian membuat sesi mahasiswa dan dosen dengan `GET /login`, token CSRF, dan `POST /login`, serta meminta token Sanctum untuk uji API tanpa membuka `/switch-role`. Keluaran lengkap tercantum di Bagian 5.3. *(Catatan Windows Git Bash: bila `curl` mencoba IPv6 lebih dulu hingga timeout terhadap host `*.up.railway.app`, paksa IPv4 lewat flag `-4` atau wrapper `curl` sebelum menjalankan skrip).*
 
-Pengujian HTTPS produksi tetap perlu dijalankan secara sadar oleh anggota tim yang berwenang. Jangan mencatat password atau menganggap output yang belum dijalankan sebagai bukti.
+### 6.6 Catatan Kendala Nyata Saat Deploy Live ke Railway (PR #63–#65)
 
-**Bukti live:** `[ISI DENGAN OUTPUT ASLI SETELAH VERIFIKASI PRODUKSI]`
-
-### 6.6 Ruang untuk kendala lanjutan (diisi Farin, Zaldy, Yuspa, dan tim)
-
-7. **[Farin]** `[tulis kendala nyata saat menyiapkan `config/demo.php` / `DemoAccountSeeder` — mis. ketidakcocokan password hash, urutan seeder, atau reset data]`
-8. **[Zaldy]** `[tulis kendala nyata saat hardening keamanan & deploy Railway pertama — mis. variabel tidak terbaca, koneksi MySQL ditolak, atau domain belum aktif]`
-9. **[Yuspa]** `[tulis kendala nyata saat menyiapkan Supervisor, `deploy.sh`, dan verifikasi final pasca-live]`
-10. **[Tim]** `[tulis kendala nyata saat uji dari HP pada server live — mis. cookie sesi tidak terkirim karena `SESSION_SECURE_COOKIE`, atau aset ter-cache versi lama]`
+7. **Error 500 seluruh rute `web` pada deploy awal (`Table 'railway.sessions' doesn't exist`) — PR #63 (`fix/sessions-table-migration`):**
+   * **Gejala & diagnosis aman:** `/up` dan `POST /api/v1/auth/login` mengembalikan `200`, tetapi `/login` dan `/tentang` mengembalikan `500`. Tanpa menyalakan `APP_DEBUG=true`, pengamatan `LOG_CHANNEL=errorlog` di Railway Deploy Logs mengungkap `SQLSTATE[42S02]: Table 'railway.sessions' doesn't exist`.
+   * **Penyebab:** `phpunit.xml` memakai `SESSION_DRIVER=array` sehingga tes lokal lolos meski migrasi awal `0001_01_01_000000_create_users_table.php` belum membuat tabel `sessions`, sedangkan produksi memakai `SESSION_DRIVER=database`.
+   * **Solusi:** menambahkan migrasi idempoten `2026_11_10_000001_create_sessions_table.php`, tes regresi `test_database_session_driver_can_serve_web_routes` di `WeekTwelveSecurityTest.php`, serta menyetel `LOG_CHANNEL=stack` + `LOG_STACK=single,errorlog` di Railway agar log tertulis ke berkas sekaligus muncul di Deploy Logs.
+8. **MySQL internal Railway bangun lebih lambat & pemicu auto-deploy lintas kepemilikan repo — PR #64 (`b72c326`):**
+   * **Gejala:** Saat container start, percobaan migrasi pertama mendapat `SQLSTATE[HY000] [2002] Connection refused (Host: mysql.railway.internal)` karena plugin MySQL baru bangun.
+   * **Solusi:** Mekanisme retry di `docker/entrypoint.sh` (`percobaan 1/10`, jeda 3 detik) langsung menghubungkan ulang dan menuntaskan migrasi + Supervisor (`apache2`, `kampuslms-worker_00`, `kampuslms-worker_01` → `RUNNING`). Selain itu, karena repo GitHub dimiliki akun anggota lain sementara Railway berada di akun berbeda, penyinkronan sumber service memastikan commit terbaru ter-build.
+9. **Error 500 pada halaman materi, tugas, kelas, dan pengumpulan + latensi `/dashboard` — PR #65 (`fix/docker-intl-opcache`):**
+   * **Gejala:** Saat uji `scripts/test-authz.sh` pertama kali (`75ba2150`), `GET /submissions/1`, `/courses/1`, `/assignments/1`, dan `/materials/1` mengembalikan `500` dengan log `The "intl" PHP extension is required to use the [format] method.`, dan `/dashboard` memakan waktu ~16 detik.
+   * **Penyebab:** Enam view Blade memanggil `\Illuminate\Support\Number::fileSize(...)`, sementara `Dockerfile` (`php:8.4-apache`) belum menginstal `libicu-dev` / ekstensi `intl` maupun `opcache`.
+   * **Solusi:** Memasang `libicu-dev`, `intl`, dan `opcache` plus konfigurasi `docker/php/opcache.ini`. Setelah deploy `51ca3610`, 29/29 rute web terautentikasi mengembalikan `200`, `scripts/test-authz.sh` lulus **17 passed, 0 failed**, dan `/dashboard` turun ke ~9,2 detik (halaman lain ~2,0–3,8 detik).
+10. **[Tim]** `[tulis kendala nyata saat uji dari HP pada server live — jika ditemukan tampilan/notifikasi bermasalah di perangkat anggota]`
 
 ---
 

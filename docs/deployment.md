@@ -5,7 +5,7 @@
 **Fokus Minggu Ini:** Audit responsivitas HP, containerisasi produksi, deployment HTTPS ke Railway.app, verifikasi pasca-deployment, dan tata cara membaca log  
 **Penulis dokumen:** Nova Reskianti (`10241058`) — Frontend Developer
 
-> **Status dokumen:** ditulis pada tahap **Urutan 1** (setelah PR Docker Rifa/`#59` di-merge ke `main`, sebelum deploy live dilakukan oleh Zaldy). Seluruh bagian yang memerlukan keluaran nyata dari server produksi sengaja dibiarkan sebagai placeholder `[ISI SETELAH ...]` dan **wajib** diisi dengan hasil perintah yang benar-benar dijalankan — bukan contoh karangan.
+> **Status dokumen:** panduan deployment dan Supervisor telah diperbarui. Bagian bukti live tetap menunggu hasil eksekusi nyata dari anggota tim; jangan mengisi placeholder dengan output contoh.
 
 ---
 
@@ -31,8 +31,8 @@
 
 | Lingkungan | URL | Status |
 |:---|:---|:---|
-| Produksi (HTTPS) | `https://[ISI SETELAH DEPLOY LIVE KE RAILWAY].up.railway.app` | *Belum aktif — diisi setelah Zaldy/Rifa membuat domain di Railway* |
-| Health check | `https://[ISI SETELAH DEPLOY LIVE KE RAILWAY].up.railway.app/up` | *Belum aktif* |
+| Produksi (HTTPS) | `https://kampuslms-production.up.railway.app` | Domain yang diberikan tim; status deployment perlu diverifikasi langsung |
+| Health check | `https://kampuslms-production.up.railway.app/up` | Belum diverifikasi dalam dokumentasi ini |
 | Lokal | `http://127.0.0.1:8000` | Aktif (pengembangan) |
 
 ### 1.2 Alur Permintaan Produksi
@@ -122,17 +122,10 @@ Urutan sebenarnya pada berkas `docker/entrypoint.sh` di `main`:
 4. `php artisan storage:link || true` — symlink `public/storage` (kegagalan tidak menghentikan container).
 5. Membersihkan cache lama: `config:clear`, `route:clear`, `view:clear`.
 6. **`php artisan migrate --force`** dengan retry ringan (maksimal 10 percobaan, jeda 3 detik) — penting karena container aplikasi sering hidup beberapa detik sebelum MySQL Railway siap menerima koneksi.
-7. Membangun cache produksi: `config:cache`, `route:cache`, `view:cache`, `event:cache`. Karena langkah ini berjalan **setelah** variabel runtime tersedia, nilai `env()` di dalam `config/*` sudah terkompilasi dengan benar.
-8. `chown` ulang `storage` & `bootstrap/cache` (berkas cache baru dibuat oleh proses CLI), lalu `exec apache2-foreground`.
-
-**Yang belum otomatis (harus diperhatikan pada deployment pertama):** *seeding* data awal **tidak** dijalankan oleh `entrypoint.sh`. Database akan kosong (hanya tabel hasil migrasi), sehingga halaman login belum punya akun. Untuk mengisi data awal, jalankan sekali dari mesin yang punya akses ke variabel Railway:
-
-```bash
-# Opsional: seeding data contoh (DatabaseSeeder memakai Faker — lihat bagian 6.4)
-railway run php artisan db:seed --force
-```
-
-Alternatifnya, isi data awal lewat shell container: `railway ssh` lalu `php artisan db:seed --force`. Jika nanti `DemoAccountSeeder` (Farin) sudah ada, perintahnya menjadi `php artisan db:seed --class=DemoAccountSeeder --force` — **hanya jika** seeder itu tidak memakai Faker, karena image produksi dibangun dengan `composer install --no-dev`.
+7. Menghitung pengguna; hanya bila jumlahnya nol, menjalankan `php artisan db:seed --force` untuk mengisi basis data awal.
+8. Jika ketiga variabel `DEMO_*_PASSWORD` tersedia, menjalankan `DemoAccountSeeder` untuk mengatur password akun demo produksi.
+9. Membangun cache produksi: `config:cache`, `route:cache`, `view:cache`, `event:cache`. Karena langkah ini berjalan **setelah** variabel runtime tersedia, nilai konfigurasi sudah terkompilasi dengan benar.
+10. `chown` ulang `storage` & `bootstrap/cache` (berkas cache baru dibuat oleh proses CLI), lalu `exec /usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf` untuk menjalankan Apache dan queue workers.
 
 ### 2.6 Rujukan Setup VPS Ubuntu + Nginx (Modul 12.1)
 
@@ -145,7 +138,7 @@ Railway adalah target utama kelompok. Langkah berikut disertakan agar deployment
    sudo apt install -y php8.4-fpm php8.4-cli php8.4-mysql php8.4-mbstring php8.4-xml \
        php8.4-zip php8.4-gd php8.4-bcmath php8.4-curl
    ```
-2. **Kode aplikasi & dependensi produksi** (tanpa `--no-dev` bila Faker masih dipakai seeder)
+2. **Kode aplikasi & dependensi produksi** (seeder produksi tidak memerlukan Faker)
    ```bash
    sudo mkdir -p /var/www/kampuslms && sudo chown -R "$USER":www-data /var/www/kampuslms
    git clone https://github.com/muhammadzaldysyahfiraz/kampuslms-kelompok-05.git /var/www/kampuslms
@@ -206,7 +199,7 @@ Railway adalah target utama kelompok. Langkah berikut disertakan agar deployment
 
 ### 3.2 Deployment Ulang di VPS (target skrip `deploy.sh`)
 
-`scripts/deploy.sh` disiapkan oleh Urutan 4 (Yuspa). Kontrak yang harus dipenuhi skrip tersebut:
+`deploy.sh` di root repositori menjalankan langkah deployment ulang berikut:
 
 ```bash
 set -euo pipefail          # gagal di tengah jalan harus menghentikan skrip
@@ -215,22 +208,35 @@ git pull origin main
 composer install --no-dev --optimize-autoloader
 npm ci && npm run build            # aset Vite harus dibangun ulang di server
 php artisan migrate --force        # TANPA db:seed (data produksi tidak boleh di-reset)
-php artisan config:cache && php artisan route:cache
-php artisan view:cache && php artisan event:cache
+php artisan optimize:clear
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan event:cache
 php artisan queue:restart          # worker memuat kode lama di memori
 php artisan up
-curl -fsS https://[domain]/up      # health check: harus 200
+curl -sS -o /dev/null -w '%{http_code}' "${HEALTH_URL:-http://127.0.0.1/up}"
 ```
 
-Selama `scripts/deploy.sh` belum ada, jalankan urutan perintah di atas secara manual.
+Skrip gagal untuk respons health check di luar HTTP 200–399. Skrip ini ditujukan untuk deployment VPS/SSH; deployment Railway yang dibangun dari commit `main` tetap berjalan melalui pipeline Railway.
 
 ### 3.3 Queue Worker (Supervisor)
 
 Antrean notifikasi (`SendAssignmentNotification`, `SendGradeNotification`) berjalan lewat tabel `jobs`, sehingga **worker wajib hidup** di produksi. Jika worker mati, tugas dan nilai tetap tersimpan, tetapi notifikasi menumpuk di tabel `jobs` dan pengguna tidak pernah menerimanya.
 
-Target konfigurasi Supervisor (Urutan 4 — Yuspa):
+Konfigurasi Supervisor di `docker/supervisor/kampuslms-worker.conf` menjalankan Apache dan dua queue worker:
 
 ```ini
+[program:apache2]
+command=/usr/local/bin/apache2-foreground
+autostart=true
+autorestart=true
+priority=10
+stdout_logfile=/dev/stdout
+stdout_logfile_maxbytes=0
+stderr_logfile=/dev/stderr
+stderr_logfile_maxbytes=0
+
 [program:kampuslms-worker]
 process_name=%(program_name)s_%(process_num)02d
 command=php /var/www/html/artisan queue:work --sleep=3 --tries=3 --max-time=3600
@@ -238,11 +244,13 @@ autostart=true
 autorestart=true
 stopasgroup=true
 killasgroup=true
-numprocs=1
+numprocs=2
 redirect_stderr=true
 stdout_logfile=/var/www/html/storage/logs/worker.log
 stopwaitsecs=3600
 ```
+
+Periksa status proses di container dengan `supervisorctl status`; Apache serta `kampuslms-worker_00` dan `_01` seharusnya berstatus `RUNNING`.
 
 `queue:restart` **wajib** dijalankan setiap selesai deploy: worker `queue:work` memuat kode PHP ke memori dan **tidak** membaca berkas baru hingga di-restart. Tanpa `queue:restart`, job baru tetap dieksekusi oleh kode lama.
 
@@ -262,15 +270,15 @@ Pada server produksi, pengguna **hanya** melihat halaman "Server Error" generik 
 
 ## 4. Kredensial Akun Demo Produksi (Khusus Penguji)
 
-> **Bagian ini hanya untuk penguji/dosen.** Jangan menyalin isi tabel ini ke `README.md`, ke deskripsi PR, atau ke grup chat umum. Password produksi **tidak** sama dengan password demo lokal (`password`).
+> **Jangan simpan password produksi di repositori atau chat AI.** Kredensial akun demo produksi dibagikan langsung kepada penguji melalui kanal privat yang disetujui tim. Password produksi tidak sama dengan password demo lokal (`password`).
 
-| Peran | Email | Password Produksi |
-|:---|:---|:---|
-| Admin | `admin@kampuslms.test` | `[ISI SETELAH SET DEMO_*_PASSWORD DI RAILWAY]` |
-| Dosen | `dosen@kampuslms.test` | `[ISI SETELAH SET DEMO_*_PASSWORD DI RAILWAY]` |
-| Mahasiswa | `mahasiswa@kampuslms.test` | `[ISI SETELAH SET DEMO_*_PASSWORD DI RAILWAY]` |
+| Peran | Email |
+|:---|:---|
+| Admin | `admin@kampuslms.test` |
+| Dosen | `dosen@kampuslms.test` |
+| Mahasiswa | `mahasiswa@kampuslms.test` |
 
-Mekanisme yang direncanakan: `DemoAccountSeeder` (Farin) membaca `config/demo.php`, yang mengambil nilai dari `DEMO_ADMIN_PASSWORD`, `DEMO_DOSEN_PASSWORD`, dan `DEMO_MAHASISWA_PASSWORD` di Railway. Seeder dijalankan **sekali** setelah deploy pertama, lalu variabel password di Railway diganti ke nilai lain setelah pengujian selesai.
+`DemoAccountSeeder` membaca `DEMO_ADMIN_PASSWORD`, `DEMO_DOSEN_PASSWORD`, dan `DEMO_MAHASISWA_PASSWORD` dari konfigurasi server. Atur kredensial hanya di pengelola variabel Railway, lalu berikan kepada penguji melalui jalur privat; jangan menambahkannya ke file yang di-commit.
 
 ---
 
@@ -281,7 +289,7 @@ Seluruh blok di bawah ini **wajib** diisi dengan keluaran nyata setelah aplikasi
 ### 5.1 Berkas Sensitif Tidak Boleh Dapat Diakses
 
 ```bash
-D=https://[ISI SETELAH DEPLOY LIVE KE RAILWAY].up.railway.app
+D=https://kampuslms-production.up.railway.app
 curl -I "$D/.env"
 curl -I "$D/storage/logs/laravel.log"
 curl -I "$D/composer.json"
@@ -314,14 +322,14 @@ supervisorctl status
 ### 5.3 Uji Otorisasi terhadap Server HTTPS Produksi
 
 ```bash
-BASE_URL=https://[ISI SETELAH DEPLOY LIVE KE RAILWAY].up.railway.app bash scripts/test-authz.sh
+BASE_URL=https://kampuslms-production.up.railway.app EXPECT_PROD=1 bash scripts/test-authz.sh
 ```
 
 ```
 [ISI SETELAH DEPLOY LIVE — tempel keluaran lengkap scripts/test-authz.sh]
 ```
 
-Catatan: `scripts/test-authz.sh` menginisialisasi sesi melalui rute `/switch-role/{role}`. Setelah Zaldy menutup rute tersebut di produksi (wajib), skrip ini tidak bisa dipakai apa adanya pada server live — lihat bagian 6.5.
+Atur `MHS_PASSWORD` dan `DOSEN_PASSWORD` secara lokal pada terminal sebelum menjalankan skrip; jangan tulis nilainya ke riwayat commit atau dokumentasi. Keluaran pengujian live belum ditambahkan karena harus berasal dari eksekusi nyata.
 
 ### 5.4 Daftar Periksa 12 Poin Keamanan Produksi (Modul 12.1)
 
@@ -333,7 +341,7 @@ Catatan: `scripts/test-authz.sh` menginisialisasi sesi melalui rute `/switch-rol
 - [ ] Rute bantu `/switch-role/{role}` dinonaktifkan di produksi (404/403).
 - [ ] HTTPS aktif dengan sertifikat valid; `SESSION_SECURE_COOKIE=true`; tidak ada konten campuran (`http://`) di halaman.
 - [ ] Kredensial MySQL hanya dari variabel platform (tidak tertulis di repo/dokumen) dan memakai user khusus aplikasi.
-- [ ] Password akun demo produksi berbeda dari `password` dan hanya dicatat di dokumen ini.
+- [ ] Password akun demo produksi berbeda dari `password` dan dibagikan kepada penguji melalui kanal privat, bukan dicatat di repositori.
 - [ ] Rate limit login (`throttle:5,1`) aktif dan terverifikasi di server live.
 - [ ] Queue worker berjalan (`supervisorctl status` → `RUNNING`) dan `queue:restart` dijalankan setelah deploy.
 - [ ] Backup database dijadwalkan dan satu kali proses restore pernah diuji.
@@ -408,31 +416,25 @@ sed -i "s/<VirtualHost \*:[0-9]*>/<VirtualHost *:${PORT}>/" /etc/apache2/sites-a
 
 **Solusi:** `docker/php/uploads.ini` (`upload_max_filesize=25M`, `post_max_size=30M`) disalin ke `/usr/local/etc/php/conf.d/` pada image. Untuk VPS+Nginx, `client_max_body_size` disetel sejalan (`30M`) karena Nginx punya batas sendiri di depan PHP-FPM. Bukti uji: `[ISI SETELAH DEPLOY LIVE — unggah berkas ±20 MB lalu catat hasilnya]`.
 
-### 6.4 `DatabaseSeeder` memakai Faker, sedangkan image produksi `--no-dev`
+### 6.4 Seeder produksi berjalan tanpa dependensi Faker
 
-**Status:** teridentifikasi, ditangani pada Urutan 3 (Farin).
+`DatabaseSeeder` tidak memakai Faker, sehingga dapat dijalankan di image yang dibangun dengan `composer install --no-dev`. Saat container pertama kali hidup, `entrypoint.sh` menjalankan seeder utama hanya jika tabel pengguna kosong; bila seluruh variabel `DEMO_*_PASSWORD` tersedia, ia juga menjalankan `DemoAccountSeeder`. Pengujian lokal seeder tercakup dalam `WeekTwelveSeederTest`; verifikasi seeding pada Railway tetap perlu dicatat setelah dilakukan langsung.
 
-**Penjelasan:** `database/seeders/DatabaseSeeder.php` membuat pengguna dengan `User::factory()->create(...)`. Faker adalah dependensi `require-dev`, sementara `Dockerfile` menjalankan `composer install --no-dev`. Bila `php artisan db:seed --force` dijalankan di dalam container produksi apa adanya, proses akan gagal dengan kelas Faker tidak ditemukan. Karena itu `entrypoint.sh` **tidak** menjalankan seeding otomatis, dan data awal di produksi harus diisi lewat seeder khusus tanpa Faker (`DemoAccountSeeder`).
+### 6.5 `scripts/test-authz.sh` menggunakan login web dan token CSRF
 
-**Rencana penanganan:** `DemoAccountSeeder` + `config/demo.php` yang membaca `DEMO_*_PASSWORD`, dijalankan manual sekali setelah deploy. Sampai itu tersedia, isi akun awal hanya lewat mesin yang memiliki Faker (staging/lokal yang terhubung ke MySQL staging).
+**Status:** skrip menginisialisasi sesi melalui form login, bukan rute bantuan yang dinonaktifkan di produksi.
 
-**Hasil akhir setelah diperbaiki:** `[ISI SETELAH URUTAN 3 SELESAI]`
+**Penjelasan:** `routes/web.php` hanya mendaftarkan `/switch-role/{role}` pada lingkungan lokal dan testing. Skrip pengujian membuat sesi mahasiswa dan dosen dengan `GET /login`, token CSRF, dan `POST /login`, sehingga dapat dijalankan tanpa mengaktifkan rute bantuan di produksi.
 
-### 6.5 `scripts/test-authz.sh` bergantung pada `/switch-role`, rute yang wajib ditutup di produksi
+Pengujian HTTPS produksi tetap perlu dijalankan secara sadar oleh anggota tim yang berwenang. Jangan mencatat password atau menganggap output yang belum dijalankan sebagai bukti.
 
-**Status:** konsekuensi lintas urutan (Nova mencatat, ditangani Zaldy pada Urutan 4).
-
-**Penjelasan:** `routes/web.php` menyediakan `GET /switch-role/{role}` yang langsung melakukan `auth()->login($user)` untuk akun demo **tanpa** autentikasi apa pun. Di produksi, siapa pun yang membuka `/switch-role/admin` menjadi admin — ini celah eskalasi hak akses. Namun `scripts/test-authz.sh` memakai rute tersebut untuk membuat sesi mahasiswa dan dosen sebelum menguji 8 titik rawan IDOR. Setelah rute ditutup, skrip kehilangan cara login.
-
-**Penanganan:** jalankan `scripts/test-authz.sh` pada lingkungan **staging/lokal** (di mana `/switch-role` masih boleh aktif), lalu untuk produksi ganti mekanisme inisialisasi sesinya dengan login form biasa (`POST /login` + cookie jar). Opsi lain: rute hanya diaktifkan bila variabel lingkungan eksplisit (mis. `APP_ENV=local`) menyetujuinya.
-
-**Bukti setelah rute ditutup:** `[ISI SETELAH URUTAN 4 SELESAI]`
+**Bukti live:** `[ISI DENGAN OUTPUT ASLI SETELAH VERIFIKASI PRODUKSI]`
 
 ### 6.6 Ruang untuk kendala lanjutan (diisi Farin, Zaldy, Yuspa, dan tim)
 
 7. **[Farin]** `[tulis kendala nyata saat menyiapkan `config/demo.php` / `DemoAccountSeeder` — mis. ketidakcocokan password hash, urutan seeder, atau reset data]`
 8. **[Zaldy]** `[tulis kendala nyata saat hardening keamanan & deploy Railway pertama — mis. variabel tidak terbaca, koneksi MySQL ditolak, atau domain belum aktif]`
-9. **[Yuspa]** `[tulis kendala nyata saat menyiapkan Supervisor, `scripts/deploy.sh`, dan verifikasi final pasca-live]`
+9. **[Yuspa]** `[tulis kendala nyata saat menyiapkan Supervisor, `deploy.sh`, dan verifikasi final pasca-live]`
 10. **[Tim]** `[tulis kendala nyata saat uji dari HP pada server live — mis. cookie sesi tidak terkirim karena `SESSION_SECURE_COOKIE`, atau aset ter-cache versi lama]`
 
 ---

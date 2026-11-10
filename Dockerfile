@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
     libzip-dev \
+    supervisor \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -52,6 +53,7 @@ FROM base AS final
 
 COPY --from=assets /app/public/build ./public/build
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY docker/supervisor/kampuslms-worker.conf /etc/supervisor/conf.d/kampuslms.conf
 
 RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh \
     && chmod +x /usr/local/bin/entrypoint.sh \

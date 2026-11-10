@@ -103,9 +103,9 @@ Tanpa worker, tugas dan nilai tetap tersimpan, tetapi notifikasinya hanya menung
 
 **URL aplikasi live (HTTPS):**
 
-👉 `https://[ISI SETELAH DEPLOY LIVE KE RAILWAY].up.railway.app`
+👉 <https://kampuslms-production.up.railway.app>
 
-> Alamat di atas masih berupa *placeholder* dan akan diperbarui segera setelah domain Railway aktif. Aplikasi produksi dijalankan sebagai container Docker multi-stage (PHP 8.4 + Apache, aset Vite dibangun di stage Node 20) di atas MySQL, sehingga siapa pun dapat membukanya dari HP melalui HTTPS.
+> Aplikasi produksi dijalankan sebagai container Docker multi-stage (PHP 8.4 + Apache, aset Vite dibangun di stage Node 20) di atas MySQL, sehingga dapat dibuka dari HP melalui HTTPS.
 
 Panduan lengkap — arsitektur server, variabel produksi, langkah deploy dari nol, cara deployment ulang, cara membaca log, kredensial akun demo untuk penguji, checklist 12 poin keamanan, serta daftar masalah teknis beserta solusinya — tersedia di:
 
@@ -122,7 +122,7 @@ Di lingkungan **lokal**, tiga akun demo berikut tersedia dengan password yang sa
 | Dosen | `dosen@kampuslms.test` | `password` |
 | Mahasiswa | `mahasiswa@kampuslms.test` | `password` |
 
-Pada lingkungan **produksi**, password akun demo **diganti** melalui `DemoAccountSeeder` (membaca variabel `DEMO_*_PASSWORD` di Railway). Password produksi tersebut hanya dicatat di [`docs/deployment.md`](docs/deployment.md) untuk keperluan pengujian dosen/penguji, dan **tidak ditulis di README ini**.
+Pada lingkungan **produksi**, password akun demo **diganti** melalui `DemoAccountSeeder` (membaca variabel `DEMO_*_PASSWORD` di Railway). Password produksi tidak dicatat di repositori; minta kredensial penguji melalui kanal privat yang disetujui tim.
 
 ---
 

@@ -11,7 +11,27 @@
 # ==============================================================================
 
 BASE_URL="${BASE_URL:-http://127.0.0.1:8000}"
+while [[ "$BASE_URL" == */ ]]; do
+    BASE_URL="${BASE_URL%/}"
+done
 API_URL="${BASE_URL}/api/v1"
+DOSEN_EMAIL="${DOSEN_EMAIL:-dosen@kampuslms.test}"
+DOSEN_PASSWORD="${DOSEN_PASSWORD:-password}"
+MHS_EMAIL="${MHS_EMAIL:-mahasiswa@kampuslms.test}"
+MHS_PASSWORD="${MHS_PASSWORD:-password}"
+
+json_escape() {
+    local value="$1"
+    value=${value//\\/\\\\}
+    value=${value//\"/\\\"}
+    value=${value//$'\n'/\\n}
+    value=${value//$'\r'/\\r}
+    value=${value//$'\t'/\\t}
+    printf '%s' "$value"
+}
+
+DOSEN_PASSWORD_JSON=$(json_escape "$DOSEN_PASSWORD")
+MHS_PASSWORD_JSON=$(json_escape "$MHS_PASSWORD")
 
 # Warna Output Terminal
 GREEN='\033[0;32m'
@@ -55,7 +75,7 @@ print_header "TAHAP 0: Autentikasi Pengguna & Pembuatan Sanctum Token"
 LOGIN_DOSEN_RES=$(curl -s -w "\n%{http_code}" -X POST "${API_URL}/auth/login" \
     -H "Accept: application/json" \
     -H "Content-Type: application/json" \
-    -d '{"email":"dosen@kampuslms.test","password":"password","device_name":"test-script"}')
+    -d "{\"email\":\"${DOSEN_EMAIL}\",\"password\":\"${DOSEN_PASSWORD_JSON}\",\"device_name\":\"test-script\"}")
 HTTP_DOSEN=$(echo "$LOGIN_DOSEN_RES" | tail -n1)
 BODY_DOSEN=$(echo "$LOGIN_DOSEN_RES" | sed '$d')
 assert_status "Login Dosen Demo (dosen@kampuslms.test)" 200 "$HTTP_DOSEN"
@@ -65,7 +85,7 @@ TOKEN_DOSEN=$(echo "$BODY_DOSEN" | grep -o '"token":"[^"]*' | cut -d'"' -f4)
 LOGIN_MHS_RES=$(curl -s -w "\n%{http_code}" -X POST "${API_URL}/auth/login" \
     -H "Accept: application/json" \
     -H "Content-Type: application/json" \
-    -d '{"email":"mahasiswa@kampuslms.test","password":"password","device_name":"test-script"}')
+    -d "{\"email\":\"${MHS_EMAIL}\",\"password\":\"${MHS_PASSWORD_JSON}\",\"device_name\":\"test-script\"}")
 HTTP_MHS=$(echo "$LOGIN_MHS_RES" | tail -n1)
 BODY_MHS=$(echo "$LOGIN_MHS_RES" | sed '$d')
 assert_status "Login Mahasiswa Demo (mahasiswa@kampuslms.test)" 200 "$HTTP_MHS"

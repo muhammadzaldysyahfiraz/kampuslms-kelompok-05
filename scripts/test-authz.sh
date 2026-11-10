@@ -1,23 +1,27 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# KampusLMS - Authorization & IDOR Security Verification Test Suite
-# SI2514024 Pemrograman Web - Pekan 07 & Persiapan UTS (Bagian 3)
-#
-# Memeriksa 8 Titik Rawan IDOR & Otorisasi:
-# 1. Mahasiswa membaca submission orang lain -> 403 Forbidden
-# 2. Mahasiswa membaca submission milik sendiri -> 200 OK
-# 3. Mahasiswa menilai submission via API -> 403 Forbidden
-# 4. Dosen A memodifikasi tugas di MK Dosen B (Cross-Lecturer) -> 403 Forbidden
-# 5. Dosen A memodifikasi tugas di MK sendiri -> 200/302 Success
-# 6. Cross-Course Scoped Binding Assignment -> 404 Not Found
-# 7. Cross-Course Scoped Binding Material -> 404 Not Found
-# 8. Mahasiswa / Dosen mengakses master /users -> 403 Forbidden
+# KampusLMS - Production-capable Web and API authorization verification suite
 # ==============================================================================
 
 BASE_URL="${BASE_URL:-http://127.0.0.1:8000}"
+while [[ "$BASE_URL" == */ ]]; do
+    BASE_URL="${BASE_URL%/}"
+done
 API_URL="${BASE_URL}/api/v1"
+MHS_EMAIL="${MHS_EMAIL:-mahasiswa@kampuslms.test}"
+MHS_PASSWORD="${MHS_PASSWORD:-password}"
+DOSEN_EMAIL="${DOSEN_EMAIL:-dosen@kampuslms.test}"
+DOSEN_PASSWORD="${DOSEN_PASSWORD:-password}"
+OWN_SUBM_ID="${OWN_SUBM_ID:-1}"
+OTHER_SUBM_ID="${OTHER_SUBM_ID:-79}"
+OWN_ASSIGN_ID="${OWN_ASSIGN_ID:-4}"
+OTHER_ASSIGN_ID="${OTHER_ASSIGN_ID:-7}"
+EXPECT_PROD="${EXPECT_PROD:-0}"
+
 COOKIE_JAR_MHS=$(mktemp)
 COOKIE_JAR_DOSEN=$(mktemp)
+LOGIN_PAGE_MHS=$(mktemp)
+LOGIN_PAGE_DOSEN=$(mktemp)
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -30,130 +34,194 @@ PASSED_COUNT=0
 FAILED_COUNT=0
 
 cleanup() {
-    rm -f "$COOKIE_JAR_MHS" "$COOKIE_JAR_DOSEN"
+    rm -f "$COOKIE_JAR_MHS" "$COOKIE_JAR_DOSEN" "$LOGIN_PAGE_MHS" "$LOGIN_PAGE_DOSEN"
 }
 trap cleanup EXIT
 
+json_escape() {
+    local value="$1"
+    value=${value//\\/\\\\}
+    value=${value//\"/\\\"}
+    value=${value//$'\n'/\\n}
+    value=${value//$'\r'/\\r}
+    value=${value//$'\t'/\\t}
+    printf '%s' "$value"
+}
+
+extract_csrf() {
+    sed -n 's/.*name="_token" value="\([^"]*\)".*/\1/p' "$1" | head -n 1
+}
+
 print_header() {
-    echo -e "\n${BLUE}==============================================================================${NC}"
-    echo -e "${CYAN}  $1${NC}"
-    echo -e "${BLUE}==============================================================================${NC}"
+    printf '\n%b==============================================================================%b\n' "$BLUE" "$NC"
+    printf '%b  %s%b\n' "$CYAN" "$1" "$NC"
+    printf '%b==============================================================================%b\n' "$BLUE" "$NC"
 }
 
 assert_status() {
-    local desc="$1"
+    local description="$1"
     local expected="$2"
     local actual="$3"
 
-    if [ "$actual" -eq "$expected" ]; then
-        echo -e "  [${GREEN}PASS${NC}] $desc (HTTP $actual)"
+    if [[ "$actual" =~ ^[0-9]{3}$ ]] && [ "$actual" -eq "$expected" ]; then
+        printf '  [%bPASS%b] %s (HTTP %s)\n' "$GREEN" "$NC" "$description" "$actual"
         PASSED_COUNT=$((PASSED_COUNT + 1))
     else
-        echo -e "  [${RED}FAIL${NC}] $desc (Diharapkan: HTTP $expected, Didapat: HTTP $actual)"
+        printf '  [%bFAIL%b] %s (expected HTTP %s, received HTTP %s)\n' "$RED" "$NC" "$description" "$expected" "$actual"
         FAILED_COUNT=$((FAILED_COUNT + 1))
     fi
 }
 
-echo -e "${YELLOW}Menjalankan Pengujian Otorisasi & IDOR KampusLMS pada: ${BASE_URL}${NC}"
+assert_not_status() {
+    local description="$1"
+    local forbidden="$2"
+    local actual="$3"
 
-# ------------------------------------------------------------------------------
-# TAHAP 1: Inisialisasi Sesi & Token
-# ------------------------------------------------------------------------------
-print_header "TAHAP 1: Inisialisasi Sesi Web dan Token Sanctum"
+    if [[ "$actual" =~ ^[0-9]{3}$ ]] && [ "$actual" -ne "$forbidden" ]; then
+        printf '  [%bPASS%b] %s (HTTP %s)\n' "$GREEN" "$NC" "$description" "$actual"
+        PASSED_COUNT=$((PASSED_COUNT + 1))
+    else
+        printf '  [%bFAIL%b] %s (HTTP %s is forbidden)\n' "$RED" "$NC" "$description" "$actual"
+        FAILED_COUNT=$((FAILED_COUNT + 1))
+    fi
+}
 
-# Sesi Mahasiswa Demo
-curl -s -c "$COOKIE_JAR_MHS" "${BASE_URL}/switch-role/mahasiswa" -L -o /dev/null
-echo -e "  [*] Sesi Web Mahasiswa terhubung."
+assert_success_status() {
+    local description="$1"
+    local actual="$2"
 
-# Sesi Dosen Demo
-curl -s -c "$COOKIE_JAR_DOSEN" "${BASE_URL}/switch-role/dosen" -L -o /dev/null
-echo -e "  [*] Sesi Web Dosen terhubung."
+    if [[ "$actual" == "200" || "$actual" == "302" ]]; then
+        printf '  [%bPASS%b] %s (HTTP %s)\n' "$GREEN" "$NC" "$description" "$actual"
+        PASSED_COUNT=$((PASSED_COUNT + 1))
+    else
+        printf '  [%bFAIL%b] %s (expected HTTP 200 or 302, received HTTP %s)\n' "$RED" "$NC" "$description" "$actual"
+        FAILED_COUNT=$((FAILED_COUNT + 1))
+    fi
+}
 
-# Token API Mahasiswa Demo
-TOKEN_MHS=$(curl -s -X POST "${API_URL}/auth/login" \
-    -H "Content-Type: application/json" \
-    -d '{"email":"mahasiswa@kampuslms.test","password":"password"}' | grep -o '"token":"[^"]*' | cut -d'"' -f4)
+login_web() {
+    local email="$1"
+    local password="$2"
+    local cookie_jar="$3"
+    local response_file="$4"
+    local login_token
 
-# ------------------------------------------------------------------------------
-# TAHAP 2: Uji IDOR Akses Submission
-# ------------------------------------------------------------------------------
-print_header "TAHAP 2: Uji Titik Rawan IDOR Submission"
+    curl -sS -c "$cookie_jar" -b "$cookie_jar" -o "$response_file" "${BASE_URL}/login"
+    login_token=$(extract_csrf "$response_file")
+    if [ -z "$login_token" ]; then
+        printf 'Unable to extract the login CSRF token for %s.\n' "$email" >&2
+        return 1
+    fi
 
-# 1. Mahasiswa membuka submission orang lain (Submission 79)
-CODE_SUBM_OTHER=$(curl -s -b "$COOKIE_JAR_MHS" -o /dev/null -w "%{http_code}" "${BASE_URL}/submissions/79")
-assert_status "Mahasiswa mengakses submission mahasiswa lain (ID 79) -> Ditahan 403" 403 "$CODE_SUBM_OTHER"
+    curl -sS -L --max-redirs 5 -b "$cookie_jar" -c "$cookie_jar" \
+        -o "$response_file" -w '%{http_code}' \
+        --data-urlencode "_token=${login_token}" \
+        --data-urlencode "email=${email}" \
+        --data-urlencode "password=${password}" \
+        "${BASE_URL}/login"
+}
 
-# 2. Mahasiswa membuka submission milik sendiri (Submission 1)
-CODE_SUBM_SELF=$(curl -s -b "$COOKIE_JAR_MHS" -o /dev/null -w "%{http_code}" "${BASE_URL}/submissions/1")
-assert_status "Mahasiswa mengakses submission miliknya sendiri (ID 1) -> Diizinkan 200" 200 "$CODE_SUBM_SELF"
+printf '%bRunning authorization checks against: %s%b\n' "$YELLOW" "$BASE_URL" "$NC"
 
-# 3. Mahasiswa mencoba menilai submission via API
-if [ -n "$TOKEN_MHS" ]; then
-    CODE_GRADE_ATTEMPT=$(curl -s -o /dev/null -w "%{http_code}" -X PUT "${API_URL}/submissions/1/grade" \
-        -H "Authorization: Bearer $TOKEN_MHS" \
-        -H "Content-Type: application/json" \
-        -H "Accept: application/json" \
-        -d '{"score":100,"feedback":"Manipulasi nilai sendiri"}')
-    assert_status "Mahasiswa mencoba memberi nilai tugas -> Ditahan 403" 403 "$CODE_GRADE_ATTEMPT"
-fi
+print_header "STAGE 1: Web login and Sanctum token setup"
+MHS_LOGIN_STATUS=$(login_web "$MHS_EMAIL" "$MHS_PASSWORD" "$COOKIE_JAR_MHS" "$LOGIN_PAGE_MHS")
+DOSEN_LOGIN_STATUS=$(login_web "$DOSEN_EMAIL" "$DOSEN_PASSWORD" "$COOKIE_JAR_DOSEN" "$LOGIN_PAGE_DOSEN")
+assert_status "Mahasiswa web login" 200 "$MHS_LOGIN_STATUS"
+assert_status "Dosen web login" 200 "$DOSEN_LOGIN_STATUS"
 
-# ------------------------------------------------------------------------------
-# TAHAP 3: Uji Cross-Lecturer IDOR pada Tugas & Materi
-# ------------------------------------------------------------------------------
-print_header "TAHAP 3: Uji Titik Rawan IDOR Antar-Dosen (Cross-Lecturer)"
-
-# Dosen demo (User 2) mencoba mengedit Tugas 1 (diampu Dosen 4)
-CODE_EDIT_ASSIGN_OTHER=$(curl -s -b "$COOKIE_JAR_DOSEN" -o /dev/null -w "%{http_code}" -X PUT "${BASE_URL}/assignments/1" \
-    -H "Accept: application/json" \
-    -d "title=Bajak+Tugas")
-assert_status "Dosen mengedit tugas MK milik dosen lain (ID 1) -> Ditahan 403" 403 "$CODE_EDIT_ASSIGN_OTHER"
-
-# Dosen demo mencoba mengedit Tugas 4 (MK 2 diampu sendiri)
-CODE_EDIT_ASSIGN_OWN=$(curl -s -b "$COOKIE_JAR_DOSEN" -o /dev/null -w "%{http_code}" -X PUT "${BASE_URL}/assignments/4" \
-    -H "Accept: application/json" \
-    -d "title=Tugas+Pertemuan+1")
-# Controller mengembalikan 200 (jika JSON) atau 302 redirect
-if [ "$CODE_EDIT_ASSIGN_OWN" -eq 200 ] || [ "$CODE_EDIT_ASSIGN_OWN" -eq 302 ]; then
-    assert_status "Dosen mengedit tugas MK miliknya sendiri (ID 4) -> Berhasil" "$CODE_EDIT_ASSIGN_OWN" "$CODE_EDIT_ASSIGN_OWN"
-else
-    assert_status "Dosen mengedit tugas MK miliknya sendiri (ID 4) -> Berhasil" 200 "$CODE_EDIT_ASSIGN_OWN"
-fi
-
-# ------------------------------------------------------------------------------
-# TAHAP 4: Uji Implicit Scoped Route Binding (Cross-Course IDOR)
-# ------------------------------------------------------------------------------
-print_header "TAHAP 4: Uji Scoped Route Binding (Route::scopeBindings())"
-
-# Akses Assignment 1 (milik Course 1) melalui Course 2
-CODE_SCOPED_ASSIGN=$(curl -s -b "$COOKIE_JAR_DOSEN" -o /dev/null -w "%{http_code}" "${BASE_URL}/courses/2/assignments/1")
-assert_status "Scoped Binding /courses/2/assignments/1 (beda MK) -> Menghasilkan 404" 404 "$CODE_SCOPED_ASSIGN"
-
-# Akses Material 1 (milik Course 1) melalui Course 2
-CODE_SCOPED_MAT=$(curl -s -b "$COOKIE_JAR_DOSEN" -o /dev/null -w "%{http_code}" "${BASE_URL}/courses/2/materials/1")
-assert_status "Scoped Binding /courses/2/materials/1 (beda MK) -> Menghasilkan 404" 404 "$CODE_SCOPED_MAT"
-
-# ------------------------------------------------------------------------------
-# TAHAP 5: Uji Proteksi Modul Pengguna (Role-Based Access Control)
-# ------------------------------------------------------------------------------
-print_header "TAHAP 5: Uji Batasan Hak Akses Pengguna (/users)"
-
-CODE_USERS_MHS=$(curl -s -b "$COOKIE_JAR_MHS" -o /dev/null -w "%{http_code}" "${BASE_URL}/users")
-assert_status "Mahasiswa mencoba mengakses /users -> Ditahan 403" 403 "$CODE_USERS_MHS"
-
-CODE_USERS_DOSEN=$(curl -s -b "$COOKIE_JAR_DOSEN" -o /dev/null -w "%{http_code}" "${BASE_URL}/users")
-assert_status "Dosen mencoba mengakses /users -> Ditahan 403" 403 "$CODE_USERS_DOSEN"
-
-# ------------------------------------------------------------------------------
-# REKAPITULASI
-# ------------------------------------------------------------------------------
-echo -e "\n${BLUE}==============================================================================${NC}"
-echo -e "  Hasil Uji Otorisasi: ${GREEN}${PASSED_COUNT} Berhasil${NC}, ${RED}${FAILED_COUNT} Gagal${NC}"
-echo -e "${BLUE}==============================================================================${NC}"
-
-if [ "$FAILED_COUNT" -eq 0 ]; then
-    echo -e "${GREEN}✓ Seluruh titik rawan IDOR & otorisasi terlindungi dengan sempurna!${NC}\n"
-    exit 0
-else
-    echo -e "${RED}✗ Ditemukan kebocoran otorisasi, silakan periksa rincian di atas!${NC}\n"
+MHS_CSRF=$(extract_csrf "$LOGIN_PAGE_MHS")
+DOSEN_CSRF=$(extract_csrf "$LOGIN_PAGE_DOSEN")
+if [ -z "$MHS_CSRF" ]; then
+    printf '%bUnable to extract the mahasiswa CSRF token from the post-login page.%b\n' "$RED" "$NC" >&2
     exit 1
 fi
+if [ -z "$DOSEN_CSRF" ]; then
+    printf '%bUnable to extract the dosen CSRF token from the post-login page.%b\n' "$RED" "$NC" >&2
+    exit 1
+fi
+
+MHS_EMAIL_JSON=$(json_escape "$MHS_EMAIL")
+MHS_PASSWORD_JSON=$(json_escape "$MHS_PASSWORD")
+TOKEN_RESPONSE=$(curl -sS -X POST "${API_URL}/auth/login" \
+    -H "Accept: application/json" \
+    -H "Content-Type: application/json" \
+    -d "{\"email\":\"${MHS_EMAIL_JSON}\",\"password\":\"${MHS_PASSWORD_JSON}\"}")
+TOKEN_MHS=$(printf '%s' "$TOKEN_RESPONSE" | grep -o '"token":"[^"]*' | cut -d'"' -f4)
+if [ -z "$TOKEN_MHS" ]; then
+    printf '%bUnable to obtain a Sanctum token for the mahasiswa account.%b\n' "$RED" "$NC" >&2
+fi
+
+print_header "STAGE 2: Submission authorization and downloads"
+CODE_SUBM_OTHER=$(curl -sS -b "$COOKIE_JAR_MHS" -o /dev/null -w '%{http_code}' "${BASE_URL}/submissions/${OTHER_SUBM_ID}")
+assert_status "Mahasiswa cannot view another student's submission" 403 "$CODE_SUBM_OTHER"
+
+CODE_SUBM_OWN=$(curl -sS -b "$COOKIE_JAR_MHS" -o /dev/null -w '%{http_code}' "${BASE_URL}/submissions/${OWN_SUBM_ID}")
+assert_status "Mahasiswa can view their own submission" 200 "$CODE_SUBM_OWN"
+
+CODE_DOWNLOAD_GUEST=$(curl -sS -o /dev/null -w '%{http_code}' "${BASE_URL}/submissions/${OWN_SUBM_ID}/download")
+assert_not_status "Guest cannot download a submission" 200 "$CODE_DOWNLOAD_GUEST"
+
+CODE_DOWNLOAD_OTHER=$(curl -sS -b "$COOKIE_JAR_MHS" -o /dev/null -w '%{http_code}' "${BASE_URL}/submissions/${OTHER_SUBM_ID}/download")
+assert_status "Mahasiswa cannot download another student's submission" 403 "$CODE_DOWNLOAD_OTHER"
+
+CODE_GRADE_MHS=$(curl -sS -b "$COOKIE_JAR_MHS" -o /dev/null -w '%{http_code}' -X PUT \
+    "${API_URL}/submissions/${OWN_SUBM_ID}/grade" \
+    -H "Authorization: Bearer ${TOKEN_MHS}" \
+    -H "Content-Type: application/json" \
+    -H "Accept: application/json" \
+    -d '{"score":100,"feedback":"Authorization test"}')
+assert_status "Mahasiswa cannot grade a submission through the API" 403 "$CODE_GRADE_MHS"
+
+print_header "STAGE 3: Cross-lecturer assignment authorization"
+CODE_ASSIGN_OTHER=$(curl -sS -b "$COOKIE_JAR_DOSEN" -o /dev/null -w '%{http_code}' -X PUT \
+    "${BASE_URL}/assignments/${OTHER_ASSIGN_ID}" \
+    -H "X-CSRF-TOKEN: ${DOSEN_CSRF}" \
+    -H "Accept: application/json" \
+    --data-urlencode "title=Bukti uji otorisasi")
+assert_status "Dosen cannot update another lecturer's assignment" 403 "$CODE_ASSIGN_OTHER"
+
+CODE_ASSIGN_OWN=$(curl -sS -b "$COOKIE_JAR_DOSEN" -o /dev/null -w '%{http_code}' -X PUT \
+    "${BASE_URL}/assignments/${OWN_ASSIGN_ID}" \
+    -H "X-CSRF-TOKEN: ${DOSEN_CSRF}" \
+    -H "Accept: application/json" \
+    --data-urlencode "title=Tugas 1: Pemodelan Data Relasional & Perancangan Skema ERD")
+assert_success_status "Dosen can update their own assignment" "$CODE_ASSIGN_OWN"
+
+print_header "STAGE 4: Scoped route binding"
+CODE_SCOPED_ASSIGN=$(curl -sS -b "$COOKIE_JAR_DOSEN" -o /dev/null -w '%{http_code}' \
+    "${BASE_URL}/courses/2/assignments/1")
+assert_status "Cross-course assignment route binding returns 404" 404 "$CODE_SCOPED_ASSIGN"
+
+CODE_SCOPED_MATERIAL=$(curl -sS -b "$COOKIE_JAR_DOSEN" -o /dev/null -w '%{http_code}' \
+    "${BASE_URL}/courses/2/materials/1")
+assert_status "Cross-course material route binding returns 404" 404 "$CODE_SCOPED_MATERIAL"
+
+print_header "STAGE 5: User management RBAC"
+CODE_USERS_MHS=$(curl -sS -b "$COOKIE_JAR_MHS" -o /dev/null -w '%{http_code}' "${BASE_URL}/users")
+assert_status "Mahasiswa cannot access /users" 403 "$CODE_USERS_MHS"
+
+CODE_USERS_DOSEN=$(curl -sS -b "$COOKIE_JAR_DOSEN" -o /dev/null -w '%{http_code}' "${BASE_URL}/users")
+assert_status "Dosen cannot access /users" 403 "$CODE_USERS_DOSEN"
+
+if [[ "$EXPECT_PROD" == "1" || "$BASE_URL" == https://* ]]; then
+    print_header "STAGE 6: Production exposure checks"
+    for path in '/.env' '/storage/logs/laravel.log' '/composer.json'; do
+        CODE_SENSITIVE=$(curl -sS -o /dev/null -w '%{http_code}' "${BASE_URL}${path}")
+        assert_not_status "Sensitive path ${path} is not publicly accessible" 200 "$CODE_SENSITIVE"
+    done
+
+    CODE_SWITCH_ROLE=$(curl -sS -o /dev/null -w '%{http_code}' "${BASE_URL}/switch-role/admin")
+    assert_status "Production switch-role route is absent" 404 "$CODE_SWITCH_ROLE"
+fi
+
+printf '\n%b==============================================================================%b\n' "$BLUE" "$NC"
+printf '  Authorization results: %b%s passed%b, %b%s failed%b\n' "$GREEN" "$PASSED_COUNT" "$NC" "$RED" "$FAILED_COUNT" "$NC"
+printf '%b==============================================================================%b\n' "$BLUE" "$NC"
+
+if [ "$FAILED_COUNT" -eq 0 ]; then
+    printf '%bAll authorization checks passed.%b\n\n' "$GREEN" "$NC"
+    exit 0
+fi
+
+printf '%bOne or more authorization checks failed.%b\n\n' "$RED" "$NC"
+exit 1

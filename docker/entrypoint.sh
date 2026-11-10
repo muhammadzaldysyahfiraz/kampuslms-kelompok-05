@@ -60,4 +60,4 @@ php artisan event:cache
 # Pastikan kepemilikan log/cache baru tetap milik www-data sebelum Apache berjalan
 chown -R www-data:www-data storage bootstrap/cache
 
-exec apache2-foreground
+exec /usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf

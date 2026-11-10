@@ -26,19 +26,32 @@ Route::middleware('guest')->group(function () {
 });
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
-// Rute pembantu demonstrasi & uji keamanan (Live Pentest) di lingkungan lokal:
-Route::get('/switch-role/{role}', function (string $role) {
-    $email = match ($role) {
-        'admin' => 'admin@kampuslms.test',
-        'dosen' => 'dosen@kampuslms.test',
-        'mahasiswa' => 'mahasiswa@kampuslms.test',
-        default => abort(404),
-    };
-    $user = \App\Models\User::where('email', $email)->firstOrFail();
-    auth()->login($user);
-    request()->session()->regenerate();
-    return redirect()->route('dashboard');
-})->name('switch-role');
+// Rute pembantu demonstrasi & uji keamanan (Live Pentest) — HANYA untuk
+// lingkungan lokal dan testing. Di produksi, definisi rute ini tidak
+// dieksekusi sama sekali (pertahanan lapis pertama: rute tidak terdaftar),
+// dan bila karena route cache basi masih terdaftar, closure menolak dengan
+// 404 (pertahanan lapis kedua). Ini menutup celah eskalasi hak akses:
+// sebelumnya siapa pun di internet bisa membuka /switch-role/admin dan
+// langsung login sebagai admin tanpa kredensial.
+if (app()->environment(['local', 'testing'])) {
+    Route::get('/switch-role/{role}', function (string $role) {
+        // Pertahanan runtime: jika environment berubah setelah rute ter-cache
+        // (mis. container produksi memuat route:cache dari build lokal),
+        // tetap tolak akses.
+        abort_unless(app()->environment(['local', 'testing']), 404);
+
+        $email = match ($role) {
+            'admin' => 'admin@kampuslms.test',
+            'dosen' => 'dosen@kampuslms.test',
+            'mahasiswa' => 'mahasiswa@kampuslms.test',
+            default => abort(404),
+        };
+        $user = \App\Models\User::where('email', $email)->firstOrFail();
+        auth()->login($user);
+        request()->session()->regenerate();
+        return redirect()->route('dashboard');
+    })->name('switch-role');
+}
 
 Route::get('/dashboard', function () { // Membuat route dashboard.
     $currentUser = request()->user();

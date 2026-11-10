@@ -18,6 +18,16 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureUserHasRole::class,
         ]);
+
+        // Railway (dan Nginx reverse proxy di VPS) menghentikan TLS di edge
+        // proxy lalu meneruskan request ke container Apache lewat HTTP dengan
+        // header X-Forwarded-Proto: https dan X-Forwarded-For. Tanpa ini,
+        // Laravel mengira request datang sebagai http:// dan menganggap
+        // seluruh pengguna berasal dari satu IP proxy — akibatnya throttle:5,1
+        // di /login memblokir semua orang setelah 5 percobaan dari "satu IP"
+        // yang sama, dan URL yang di-generate (asset, redirect) memakai
+        // skema http:// sehingga browser menandai halaman sebagai mixed content.
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->shouldRenderJsonWhen(function (Request $request, \Throwable $e) {

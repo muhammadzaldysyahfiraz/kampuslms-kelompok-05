@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -21,29 +20,15 @@ class AppServiceProvider extends ServiceProvider
         // tidak melihat halaman rusak.
         Model::preventLazyLoading(! app()->isProduction());
 
+        // Role akun login adalah sumber kebenaran. Tamu TIDAK boleh memicu query
+        // DB apa pun di sini — sebelumnya setiap render halaman publik
+        // (mis. /tentang) menjalankan User::where('role', ...)->first(),
+        // sehingga tamu bisa melihat tautan "Nilai Saya" (role mahasiswa) atau
+        // "Pengguna" (role admin) yang bukan haknya, dan halaman error ikut
+        // menanggung query tersebut.
         View::composer('*', function ($view) {
-            // Role akun login adalah sumber kebenaran; guest hanya mendapat tampilan default.
             $activeUser = auth()->user();
-            $activeRole = $activeUser?->role ?? 'mahasiswa';
-
-            if (!$activeUser) {
-                if ($activeRole === 'dosen') {
-                    $activeUser = User::where('role', 'dosen')->first();
-                } elseif ($activeRole === 'admin') {
-                    $activeUser = User::where('role', 'admin')->first();
-                } else {
-                    $activeUser = User::where('role', 'mahasiswa')->first();
-                }
-
-                if (!$activeUser) {
-                    $activeUser = User::first() ?? (object) [
-                        'name' => 'Muhammad Rifa Al-Rizqul',
-                        'email' => '10241050@student.itk.ac.id',
-                        'role' => 'mahasiswa',
-                        'nim_nip' => '10241050',
-                    ];
-                }
-            }
+            $activeRole = $activeUser?->role ?? 'guest';
 
             $view->with('activeRole', $activeRole);
             $view->with('activeUser', $activeUser);

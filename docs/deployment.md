@@ -331,6 +331,7 @@ BASE_URL=https://kampuslms-production.up.railway.app EXPECT_PROD=1 bash scripts/
 ```
 
 Atur `MHS_PASSWORD` dan `DOSEN_PASSWORD` secara lokal pada terminal sebelum menjalankan skrip; jangan tulis nilainya ke riwayat commit atau dokumentasi. Keluaran pengujian live belum ditambahkan karena harus berasal dari eksekusi nyata.
+Uji update yang berizin mengirim kembali judul asli tugas ID 4 pada `DatabaseSeeder` (`Tugas 1: Pemodelan Data Relasional & Perancangan Skema ERD`) agar request verifikasi tidak mengganti konten data demo.
 
 ### 5.4 Daftar Periksa 12 Poin Keamanan Produksi (Modul 12.1)
 

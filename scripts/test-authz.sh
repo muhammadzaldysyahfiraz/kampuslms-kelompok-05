@@ -184,7 +184,7 @@ CODE_ASSIGN_OWN=$(curl -sS -b "$COOKIE_JAR_DOSEN" -o /dev/null -w '%{http_code}'
     "${BASE_URL}/assignments/${OWN_ASSIGN_ID}" \
     -H "X-CSRF-TOKEN: ${DOSEN_CSRF}" \
     -H "Accept: application/json" \
-    --data-urlencode "title=Tugas 1: Normalisasi Skema & Perancangan ERD Rumah Sakit")
+    --data-urlencode "title=Tugas 1: Pemodelan Data Relasional & Perancangan Skema ERD")
 assert_success_status "Dosen can update their own assignment" "$CODE_ASSIGN_OWN"
 
 print_header "STAGE 4: Scoped route binding"

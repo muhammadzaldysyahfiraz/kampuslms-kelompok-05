@@ -5,7 +5,7 @@
 **Fokus Minggu Ini:** Audit responsivitas HP, containerisasi produksi, deployment HTTPS ke Railway.app, verifikasi pasca-deployment, dan tata cara membaca log  
 **Penulis dokumen:** Nova Reskianti (`10241058`) — Frontend Developer
 
-> **Status dokumen:** bukti live telah diisi dari keluaran nyata deployment Railway `51ca3610-2108-439a-b191-206add21c3f6` (commit `2037008`, 10 November 2026 UTC / 11 November 2026 WITA), mencakup uji API/HTTP, `scripts/test-authz.sh`, serta uji tampilan mobile langsung (`360px`–`430px`). Bagian yang tetap menunggu eksekusi terpisah (opsi CLI `supervisorctl status` via SSH, uji backup/restore DB, serta BREAK 1–3 bila dijalankan) dibiarkan jujur agar tidak diisi data rekayasa.
+> **Status dokumen:** bukti live telah diisi dari keluaran nyata deployment Railway `51ca3610-2108-439a-b191-206add21c3f6` (commit `2037008`, 10–11 November 2026), mencakup uji API/HTTP, `scripts/test-authz.sh`, uji unggah berkas ±19,07 MiB live, tampilan mobile (`360px`–`430px`), serta simulasi terisolasi BREAK 1–3 di `127.0.0.1` (`break_test.sqlite`). Hal yang belum dijalankan langsung di kontainer produksi (opsi CLI `supervisorctl status` via SSH dan uji backup/restore DB terpisah) dibiarkan jujur agar tidak diisi data rekayasa.
 
 ---
 
@@ -471,13 +471,13 @@ Pengujian langsung pada URL produksi `https://kampuslms-production.up.railway.ap
 
 ### 5.6 Catatan Percobaan BREAK 1–3
 
-Percobaan BREAK hanya boleh dilakukan di belakang **pagar akses** (IP allowlist Railway, basic-auth Nginx, atau environment staging) — **bukan** pada situs terbuka. Setelah percobaan selesai, wajib mengganti password database dan menjalankan `php artisan key:generate`.
+Percobaan BREAK dilakukan pada **lingkungan terisolasi lokal (`127.0.0.1`) memakai SQLite sementara (`break_test.sqlite`) dan `APP_KEY` sekali pakai** agar domain produksi terbuka tidak pernah mengekspos `APP_DEBUG=true` maupun `.env` ke publik (sesuai larangan modul).
 
-| BREAK | Yang Dicoba | Jam Mulai | Jam Kembali | Pagar Akses yang Dipakai | Tindakan Pemulihan |
+| BREAK | Yang Dicoba & Hasil Pengamatan Nyata (11 Nov 2026) | Jam Mulai | Jam Kembali | Pagar Akses yang Dipakai | Tindakan Pemulihan |
 |:---:|:---|:---:|:---:|:---|:---|
-| 1 | `[mis. APP_DEBUG=true + picu error 500]` | `[—]` | `[—]` | `[—]` | `[APP_DEBUG=false + redeploy]` |
-| 2 | `[mis. hapus .htaccess / ubah AllowOverride]` | `[—]` | `[—]` | `[—]` | `[—]` |
-| 3 | `[mis. matikan queue worker]` | `[—]` | `[—]` | `[—]` | `[supervisorctl start + queue:retry all]` |
+| 1 | `APP_DEBUG=true` memicu `QueryException` → `HTTP 500` (`877.132` byte, membocorkan SQL & stack trace Laravel) | `08:49:16 WITA` | `08:49:20 WITA` | `127.0.0.1:18941–18942` + DB & key sementara | Kembalikan `APP_DEBUG=false` → `HTTP 500` generik (`Server Error`, `6.665` byte, tanpa SQL/trace) |
+| 2 | Document root diarahkan ke `.` (`-t .`) → `HEAD /.env` & `HEAD /composer.json` sama-sama `HTTP 200` | `08:49:20 WITA` | `08:49:24 WITA` | `127.0.0.1:18943–18944` (hanya `HEAD`, tanpa baca isi) | Kembalikan document root ke `-t public` → `/.env` & `/composer.json` kembali `HTTP 404` |
+| 3 | Queue worker mati: `AssignmentPublished` di-dispatch ke `QUEUE_CONNECTION=database` → tabel `jobs` `0 → 1`, tabel `notifications` tetap `0` | `08:49:24 WITA` | `08:49:43 WITA` | Konteks DB sementara `break_test.sqlite` lokal | Jalankan `php artisan queue:work --once` → `jobs=0` dan `18` notifikasi terkirim (`notifications=18`) |
 
 ---
 
@@ -528,7 +528,7 @@ sed -i "s/<VirtualHost \*:[0-9]*>/<VirtualHost *:${PORT}>/" /etc/apache2/sites-a
 
 **Penyebab:** batas bawaan PHP (`upload_max_filesize=2M`, `post_max_size=8M`) lebih kecil daripada aturan validasi aplikasi (materi maks 20 MB, tugas maks 5 MB). PHP menolak berkas **sebelum** validasi Laravel berjalan, sehingga pesan errornya membingungkan. `post_max_size` juga harus mencakup total body multipart, bukan hanya berkasnya.
 
-**Solusi:** `docker/php/uploads.ini` (`upload_max_filesize=25M`, `post_max_size=30M`) disalin ke `/usr/local/etc/php/conf.d/` pada image. Untuk VPS+Nginx, `client_max_body_size` disetel sejalan (`30M`) karena Nginx punya batas sendiri di depan PHP-FPM. Bukti uji: `[ISI SETELAH DEPLOY LIVE — unggah berkas ±20 MB lalu catat hasilnya]`.
+**Solusi:** `docker/php/uploads.ini` (`upload_max_filesize=25M`, `post_max_size=30M`) disalin ke `/usr/local/etc/php/conf.d/` pada image. Untuk VPS+Nginx, `client_max_body_size` disetel sejalan (`30M`) karena Nginx punya batas sendiri di depan PHP-FPM. Bukti uji live (11 Nov 2026, deployment `51ca3610`): unggah PDF valid `uji_20mb.pdf` (`20.000.000` byte / ±19,07 MiB) lewat `POST /courses/1/materials` sebagai akun Dosen berhasil **`HTTP 201`** (ID 12, `file_size=20000000`), `GET /materials/12/download` mengembalikan **`HTTP 200`** utuh `20.000.000` byte, lalu materi uji langsung dibersihkan via `DELETE /materials/12` (`HTTP 200`, verifikasi `GET /materials/12` → `404`).
 
 ### 6.4 Seeder produksi berjalan tanpa dependensi Faker
 

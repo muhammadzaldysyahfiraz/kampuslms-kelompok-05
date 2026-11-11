@@ -135,80 +135,8 @@
                     </button>
                 </div>
             </form>
-
-            {{-- 1-Click Demo Credentials Card --}}
-            <div class="mt-8 pt-6 border-t border-slate-100">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="meta-label">
-                        Akun demo pengujian
-                    </span>
-                    <span class="text-[10px] text-slate-500 font-mono">Password: password</span>
-                </div>
-
-                <div class="grid grid-cols-3 gap-2.5">
-                    <button 
-                        type="button" 
-                        data-tactile="spring"
-                        onclick="fillDemo('admin@kampuslms.test', 'password')"
-                        aria-label="Isi kredensial akun demo Administrator"
-                        title="admin@kampuslms.test"
-                        class="demo-fill-btn group flex flex-col items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border border-slate-200 bg-slate-50/80 hover:bg-white hover:border-slate-300 text-slate-700 text-center transition-all cursor-pointer hover:shadow-xs"
-                    >
-                        <div class="w-6 h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center text-slate-600 group-hover:text-slate-900 group-hover:border-slate-300 transition-colors">
-                            <svg width="14" height="14" class="w-3.5 h-3.5" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
-                            </svg>
-                        </div>
-                        <span class="font-semibold text-slate-900 text-xs leading-none">Admin</span>
-                        <span class="text-[10px] text-slate-500 font-mono leading-none">admin@...</span>
-                    </button>
-
-                    <button 
-                        type="button" 
-                        data-tactile="spring"
-                        onclick="fillDemo('dosen@kampuslms.test', 'password')"
-                        aria-label="Isi kredensial akun demo Dosen"
-                        title="dosen@kampuslms.test"
-                        class="demo-fill-btn group flex flex-col items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border border-slate-200 bg-slate-50/80 hover:bg-white hover:border-slate-300 text-slate-700 text-center transition-all cursor-pointer hover:shadow-xs"
-                    >
-                        <div class="w-6 h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center text-slate-600 group-hover:text-slate-900 group-hover:border-slate-300 transition-colors">
-                            <svg width="14" height="14" class="w-3.5 h-3.5" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                            </svg>
-                        </div>
-                        <span class="font-semibold text-slate-900 text-xs leading-none">Dosen</span>
-                        <span class="text-[10px] text-slate-500 font-mono leading-none">dosen@...</span>
-                    </button>
-
-                    <button 
-                        type="button" 
-                        data-tactile="spring"
-                        onclick="fillDemo('mahasiswa@kampuslms.test', 'password')"
-                        aria-label="Isi kredensial akun demo Mahasiswa"
-                        title="mahasiswa@kampuslms.test"
-                        class="demo-fill-btn group flex flex-col items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border border-slate-200 bg-slate-50/80 hover:bg-white hover:border-slate-300 text-slate-700 text-center transition-all cursor-pointer hover:shadow-xs"
-                    >
-                        <div class="w-6 h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center text-slate-600 group-hover:text-slate-900 group-hover:border-slate-300 transition-colors">
-                            <svg width="14" height="14" class="w-3.5 h-3.5" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
-                            </svg>
-                        </div>
-                        <span class="font-semibold text-slate-900 text-xs leading-none">Mahasiswa</span>
-                        <span class="text-[10px] text-slate-500 font-mono leading-none">mhs@...</span>
-                    </button>
-                </div>
-            </div>
-
         </div>
 
     </div>
-
-    <script>
-        function fillDemo(email, password) {
-            document.getElementById('email').value = email;
-            document.getElementById('password').value = password;
-            document.getElementById('email').focus();
-        }
-    </script>
 </body>
 </html>

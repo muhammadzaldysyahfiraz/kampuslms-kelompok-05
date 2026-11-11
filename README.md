@@ -114,7 +114,7 @@ Panduan lengkap — arsitektur server, variabel produksi, langkah deploy dari no
 
 ### Akun Demo
 
-Di lingkungan **lokal**, tiga akun demo berikut tersedia dengan password yang sama, yaitu `password` (tombol isi-cepat juga tersedia di halaman login):
+Di lingkungan **lokal**, tiga akun demo berikut tersedia dengan password yang sama, yaitu `password`:
 
 | Peran | Email | Password (lokal) |
 |:---|:---|:---|

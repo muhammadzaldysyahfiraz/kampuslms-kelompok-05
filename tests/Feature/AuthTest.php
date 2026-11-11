@@ -16,7 +16,8 @@ class AuthTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Masuk ke akun Anda');
-        $response->assertSee('Akun demo pengujian');
+        $response->assertDontSee('Akun demo pengujian');
+        $response->assertDontSee('fillDemo');
     }
 
     public function test_authenticated_user_is_redirected_away_from_login_page(): void

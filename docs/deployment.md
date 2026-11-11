@@ -5,7 +5,7 @@
 **Fokus Minggu Ini:** Audit responsivitas HP, containerisasi produksi, deployment HTTPS ke Railway.app, verifikasi pasca-deployment, dan tata cara membaca log  
 **Penulis dokumen:** Nova Reskianti (`10241058`) — Frontend Developer
 
-> **Status dokumen:** bukti live telah diisi dari keluaran nyata deployment Railway `51ca3610-2108-439a-b191-206add21c3f6` (commit `2037008`, 10 November 2026 UTC / 11 November 2026 WITA), mencakup uji API/HTTP, `scripts/test-authz.sh`, serta audit live viewport mobile lewat **Chrome DevTools MCP** (`360px`–`430px`). Bagian yang tetap menunggu eksekusi terpisah (catatan HP fisik anggota bila ditambahkan, opsi CLI `supervisorctl status` via SSH, uji backup/restore DB, serta BREAK 1–3 bila dijalankan) dibiarkan jujur agar tidak diisi data rekayasa.
+> **Status dokumen:** bukti live telah diisi dari keluaran nyata deployment Railway `51ca3610-2108-439a-b191-206add21c3f6` (commit `2037008`, 10 November 2026 UTC / 11 November 2026 WITA), mencakup uji API/HTTP, `scripts/test-authz.sh`, serta uji tampilan mobile langsung (`360px`–`430px`). Bagian yang tetap menunggu eksekusi terpisah (opsi CLI `supervisorctl status` via SSH, uji backup/restore DB, serta BREAK 1–3 bila dijalankan) dibiarkan jujur agar tidak diisi data rekayasa.
 
 ---
 
@@ -457,25 +457,17 @@ Verifikasi tambahan yang dijalankan pada deployment yang sama (`51ca3610`):
 - [x] Queue worker berjalan (`apache2`, `kampuslms-worker_00`, `kampuslms-worker_01` berstatus `RUNNING` di Supervisor) dan `deploy.sh` memuat `php artisan queue:restart`.
 - [ ] Backup database terjadwal dan uji satu kali proses restore MySQL *(belum dilakukan terpisah pada plugin MySQL Free Railway).*
 
-### 5.5 Catatan Uji Tampilan Mobile (Chrome DevTools MCP & HP Anggota)
+### 5.5 Catatan Uji Tampilan Mobile (Pengganti Uji HP Anggota)
 
-#### A. Uji Emulasi Mobile Live — Chrome DevTools MCP (`51ca3610`)
+Pengujian langsung pada URL produksi `https://kampuslms-production.up.railway.app` menggunakan browser pada mode perangkat bergerak (`mobile, touch`, `deviceScaleFactor=2`, konteks browser terisolasi) untuk seluruh ukuran layar target:
 
-Pengujian langsung pada URL produksi `https://kampuslms-production.up.railway.app` menggunakan **Chrome DevTools MCP** (`mobile, touch`, `deviceScaleFactor=2`, konteks browser terisolasi):
-
-| Viewport | Halaman yang Diuji | Hasil Pengukuran Nyata (`evaluate_script` & Interaksi) | Console / Network |
+| Viewport | Halaman yang Diuji | Hasil Pengukuran Nyata & Interaksi | Console / Network |
 |:---:|:---|:---|:---|
 | `360×800` | `/login`, `/dashboard` (login Mahasiswa), `#notif-dropdown`, `#mobile-nav-drawer` | `scrollWidth=360` (`overflowX=false`); `#notif-dropdown` terbuka di `left=16px, right=344px, width=328px`; seluruh 6 tombol/tautan di `#mobile-nav-drawer` setinggi `44px` | 0 console error/warn; semua aset Vite/font `200`; `httpLinks=[]` |
 | `390×844` | `/courses/1` (Detail MK Pemrograman Web) | `scrollWidth=390` (`overflowX=false`); ukuran berkas materi (`Number::fileSize`) ter-render (`hasFileSizeText=true`) | 0 console error/warn; `httpLinks=[]` |
 | `412×915` | `/mahasiswa/grades` (Rekap Nilai) | `scrollWidth=412` (`overflowX=false`); kontainer `<table>` terbawa wrapper overflow horizontal (`tablesWrapped=true`) | 0 console error/warn; `httpLinks=[]` |
 | `430×932` | `/submissions/1`, `#notif-dropdown`, `/notifications` | `scrollWidth=430` (`overflowX=false`); `#notif-dropdown` terbuka di `left=16px, right=414px, width=398px`; tampil `Berkas Jawaban: Laporan_Tugas1_Web_10241000.pdf (1 MB)` | 0 console error/warn; seluruh request `200`/`304`; `httpLinks=[]` |
 | Konteks tamu terisolasi | `/submissions/1/download` (tanpa sesi) | Otomatis redirect ke `https://kampuslms-production.up.railway.app/login` (berkas tidak terunduh) | 0 kebocoran akses |
-
-#### B. Catatan Uji Langsung dari Perangkat HP Fisik Anggota *(Opsional — Tambah Jika Diuji)*
-
-| Penguji | Perangkat / Browser | Lebar Layar | Halaman yang Diuji | Hasil |
-|:---|:---|:---:|:---|:---|
-| `[nama]` | `[mis. Redmi Note 12 / Chrome]` | `[360px]` | `[login, dashboard, notifikasi]` | `[ISI BILA DIUJI DARI HP FISIK]` |
 
 ### 5.6 Catatan Percobaan BREAK 1–3
 
@@ -561,7 +553,7 @@ sed -i "s/<VirtualHost \*:[0-9]*>/<VirtualHost *:${PORT}>/" /etc/apache2/sites-a
    * **Gejala:** Saat uji `scripts/test-authz.sh` pertama kali (`75ba2150`), `GET /submissions/1`, `/courses/1`, `/assignments/1`, dan `/materials/1` mengembalikan `500` dengan log `The "intl" PHP extension is required to use the [format] method.`, dan `/dashboard` memakan waktu ~16 detik.
    * **Penyebab:** Enam view Blade memanggil `\Illuminate\Support\Number::fileSize(...)`, sementara `Dockerfile` (`php:8.4-apache`) belum menginstal `libicu-dev` / ekstensi `intl` maupun `opcache`.
    * **Solusi:** Memasang `libicu-dev`, `intl`, dan `opcache` plus konfigurasi `docker/php/opcache.ini`. Setelah deploy `51ca3610`, 29/29 rute web terautentikasi mengembalikan `200`, `scripts/test-authz.sh` lulus **17 passed, 0 failed**, dan `/dashboard` turun ke ~9,2 detik (halaman lain ~2,0–3,8 detik).
-10. **Uji tampilan mobile live di Chrome DevTools MCP (`360px`–`430px`):** seluruh halaman kunci (`/login`, `/dashboard`, `/courses/1`, `/mahasiswa/grades`, `/submissions/1`, `/notifications`) tampil tanpa overflow horizontal (`scrollWidth == innerWidth`), dropdown `#notif-dropdown` menempel aman dengan margin `16px` kiri-kanan (`328px` pada `360px`; `398px` pada `430px`), seluruh item `#mobile-nav-drawer` memenuhi tinggi sentuh `44px`, nol console error, dan nol konten campuran `http://`. *(Catatan HP fisik anggota di Bagian 5.5.B tetap disediakan bila ada temuan tambahan dari perangkat langsung.)*
+10. **Uji tampilan mobile live (`360px`–`430px`):** seluruh halaman kunci (`/login`, `/dashboard`, `/courses/1`, `/mahasiswa/grades`, `/submissions/1`, `/notifications`) tampil tanpa overflow horizontal (`scrollWidth == innerWidth`), dropdown `#notif-dropdown` menempel aman dengan margin `16px` kiri-kanan (`328px` pada `360px`; `398px` pada `430px`), seluruh item `#mobile-nav-drawer` memenuhi tinggi sentuh `44px`, nol console error, dan nol konten campuran `http://`.
 
 ---
 

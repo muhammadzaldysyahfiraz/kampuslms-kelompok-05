@@ -217,10 +217,8 @@ Informasi branching README diperbaiki agar sesuai dengan branch remote: tersedia
 
 Repository yang diperiksa adalah [ItsShika24/kampuslms-kelompok-06](https://github.com/ItsShika24/kampuslms-kelompok-06). Daftar PR terbuka terbaru yang diperoleh pada 18 November 2026 memuat:
 
-| PR | Status | Judul | Base ← head | Author | File berubah |
-|---|---|---|---|---|---|
-| [#50](https://github.com/ItsShika24/kampuslms-kelompok-06/pull/50) | Open | `fix(review): eager load materials and submissions in course destroy t…` | `main` ← `Shabrina-Azzahra-13` | `shabrinakeif` | 5: controller, script, dan dokumentasi |
-| [#49](https://github.com/ItsShika24/kampuslms-kelompok-06/pull/49) | Open | `docs(w13): tambah laporan refleksi git dan dokumentasi break test` | `main` ← `Oktavia-Nur-Minggu-13` | `06Victoire` | 1: laporan dokumentasi Minggu 13 |
+- [PR #50](https://github.com/ItsShika24/kampuslms-kelompok-06/pull/50) berstatus **open**, dari `Shabrina-Azzahra-13` ke `main`, dibuat oleh `shabrinakeif`. Judul yang ditampilkan GitHub diawali `fix(review): eager load materials and submissions in course destroy`; PR mengubah lima file.
+- [PR #49](https://github.com/ItsShika24/kampuslms-kelompok-06/pull/49) berstatus **open**, dari `Oktavia-Nur-Minggu-13` ke `main`, dibuat oleh `06Victoire`. Judulnya `docs(w13): tambah laporan refleksi git dan dokumentasi break test`; PR mengubah satu file.
 
 Selain #50, tidak ditemukan PR terbuka lain yang memuat perubahan source code. PR #49 hanya menambah `docs/Minggu13/laporan-minggu-13-oktavia.md`, sehingga bukan kandidat untuk review kode tiga kategori. Berdasarkan informasi koordinasi praktikum, PR #50 telah menjadi target review Nova Reskianti. Untuk menghindari duplikasi dan karena belum ada penetapan target lain, **status peer review: MENUNGGU KONFIRMASI TARGET**. Tidak ada review yang dikirim.
 

@@ -125,8 +125,21 @@ Pada branch `feat/week-13-rifa`, saya menemukan dan memperbaiki masalah keamanan
 ### 4.2 Peer Review ke Kelompok 06 (Komponen Review 10% Individu)
 
 * **Repositori target:** [`ItsShika24/kampuslms-kelompok-06`](https://github.com/ItsShika24/kampuslms-kelompok-06)
-* **Kondisi saat pemeriksaan (18 November 2026):** Seluruh Pull Request pada repositori Kelompok 06 saat ini berstatus `closed` (sudah di-merge), termasuk PR #50 (`fix(review): eager load materials and submissions in course destroy`) yang di-merge pada 18 November 2026 pukul 07.17 WITA dan sebelumnya dipilih oleh Nova.
-* **Status peer review Rifa:** **MENUNGGU KONFIRMASI TARGET & PENYUSUNAN TEMUAN PRIBADI** — Kandidat PR kode yang belum diambil anggota lain antara lain **PR #31** (`resources/views/components/layout.blade.php`, `resources/views/grades/index.blade.php`, `routes/web.php`) atau **PR #38** (`app/Http/Controllers/Api/*`, `database/seeders/DemoAccountSeeder.php`). Temuan review tidak digenerate otomatis oleh AI karena harus diperiksa, dipahami, dan diposting sendiri memakai akun GitHub `rifarizqul-itk`.
+* **Pull Request yang direview:** [PR #31 — `fix(w10): perbaikan layout navbar admin, perbaikan routing rekap nilai, dan pembersihan UI dashboard`](https://github.com/ItsShika24/kampuslms-kelompok-06/pull/31) (penulis: `@tikaacode`, branch `Tika-Mila-Wahyuni-10` → `main`)
+* **Bukti komentar review di GitHub (`@rifarizqul-itk`):** [Review #5948645787 pada PR #31](https://github.com/ItsShika24/kampuslms-kelompok-06/pull/31#pullrequestreview-5948645787)
+* **Catatan kondisi PR target:** Seluruh Pull Request pada repositori Kelompok 06 sudah berstatus `closed`/merged pada 18 November 2026 (termasuk PR #50 yang sudah diambil oleh Nova), sehingga dipilih PR #31 yang belum direview anggota Kelompok 05 lain dan berkaitan langsung dengan area Frontend.
+
+**Ringkasan 3 temuan yang dikirim (Keamanan, Performa, Struktur & Keterbacaan):**
+
+1. **Keamanan (`resources/views/components/layout.blade.php:38-53, :151` & `app/Http/Controllers/CourseController.php:69`):**  
+   * **Risiko:** Ketika `!$headerUser`, blok `@php` di `layout.blade.php` tetap menjalankan query `User::where('email', ...)` berdasarkan `session('demo_role')` dan merender navigasi berbasis `$demoRole`. Pada `CourseController@show` (tujuan rute `courses.show` yang ditambahkan di `routes/web.php:157`), penentuan `$role` juga memprioritaskan `session('demo_role', $user?->role ?? 'mahasiswa')`, sehingga sesi `demo_role` yang tertinggal berisiko menampilkan tugas `draft` atau daftar mahasiswa kepada peran yang tidak semestinya.
+   * **Saran:** Hapus query fallback user demo pada `layout.blade.php` untuk state tamu dan gunakan `auth()->user()?->role` sebagai sumber otoritas peran di `CourseController@show` (batasi fallback `demo_role` hanya pada `local`/`testing`).
+2. **Performa (`resources/views/components/layout.blade.php:179-181` & `resources/views/grades/index.blade.php:167`):**  
+   * **Risiko:** `layout.blade.php` mengeksekusi 2 query notifikasi langsung pada setiap render halaman terautentikasi, sementara `grades/index.blade.php` memanggil `$assignment->submissions->firstWhere('user_id', $student->id)` di dalam nested loop mahasiswa × tugas (pemindaian linear $O(N \times M \times K)$).
+   * **Saran:** Pindahkan data notifikasi navbar ke `View::composer` (atau muat via endpoint notifikasi saat dropdown dibuka), dan siapkan lookup map submission berbasis `user_id` (`keyBy`) di controller.
+3. **Struktur & Keterbacaan (`routes/web.php:156-157`, `resources/views/grades/index.blade.php:104, 165-172, 191-193, 238`, `resources/views/components/layout.blade.php:35-63`):**  
+   * **Risiko:** Penambahan `Route::get('/courses/{course}', ...)->name('courses.show')` tepat di bawah `mata-kuliah.show` bertolak belakang dengan perubahan di `grades/index.blade.php` yang mengganti `courses.show` menjadi `mata-kuliah.show`, menciptakan dua URL untuk action yang sama. Selain itu, agregasi nilai dan query data masih bercampur di blok `@php` view.
+   * **Saran:** Tetapkan satu route kanonik (gunakan `Route::redirect` jika hanya butuh kompatibilitas URL lama) dan pindahkan perhitungan skor/rata-rata nilai ke controller.
 
 ---
 
@@ -137,9 +150,9 @@ Pada branch `feat/week-13-rifa`, saya menemukan dan memperbaiki masalah keamanan
 2. **Kenapa `git rm --cached .env` tidak cukup kalau `.env` sudah pernah ter-push?**  
    Karena `git rm --cached .env` hanya menghentikan pelacakan berkas tersebut mulai commit berikutnya (`HEAD`), sedangkan snapshot commit lama yang berisi `.env` tetap tersimpan di riwayat repositori dan bisa diakses siapa saja. Kredensial yang terlanjur ter-push wajib diganti/dirotasi.
 3. **Tunjukkan satu temuan review yang Anda tulis. Jelaskan risikonya tanpa membaca catatan.**  
-   *(Akan diisi setelah menelaah dan memposting 3 temuan pada PR target Kelompok 06 yang dipilih bersama tim/dosen.)*
+   Pada PR #31 Kelompok 06 (`layout.blade.php:38-53` dan `CourseController@show:69`), fallback pembacaan `session('demo_role')` dan query user demo masih aktif tanpa membatasi environment ke `local`/`testing`. Risikonya, jika sesi `demo_role` tertinggal atau terisi di produksi, halaman detail mata kuliah atau navigasi header dapat menampilkan menu admin maupun data kelas yang tidak sesuai dengan peran asli pengguna yang sedang login.
 4. **Tunjukkan satu temuan yang masuk ke kelompok Anda. Anda terima atau tolak? Kenapa?**  
-   *(Belum ada komentar peer review eksternal yang masuk ke PR/Issues `kampuslms-kelompok-05` hingga 18 November 2026; setelah kelompok reviewer memberi masukan pada PR terbuka kami, tanggapan dan commit perbaikannya akan dicatat di sini.)*
+   *(Belum ada komentar peer review eksternal yang masuk ke PR/Issues `kampuslms-kelompok-05` hingga 18 November 2026; PR #71 telah dibuka untuk memfasilitasi review dari kelompok reviewer dan anggota tim.)*
 5. **Kenapa PR sebaiknya kecil dan satu fitur?**  
    PR yang kecil dan berfokus pada satu perubahan mudah dibaca reviewer tanpa terlewat celah keamanan, cepat diuji CI, minim konflik merge, dan aman untuk di-`revert` jika muncul regresi di produksi.
 6. **Kenapa penilaian kontribusi tidak bisa hanya berdasarkan jumlah commit?**  

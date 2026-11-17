@@ -127,9 +127,15 @@ Pada lingkungan **produksi**, password akun demo **diganti** melalui `DemoAccoun
 ---
 
 ## 🌿 Struktur Branching & Alur Kerja Git
-* `main` — Branch produksi/stabil (dilindungi branch protection).
-* `dev` — Branch integrasi fitur.
-* `feat/<nama-fitur>` — Branch pengembangan fitur mandiri per anggota.
+* `main` — Branch utama/stabil. Status branch protection perlu dikonfirmasi melalui pengaturan repository; jangan menganggap perlindungan aktif sebelum diverifikasi.
+* `dev-*` — Beberapa branch integrasi atau personal tersedia, misalnya `dev-yuspa`; tidak ada branch remote bernama tepat `dev` pada saat dokumentasi ini diperiksa.
+* `feat/<nama-fitur>` — Branch pengembangan fitur; branch dengan pola ini tersedia di remote.
+
+---
+
+## 📚 Dokumentasi Praktikum
+
+* [Laporan Praktikum Minggu 13 — Muhammad Yuspa Ardiansyah](docs/minggu-13-Muhammad-Yuspa-Ardiansyah.md)
 
 ---
 

@@ -52,37 +52,15 @@
                     </span>
                 </a>
 
-                {{-- Horizontal Nav Links (Filtered by Role) --}}
+                {{-- Horizontal Nav Links (Satu sumber dari View Composer) --}}
                 <nav class="hidden md:flex items-center gap-1" aria-label="Navigasi Utama">
-                    <a href="{{ route('dashboard') }}" 
-                       aria-current="{{ request()->routeIs('dashboard') ? 'page' : 'false' }}"
-                       class="nav-link-swiss {{ request()->routeIs('dashboard') ? 'is-active' : '' }}">
-                        Dashboard
-                    </a>
-                    <a href="{{ route('courses.index') }}" 
-                       aria-current="{{ request()->routeIs('courses.*') ? 'page' : 'false' }}"
-                       class="nav-link-swiss {{ request()->routeIs('courses.*') ? 'is-active' : '' }}">
-                        {{ $activeRole === 'dosen' ? 'Mata Kuliah Diampu' : 'Mata Kuliah' }}
-                    </a>
-                    @if ($activeRole === 'mahasiswa')
-                        <a href="{{ route('mahasiswa.grades.index') }}" 
-                           aria-current="{{ request()->routeIs('mahasiswa.grades.*') ? 'page' : 'false' }}"
-                           class="nav-link-swiss {{ request()->routeIs('mahasiswa.grades.*') ? 'is-active' : '' }}">
-                            Nilai Saya
+                    @foreach ($navItems as $item)
+                        <a href="{{ $item['url'] }}"
+                           aria-current="{{ $item['active'] ? 'page' : 'false' }}"
+                           class="nav-link-swiss {{ $item['active'] ? 'is-active' : '' }}">
+                            {{ $item['label'] }}
                         </a>
-                    @endif
-                    @if ($activeRole === 'admin')
-                        <a href="{{ route('users.index') }}" 
-                           aria-current="{{ request()->routeIs('users.*') ? 'page' : 'false' }}"
-                           class="nav-link-swiss {{ request()->routeIs('users.*') ? 'is-active' : '' }}">
-                            Pengguna
-                        </a>
-                    @endif
-                    <a href="{{ route('tentang') }}" 
-                       aria-current="{{ request()->routeIs('tentang') ? 'page' : 'false' }}"
-                       class="nav-link-swiss {{ request()->routeIs('tentang') ? 'is-active' : '' }}">
-                        Tentang Kelompok
-                    </a>
+                    @endforeach
                 </nav>
             </div>
 
@@ -233,27 +211,15 @@
 
         </div>
 
-        {{-- Mobile Nav Menu (Filtered by Role, 44px touch targets) --}}
+        {{-- Mobile Nav Menu (Menggunakan $navItems yang sama dengan desktop, 44px touch targets) --}}
         <nav id="mobile-nav-drawer" class="hidden md:hidden border-t border-slate-200 bg-white px-4 py-3 space-y-1" aria-label="Navigasi Mobile">
-            <a href="{{ route('dashboard') }}" aria-current="{{ request()->routeIs('dashboard') ? 'page' : 'false' }}" class="flex items-center min-h-11 px-3 rounded-lg text-xs font-semibold {{ request()->routeIs('dashboard') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
-                Dashboard
-            </a>
-            <a href="{{ route('courses.index') }}" aria-current="{{ request()->routeIs('courses.*') ? 'page' : 'false' }}" class="flex items-center min-h-11 px-3 rounded-lg text-xs font-semibold {{ request()->routeIs('courses.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
-                {{ $activeRole === 'dosen' ? 'Mata Kuliah Diampu' : 'Mata Kuliah' }}
-            </a>
-            @if ($activeRole === 'mahasiswa')
-                <a href="{{ route('mahasiswa.grades.index') }}" aria-current="{{ request()->routeIs('mahasiswa.grades.*') ? 'page' : 'false' }}" class="flex items-center min-h-11 px-3 rounded-lg text-xs font-semibold {{ request()->routeIs('mahasiswa.grades.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
-                    Nilai Saya
+            @foreach ($navItems as $item)
+                <a href="{{ $item['url'] }}"
+                   aria-current="{{ $item['active'] ? 'page' : 'false' }}"
+                   class="flex items-center min-h-11 px-3 rounded-lg text-xs font-semibold {{ $item['active'] ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
+                    {{ $item['label'] }}
                 </a>
-            @endif
-            @if ($activeRole === 'admin')
-                <a href="{{ route('users.index') }}" aria-current="{{ request()->routeIs('users.*') ? 'page' : 'false' }}" class="flex items-center min-h-11 px-3 rounded-lg text-xs font-semibold {{ request()->routeIs('users.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
-                    Pengguna
-                </a>
-            @endif
-            <a href="{{ route('tentang') }}" aria-current="{{ request()->routeIs('tentang') ? 'page' : 'false' }}" class="flex items-center min-h-11 px-3 rounded-lg text-xs font-semibold {{ request()->routeIs('tentang') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">
-                Tentang Kelompok
-            </a>
+            @endforeach
 
             @auth
                 <a href="{{ route('notifications.index') }}" aria-current="{{ request()->routeIs('notifications.*') ? 'page' : 'false' }}" class="flex items-center justify-between min-h-11 px-3 rounded-lg text-xs font-semibold {{ request()->routeIs('notifications.*') ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-700 hover:bg-slate-50' }}">

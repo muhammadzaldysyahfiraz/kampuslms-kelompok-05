@@ -276,14 +276,11 @@
                 </div>
 
                 {{-- Peserta Perkuliahan (Tanpa Kapasitas Palsu /30 atau Timestamp Mentah) --}}
-                @php
-                    $stdCount = $course->students_count ?? ($course->relationLoaded('students') ? $course->students->count() : 0);
-                @endphp
                 <div class="pt-5">
                     <div class="flex items-center justify-between">
                         <span class="section-title">Peserta kuliah</span>
                         <span class="text-xs font-bold text-slate-900 font-mono bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded">
-                            {{ $stdCount }} Mahasiswa
+                            {{ $course->students_count }} Mahasiswa
                         </span>
                     </div>
 
@@ -292,10 +289,10 @@
                         <div class="mt-4 pt-4 border-t border-slate-100">
                             <h4 class="text-xs font-bold text-slate-900 mb-2 flex items-center justify-between">
                                 <span>Daftarkan Mahasiswa</span>
-                                <span class="text-[10px] text-slate-500 font-normal">{{ isset($availableStudents) ? $availableStudents->count() : 0 }} belum terdaftar</span>
+                                <span class="text-[10px] text-slate-500 font-normal">{{ $availableStudents->count() }} belum terdaftar</span>
                             </h4>
 
-                            @if (isset($availableStudents) && $availableStudents->isNotEmpty())
+                            @if ($availableStudents->isNotEmpty())
                                 <form action="{{ route('courses.enrollments.store', $course) }}" method="POST" class="space-y-3">
                                     @csrf
                                     <div>
@@ -325,10 +322,10 @@
                         {{-- Daftar Peserta Terdaftar --}}
                         <div class="mt-4 pt-4 border-t border-slate-100">
                             <h4 class="text-xs font-bold text-slate-900 mb-2">
-                                Daftar Peserta ({{ $course->relationLoaded('students') ? $course->students->count() : $stdCount }})
+                                Daftar Peserta ({{ $course->students_count }})
                             </h4>
 
-                            @if ($course->relationLoaded('students') && $course->students->isNotEmpty())
+                            @if ($course->students->isNotEmpty())
                                 <div class="max-h-52 overflow-y-auto space-y-2 pr-1 divide-y divide-slate-100">
                                     @foreach ($course->students as $student)
                                         <div class="pt-2 first:pt-0 flex items-center justify-between gap-2 text-xs">

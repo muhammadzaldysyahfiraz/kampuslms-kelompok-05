@@ -35,9 +35,10 @@ until php artisan migrate --force; do
     sleep 3
 done
 
-# Hook Seeding Aman (Urutan 2 - Farin):
+# Hook Seeding Aman (Urutan 2 - Farin - M13 Refactor):
 # 1. Jalankan db:seed penuh HANYA jika database kosong (first boot, User::count() == 0).
-USER_COUNT=$(php -r "require 'vendor/autoload.php'; \$app = require_once 'bootstrap/app.php'; \$kernel = \$app->make(Illuminate\Contracts\Console\Kernel::class); \$kernel->bootstrap(); echo App\Models\User::count();" 2>/dev/null || echo "0")
+# Menggunakan artisan tinker agar aman terhadap perubahan internal framework
+USER_COUNT=$(php artisan tinker --execute="echo App\Models\User::count();" 2>/dev/null || echo "0")
 if [ "$USER_COUNT" = "0" ]; then
     echo "Database kosong terdeteksi (User count: 0). Menjalankan seeder awal..."
     php artisan db:seed --force
@@ -45,9 +46,20 @@ else
     echo "Database sudah berisi data (User count: ${USER_COUNT}). Melewati seeding awal."
 fi
 
-# 2. Perbarui kredensial akun demo jika variabel DEMO_*_PASSWORD disetel di server produksi
-if [ -n "${DEMO_ADMIN_PASSWORD:-}" ] && [ -n "${DEMO_DOSEN_PASSWORD:-}" ] && [ -n "${DEMO_MAHASISWA_PASSWORD:-}" ]; then
-    echo "Kredensial demo produksi terdeteksi. Menjalankan DemoAccountSeeder..."
+# 2. Perbarui kredensial akun demo produksi
+# Validasi Keamanan: Di produksi (APP_ENV=production), ketiga password demo WAJIB disetel.
+# Jika ada yang kosong, container harus berhenti (exit 1) agar akun admin/dosen/mhs tidak tertinggal dengan password default.
+CURRENT_ENV="${APP_ENV:-local}"
+if [ "$CURRENT_ENV" = "production" ]; then
+    if [ -z "${DEMO_ADMIN_PASSWORD:-}" ] || [ -z "${DEMO_DOSEN_PASSWORD:-}" ] || [ -z "${DEMO_MAHASISWA_PASSWORD:-}" ]; then
+        echo "KESALAHAN KEAMANAN: Lingkungan produksi terdeteksi tetapi variabel DEMO_ADMIN_PASSWORD, DEMO_DOSEN_PASSWORD, atau DEMO_MAHASISWA_PASSWORD belum disetel lengkap!" >&2
+        echo "Container dihentikan untuk mencegah akun demo aktif dengan kata sandi default 'password'." >&2
+        exit 1
+    fi
+    echo "Kredensial demo produksi terverifikasi lengkap. Menjalankan DemoAccountSeeder..."
+    php artisan db:seed --class=DemoAccountSeeder --force
+elif [ -n "${DEMO_ADMIN_PASSWORD:-}" ] && [ -n "${DEMO_DOSEN_PASSWORD:-}" ] && [ -n "${DEMO_MAHASISWA_PASSWORD:-}" ]; then
+    echo "Kredensial demo terdeteksi pada lingkungan non-produksi. Menjalankan DemoAccountSeeder..."
     php artisan db:seed --class=DemoAccountSeeder --force
 fi
 

@@ -113,7 +113,7 @@ Route::get('/dashboard', function () { // Membuat route dashboard.
     ]; // Menutup data fallback.
 
     // Opsi B: Data Penugasan Adaptif Sesuai Peran Pengguna (Mencegah Repetisi)
-    // 1. Mahasiswa: Status pengerjaan & pengumpulan tugas mandiri (Prioritaskan yang belum dikumpulkan di urutan atas)
+    // 1. Mahasiswa: Status pengerjaan & pengumpulan tugas mandiri (hanya tugas terbit)
     $studentTasks = \App\Models\Assignment::with(['course', 'submissions' => function ($q) use ($currentUser) {
         if (isset($currentUser->id)) {
             $q->where('user_id', $currentUser->id)->with('grade');
@@ -130,32 +130,19 @@ Route::get('/dashboard', function () { // Membuat route dashboard.
         ->values()
         ->take(6);
 
-    if ($studentTasks->isEmpty()) {
-        $studentTasks = \App\Models\Assignment::with(['course', 'submissions' => function ($q) use ($currentUser) {
-            if (isset($currentUser->id)) {
-                $q->where('user_id', $currentUser->id)->with('grade');
-            }
-        }])
-            ->whereIn('course_id', $courseIds)
-            ->latest()
-            ->take(6)
-            ->get();
-    }
-
-    // 2. Dosen: Antrean tugas mahasiswa yang perlu dinilai
+    // 2. Dosen: Antrean tugas mahasiswa hanya dari mata kuliah yang diampu dosen tersebut
     $lecturerCourseIds = \App\Models\Course::where('lecturer_id', $currentUser->id ?? 0)->pluck('id');
-    $pendingSubmissionsQuery = \App\Models\Submission::with(['assignment.course', 'student', 'grade']);
-    if ($lecturerCourseIds->isNotEmpty()) {
-        $pendingSubmissionsQuery->whereHas('assignment', function ($q) use ($lecturerCourseIds) {
-            $q->whereIn('course_id', $lecturerCourseIds);
-        });
-    }
-    $pendingSubmissions = (clone $pendingSubmissionsQuery)->whereDoesntHave('grade')->latest()->take(4)->get();
-    if ($pendingSubmissions->isEmpty()) {
-        $pendingSubmissions = $pendingSubmissionsQuery->latest()->take(4)->get();
-    }
-    if ($pendingSubmissions->isEmpty()) {
-        $pendingSubmissions = \App\Models\Submission::with(['assignment.course', 'student', 'grade'])->latest()->take(4)->get();
+    if ($lecturerCourseIds->isEmpty()) {
+        $pendingSubmissions = collect();
+    } else {
+        $pendingSubmissionsQuery = \App\Models\Submission::with(['assignment.course', 'student', 'grade'])
+            ->whereHas('assignment', function ($q) use ($lecturerCourseIds) {
+                $q->whereIn('course_id', $lecturerCourseIds);
+            });
+        $pendingSubmissions = (clone $pendingSubmissionsQuery)->whereDoesntHave('grade')->latest()->take(4)->get();
+        if ($pendingSubmissions->isEmpty()) {
+            $pendingSubmissions = $pendingSubmissionsQuery->latest()->take(4)->get();
+        }
     }
 
     // 3. Admin: Log sistem pengumpulan penugasan lintas kelas
@@ -228,6 +215,7 @@ Route::get('/dashboard', function () { // Membuat route dashboard.
     if (! $urgentAssignment) {
         $urgentAssignment = \App\Models\Assignment::with('course')
             ->whereIn('course_id', $courseIds)
+            ->when($activeRole === 'mahasiswa', fn ($q) => $q->where('status', 'published'))
             ->orderBy('due_at', 'asc')
             ->first();
     }
@@ -244,16 +232,16 @@ Route::get('/dashboard', function () { // Membuat route dashboard.
     if ($upcomingSchedule->isEmpty()) {
         $upcomingSchedule = \App\Models\Assignment::with('course')
             ->whereIn('course_id', $courseIds)
+            ->when($activeRole === 'mahasiswa', fn ($q) => $q->where('status', 'published'))
             ->when($urgentAssignment, fn ($q) => $q->where('id', '!=', $urgentAssignment->id))
             ->orderBy('due_at', 'asc')
             ->take(3)
             ->get();
     }
 
-    $lecturerCourses = $currentUser && method_exists($currentUser, 'taughtCourses') ? $currentUser->taughtCourses()->with(['materials', 'assignments', 'students'])->get() : \App\Models\Course::where('lecturer_id', $currentUser->id ?? 0)->with(['materials', 'assignments', 'students'])->get(); // Mengambil course yang diampu user aktif.
-    if ($lecturerCourses->isEmpty() && $activeRole === 'dosen') { // Memeriksa fallback course untuk dosen.
-        $lecturerCourses = \App\Models\Course::take(2)->with(['materials', 'assignments', 'students'])->get(); // Mengambil dua course sebagai fallback.
-    } // Mengakhiri kondisi fallback dosen.
+    $lecturerCourses = $currentUser && method_exists($currentUser, 'taughtCourses')
+        ? $currentUser->taughtCourses()->with(['materials', 'assignments', 'students'])->get()
+        : \App\Models\Course::where('lecturer_id', $currentUser->id ?? 0)->with(['materials', 'assignments', 'students'])->get(); // Mengambil course yang diampu user aktif tanpa membocorkan course dosen lain.
 
     $recentUsers = $activeRole === 'admin' ? \App\Models\User::latest()->take(5)->get() : collect(); // Mengambil user terbaru untuk admin.
 

@@ -16,7 +16,7 @@
 
 | No | Nama Anggota | NIM | Peran / Pembagian Tugas | Akun GitHub |
 |:--:|:---|:---:|:---|:---|
-| 1 | **Muhammad Rifa Al Rizqul Aulia** | 10241050 | Frontend Developer | [@rifarizqul](https://github.com/rifarizqul) |
+| 1 | **Muhammad Rifa Al Rizqul Aulia** | 10241050 | Frontend Developer | [@rifarizqul-itk](https://github.com/rifarizqul-itk) |
 | 2 | **Nova Reskianti** | 10241058 | Frontend Developer | [@Novares06](https://github.com/Novares06) |
 | 3 | **Muhammad Zaldy Syah Firaz** | 10241054 | Backend Developer | [@muhammadzaldysyahfiraz](https://github.com/muhammadzaldysyahfiraz) |
 | 4 | **Muhammad Yuspa Ardiansyah** | 10241052 | Backend Developer | [@ardiansyahyus24](https://github.com/ardiansyahyus24) |
@@ -135,6 +135,8 @@ Pada lingkungan **produksi**, password akun demo **diganti** melalui `DemoAccoun
 
 ## 📚 Dokumentasi Praktikum
 
+* [Laporan Praktikum Minggu 13 — Muhammad Rifa Al Rizqul Aulia](docs/minggu-13-Muhammad-Rifa-Al-Rizqul-Aulia.md)
+* [Laporan Praktikum Minggu 13 — Nova Reskianti](docs/minggu-13-Nova-Reskianti.md)
 * [Laporan Praktikum Minggu 13 — Muhammad Yuspa Ardiansyah](docs/minggu-13-Muhammad-Yuspa-Ardiansyah.md)
 
 ---

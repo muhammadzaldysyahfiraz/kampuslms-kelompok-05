@@ -14,6 +14,11 @@ class GradePolicy
         return in_array($user->role, ['admin', 'dosen', 'mahasiswa'], true);
     }
 
+    public function viewMine(User $user): bool
+    {
+        return $user->role === 'mahasiswa';
+    }
+
     public function view(User $user, Grade $grade): bool
     {
         // Catatan kelompok: tidak ada kolom "dipublikasikan" di tabel grades,

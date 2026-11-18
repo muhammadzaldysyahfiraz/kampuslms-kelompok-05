@@ -49,4 +49,10 @@ class CoursePolicy
         return $user->role === 'admin'
             || ($user->role === 'dosen' && $course->isTaughtBy($user));
     }
+
+    /** Admin or the assigned lecturer may view the course gradebook matrix. */
+    public function viewCourseGrades(User $user, Course $course): bool
+    {
+        return $this->manageContent($user, $course);
+    }
 }

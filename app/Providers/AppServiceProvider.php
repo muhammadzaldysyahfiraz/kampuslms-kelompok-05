@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\Grade;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -32,6 +35,46 @@ class AppServiceProvider extends ServiceProvider
 
             $view->with('activeRole', $activeRole);
             $view->with('activeUser', $activeUser);
+        });
+
+        // Satu definisi navigasi untuk desktop & mobile; hak akses dicek lewat Policy.
+        View::composer('components.layout', function ($view) {
+            $activeRole = auth()->user()?->role ?? 'guest';
+
+            $navItems = array_values(array_filter([
+                [
+                    'label' => 'Dashboard',
+                    'url' => route('dashboard'),
+                    'active' => request()->routeIs('dashboard'),
+                    'visible' => true,
+                ],
+                [
+                    'label' => $activeRole === 'dosen' ? 'Mata Kuliah Diampu' : 'Mata Kuliah',
+                    'url' => route('courses.index'),
+                    'active' => request()->routeIs('courses.*'),
+                    'visible' => true,
+                ],
+                [
+                    'label' => 'Nilai Saya',
+                    'url' => route('mahasiswa.grades.index'),
+                    'active' => request()->routeIs('mahasiswa.grades.*'),
+                    'visible' => Gate::allows('viewMine', Grade::class),
+                ],
+                [
+                    'label' => 'Pengguna',
+                    'url' => route('users.index'),
+                    'active' => request()->routeIs('users.*'),
+                    'visible' => Gate::allows('viewAny', User::class),
+                ],
+                [
+                    'label' => 'Tentang Kelompok',
+                    'url' => route('tentang'),
+                    'active' => request()->routeIs('tentang'),
+                    'visible' => true,
+                ],
+            ], fn (array $item) => $item['visible']));
+
+            $view->with('navItems', $navItems);
         });
     }
 }

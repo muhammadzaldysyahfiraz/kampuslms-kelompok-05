@@ -27,8 +27,7 @@ class GradeController extends Controller
 
     public function indexForCourse(Request $request, Course $course): mixed
     {
-        Gate::authorize('view', $course);
-        Gate::authorize('viewAny', Grade::class);
+        Gate::authorize('viewCourseGrades', $course);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([

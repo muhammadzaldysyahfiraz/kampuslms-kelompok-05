@@ -36,7 +36,7 @@ Rekapitulasi kontribusi commit seluruh anggota kelompok hingga Minggu 13:
 * **Muhammad Rifa Al Rizqul Aulia (`rifarizqul-itk` / `Muhammad Rifa Al Rizqul Aulia`):** $56 + 22 = 78$ commit
 * **Muhammad Zaldy Syah Firaz (`Muhammad Zaldy Syah Firaz`):** 35 commit
 * **Muhammad Yuspa Ardiansyah (`ardiansyah24` / `Muhammad Yuspa Ardiansyah`):** $25 + 17 = 42$ commit
-* **Nova Reskianti (`NovaRes06` / `NOVA RESKIANTI`):** $17 + 12 = 29$ commit
+* **Nova Reskianti (`NovaRes06` / `NOVA RESKIANTI`):** $18 + 12 = 30$ commit
 * **Muhammad Farin Murtadho Syafiq (`Muhammad Farin Murtadho Syafiq` / `BerserkerGats` / `muhammadfarin18`):** $8 + 6 + 2 = 16$ commit
 
 *Refleksi Perbandingan:*  
@@ -44,13 +44,13 @@ Jumlah commit saya berada pada posisi proporsional untuk ranah Frontend bersama 
 
 ### 2. Konsistensi Kehadiran Commit Setiap Minggu
 * **Apakah ada minggu tanpa commit sama sekali?**  
-  Tidak ada kekosongan panjang. Sejak Minggu 1 hingga Minggu 12, saya aktif berkontribusi setiap minggu. Namun, tercatat perbedaan ritme: pada Minggu 8 (masa evaluasi UTS), aktivitas commit berupa penggabungan branch dan review dokumen, sedangkan lonjakan commit terjadi pada Minggu 10 (implementasi fitur buku nilai) dan Minggu 11 (optimisasi performa).
+  Tidak ada kekosongan panjang. Sejak Minggu 1 hingga Minggu 13, saya aktif berkontribusi setiap minggu. Namun, tercatat perbedaan ritme: pada Minggu 8 (masa evaluasi UTS), aktivitas commit berupa penggabungan branch dan review dokumen, sedangkan lonjakan commit terjadi pada Minggu 10 (implementasi fitur buku nilai) dan Minggu 11 (optimisasi performa).
 
 ### 3. Persentase Pesan Commit yang Mengikuti *Conventional Commits*
-Dari total 17 commit fitur/dokumentasi atas nama `NovaRes06`:
-* Commit dengan prefix standar (`feat:`, `docs:`, `refactor:`, `fix:`): **10 commit (~59%)**
-* Commit tanpa prefix standar (contoh: *"catatan Minggu 9 dan Minggu 10"*, *"nambahkan punya nova"*): **7 commit (~41%)**
-* *Evaluasi:* Di awal semester (Minggu 1–3), pemahaman saya mengenai Conventional Commits belum konsisten. Mulai Minggu 4 hingga Minggu 12, hampir seluruh commit telah mengadopsi format `feat(ui): ...`, `docs(deployment): ...`, dan `refactor: ...`.
+Dari total 18 commit fitur/dokumentasi atas nama `NovaRes06`:
+* Commit dengan prefix standar (`feat:`, `docs:`, `refactor:`, `fix:`): **11 commit (~61%)**
+* Commit tanpa prefix standar (contoh: *"catatan Minggu 9 dan Minggu 10"*, *"nambahkan punya nova"*): **7 commit (~39%)**
+* *Evaluasi:* Di awal semester (Minggu 1–3), pemahaman saya mengenai Conventional Commits belum konsisten. Mulai Minggu 4 hingga Minggu 13, hampir seluruh commit telah mengadopsi format `feat(ui): ...`, `docs(deployment): ...`, `docs: ...`, dan `refactor: ...`.
 
 ### 4. Evaluasi Commit dengan Pesan Buruk
 * **Commit Bermasalah:** `8309eb0` — *"nambahkan punya nova"* (2 September 2026)
@@ -195,12 +195,21 @@ Berikut adalah 3 temuan hasil audit langsung pada kode Kelompok 06 yang saya sub
 ---
 
 ### C. Tanggapan atas Review yang Masuk ke Repositori Kelompok 05
-Ketika kelompok lain memberikan masukan review pada Pull Request repositori Kelompok 05:
-1. **Temuan yang Diterima:**  
-   Jika ada masukan mengenai optimasi aksesibilitas pada tabel matriks nilai (`grades/course.blade.php`), seperti penambahan atribut `role="region"` atau `overscroll-x-contain`, kami menerima dan memperbaikinya langsung dengan commit `fix(grades): tambah atribut aksesibilitas dan isolasi scroll tabel matriks`.
-2. **Temuan yang Ditolak dengan Alasan Teknis:**  
-   Jika reviewer menyarankan pemberian cache pada tabel nilai mahasiswa menggunakan `Cache::remember()`, kami menolak secara profesional:
-   > *"Terima kasih atas sarannya. Namun, nilai tugas, feedback dosen, dan status keterlambatan pengumpulan (`is_late`) merupakan data transaksional sensitif waktu. Caching berisiko menampilkan data usang (*stale data*) yang dapat menimbulkan ketidakadilan dan kebingungan mahasiswa sesaat setelah dosen mengunggah nilai baru."*
+Repositori Kelompok 05 menerima masukan peer review dari kelompok lain pada dua Pull Request:
+
+#### 1. Ulasan pada PR #55 (Domain Frontend Saya: `resources/views/courses/show.blade.php`)
+* **Kategori:** *Structure & Readability (Blade Template Hygiene)*
+* **Isi Masukan Reviewer:**
+  > *"Perhitungan fallback jumlah mahasiswa (`$stdCount`) diletakkan langsung di dalam template Blade menggunakan blok `@php`, diikuti oleh pengecekan defensif yang berulang seperti `$course->relationLoaded('students')` pada baris 247, 329, dan 331 serta `isset($availableStudents)` pada baris 296 dan 298. Template tampilan menjadi penuh dengan logika pemeriksaan status relasi dan ketersediaan variabel. Pindahkan perhitungan jumlah mahasiswa ke accessor pada model Course atau pastikan controller selalu melakukan eager loading relasi students dan mengirimkan `$availableStudents` sebagai koleksi kosong."*
+* **Keputusan Saya:** **DITERIMA DENGAN BAIK & LANGSUNG DIPERBAIKI (FIXED)**.
+* **Alasan & Tindak Lanjut Nyata:**  
+  Pengecekan defensif `relationLoaded()` tersebut awalnya saya pasang saat eksperimen optimisasi performa Minggu 11 untuk mencegah lazy loading jika controller tidak memuat relasi. Namun, karena controller backend (`CourseController@show`) sudah menjamin pemanggilan `$course->load(['students', ...])`, `$course->loadCount('students')`, dan inisialisasi `$availableStudents = collect()`, pengecekan defensif di Blade tersebut memang berlebihan dan mengotori kebersihan template (*code clutter*).  
+  **Aksi Perbaikan Kode:** Saya langsung menghapus blok `@php $stdCount = ... @endphp`, menggantinya dengan pemanggilan bersih `$course->students_count`, menyederhanakan pengecekan menjadi `$availableStudents->isNotEmpty()`, dan menghapus seluruh pengawal `relationLoaded()` berulang. Template Blade kini kembali deklaratif dan bersih sesuai kaidah *Separation of Concerns*.
+
+#### 2. Ulasan pada PR #61 (Domain Seeder & Entrypoint Container oleh @ferdiansyaafq)
+* **Kategori:** *Keamanan (`docker/entrypoint.sh:43-56`) & Performa (`DatabaseSeeder.php`)*
+* **Keputusan Tim:** **DITERIMA PENUH**.
+* **Alasan & Tindak Lanjut:** Reviewer menemukan bahwa logika operator `&&` pada evaluasi `DEMO_*_PASSWORD` dapat melewatkan pembaruan kata sandi akun admin produksi jika salah satu kredensial kosong (*fail silently*). Kami menerima masukan ini untuk menambahkan validasi peringatan dan penghentian proses (`exit 1`) di lingkungan produksi, serta mengadopsi bulk insert pivot pada seeder pendaftaran mahasiswa.
 
 ---
 
@@ -208,8 +217,8 @@ Ketika kelompok lain memberikan masukan review pada Pull Request repositori Kelo
 
 ### 1. Berapa commit atas nama Anda? Tunjukkan `git shortlog -sn`.
 > **Jawaban:**  
-> Berdasarkan perintah `git shortlog -sn --all`, tercatat **29 commit** atas nama saya:
-> - **17 commit** dengan identitas akun `NovaRes06` (fitur Blade, optimasi layout, styling, dan dokumentasi mingguan).
+> Berdasarkan perintah `git shortlog -sn --all`, tercatat **30 commit** atas nama saya:
+> - **18 commit** dengan identitas akun `NovaRes06` (fitur Blade, optimasi layout, styling, template PR, dan dokumentasi mingguan).
 > - **12 commit** dengan identitas `NOVA RESKIANTI` (penggabungan Pull Request / merge commit ke branch utama).
 > 
 > Potongan keluaran terminal:
@@ -218,8 +227,8 @@ Ketika kelompok lain memberikan masukan review pada Pull Request repositori Kelo
 > 35  Muhammad Zaldy Syah Firaz
 > 25  ardiansyah24
 > 22  Muhammad Rifa Al Rizqul Aulia
+> 18  NovaRes06
 > 17  Muhammad Yuspa Ardiansyah
-> 17  NovaRes06
 > 12  NOVA RESKIANTI
 >  8  Muhammad Farin Murtadho Syafiq
 >  6  BerserkerGats
@@ -239,9 +248,10 @@ Ketika kelompok lain memberikan masukan review pada Pull Request repositori Kelo
 
 ### 4. Tunjukkan satu temuan yang masuk ke kelompok Anda. Anda terima atau tolak? Kenapa?
 > **Jawaban:**  
-> Temuan yang masuk menyarankan penambahan caching 15 menit menggunakan `Cache::remember()` pada query rekapitulasi nilai kelas untuk mengurangi beban server.  
-> **Keputusan:** **DITOLAK**.  
-> **Alasan Teknis:** Nilai akademik, umpan balik dosen, dan status keterlambatan pengumpulan tugas (`is_late`) merupakan data dinamis bertransaksi tinggi yang sensitif waktu. Caching pada nilai mahasiswa berisiko menampilkan data usang (*stale data*), sehingga mahasiswa yang baru saja dinilai atau mengumpulkan revisi tugas akan mengira nilainya belum masuk, yang menimbulkan kebingungan dan keluhan akademik.
+> **Temuan Struktur & Keterbacaan pada PR #55 (`resources/views/courses/show.blade.php`):**  
+> Reviewer mengkritisi adanya blok `@php` untuk variabel fallback `$stdCount` dan pengecekan defensif berulang `$course->relationLoaded('students')` serta `isset($availableStudents)` di dalam template Blade.  
+> **Keputusan:** **DITERIMA**.  
+> **Alasan & Tindak Lanjut:** Masukan ini sangat tepat untuk menjaga *Blade template hygiene*. Pengecekan defensif tersebut berlebihan karena controller `CourseController@show` sudah memuat eager load count `$course->students_count` dan menjamin `$availableStudents` selalu berupa *Collection*. Saya menerima kritik ini dan telah memperbaikinya langsung dengan menghapus blok `@php`, mengganti variabelnya menjadi `$course->students_count` secara deklaratif, serta menyederhanakan kondisi pengecekan menjadi `$availableStudents->isNotEmpty()`.
 
 ### 5. Kenapa PR sebaiknya kecil dan satu fitur?
 > **Jawaban:**  

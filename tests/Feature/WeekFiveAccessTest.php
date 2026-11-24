@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Assignment;
 use App\Models\Course;
+use App\Models\Material;
 use App\Models\Submission;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -204,6 +205,51 @@ class WeekFiveAccessTest extends TestCase
             ->assertJsonPath('assignment.id', $assignmentB->id);
     }
 
+    /** Dosen yang bukan pengampu tidak boleh mengubah atau menghapus tugas. */
+    public function test_other_lecturer_cannot_update_or_delete_assignments_in_web(): void
+    {
+        $owner = $this->userWithRole('dosen');
+        $otherLecturer = $this->userWithRole('dosen');
+        $course = $this->courseFor($owner);
+        $assignment = $this->assignmentFor($course, $owner);
+
+        $this->actingAs($otherLecturer)
+            ->putJson(route('assignments.update', $assignment), [])
+            ->assertForbidden();
+
+        $this->actingAs($otherLecturer)
+            ->deleteJson(route('assignments.destroy', $assignment))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('assignments', [
+            'id' => $assignment->id,
+            'title' => $assignment->title,
+        ]);
+    }
+
+    /** URL nested harus cocok dengan mata kuliah pemilik materi. */
+    public function test_nested_material_binding_rejects_material_from_another_course(): void
+    {
+        $lecturer = $this->userWithRole('dosen');
+        $student = $this->userWithRole('mahasiswa');
+        $courseA = $this->courseFor($lecturer);
+        $courseB = $this->courseFor($lecturer);
+        $courseB->students()->attach($student->id, ['enrolled_at' => now()]);
+        $material = Material::factory()->create([
+            'course_id' => $courseB->id,
+            'uploaded_by' => $lecturer->id,
+        ]);
+
+        $this->actingAs($student)
+            ->getJson("/courses/{$courseA->id}/materials/{$material->id}")
+            ->assertNotFound();
+
+        $this->actingAs($student)
+            ->getJson("/courses/{$courseB->id}/materials/{$material->id}")
+            ->assertOk()
+            ->assertJsonPath('material.id', $material->id);
+    }
+
     public function test_only_admin_can_manage_users(): void
     {
         $student = $this->userWithRole('mahasiswa');
@@ -217,6 +263,89 @@ class WeekFiveAccessTest extends TestCase
         $this->actingAs($admin)
             ->get('/users')
             ->assertOk();
+    }
+
+    /** Hanya admin yang dapat mengubah atau menghapus data mata kuliah. */
+    public function test_non_admin_cannot_update_or_delete_courses_and_admin_can(): void
+    {
+        $lecturer = $this->userWithRole('dosen');
+        $student = $this->userWithRole('mahasiswa');
+        $admin = $this->userWithRole('admin');
+        $course = $this->courseFor($lecturer);
+
+        foreach ([$lecturer, $student] as $actor) {
+            $this->actingAs($actor)
+                ->putJson(route('courses.update', $course), [])
+                ->assertForbidden();
+
+            $this->actingAs($actor)
+                ->deleteJson(route('courses.destroy', $course))
+                ->assertForbidden();
+        }
+
+        $this->assertDatabaseHas('courses', ['id' => $course->id]);
+
+        $this->actingAs($admin)
+            ->put(route('courses.update', $course), [
+                'code' => 'SI9999010',
+                'name' => 'Mata Kuliah Diperbarui',
+                'description' => 'Perubahan oleh admin.',
+                'sks' => 3,
+                'lecturer_id' => $lecturer->id,
+                'status' => 'active',
+            ])
+            ->assertRedirect(route('courses.show', $course));
+
+        $this->assertDatabaseHas('courses', [
+            'id' => $course->id,
+            'name' => 'Mata Kuliah Diperbarui',
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('courses.destroy', $course))
+            ->assertRedirect(route('courses.index'));
+
+        $this->assertDatabaseMissing('courses', ['id' => $course->id]);
+    }
+
+    /** POST user dari dosen/mahasiswa ditolak sebelum data dibuat; admin diizinkan. */
+    public function test_non_admin_cannot_create_users_and_admin_can(): void
+    {
+        foreach (['dosen', 'mahasiswa'] as $role) {
+            $actor = $this->userWithRole($role);
+            $email = "blocked-{$role}@kampuslms.test";
+            $payload = [
+                'name' => 'Pengguna Tidak Berwenang',
+                'email' => $email,
+                'password' => 'password123',
+                'role' => 'mahasiswa',
+            ];
+
+            $this->actingAs($actor)
+                ->postJson(route('admin.users.store'), $payload)
+                ->assertForbidden();
+
+            $this->actingAs($actor)
+                ->postJson(route('users.store'), $payload)
+                ->assertForbidden();
+
+            $this->assertDatabaseMissing('users', ['email' => $email]);
+        }
+
+        $admin = $this->userWithRole('admin');
+        $this->actingAs($admin)
+            ->post(route('admin.users.store'), [
+                'name' => 'Pengguna Baru',
+                'email' => 'admin-created@kampuslms.test',
+                'password' => 'password123',
+                'role' => 'mahasiswa',
+            ])
+            ->assertRedirect(route('users.index'));
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'admin-created@kampuslms.test',
+            'role' => 'mahasiswa',
+        ]);
     }
 
     public function test_only_admin_or_assigned_lecturer_can_enroll_a_student(): void
@@ -275,6 +404,6 @@ class WeekFiveAccessTest extends TestCase
 
     public function test_role_is_not_mass_assignable(): void
     {
-        $this->assertFalse((new User())->isFillable('role'));
+        $this->assertFalse((new User)->isFillable('role'));
     }
 }

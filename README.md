@@ -138,6 +138,10 @@ Pada lingkungan **produksi**, password akun demo **diganti** melalui `DemoAccoun
 * [Laporan Praktikum Minggu 13 — Muhammad Rifa Al Rizqul Aulia](docs/minggu-13-Muhammad-Rifa-Al-Rizqul-Aulia.md)
 * [Laporan Praktikum Minggu 13 — Nova Reskianti](docs/minggu-13-Nova-Reskianti.md)
 * [Laporan Praktikum Minggu 13 — Muhammad Yuspa Ardiansyah](docs/minggu-13-Muhammad-Yuspa-Ardiansyah.md)
+* [Catatan Praktikum Minggu 14 — Nova Reskianti](docs/minggu-14-Nova-Reskianti.md)
+* [Catatan Praktikum Minggu 14 — Muhammad Yuspa Ardiansyah](docs/minggu-14-Muhammad-Yuspa-Ardiansyah.md)
+* [Debugging dan Test Regresi](docs/debugging.md)
+* [Analisis Keamanan dan Pemetaan Feature Test](docs/keamanan.md)
 
 ---
 

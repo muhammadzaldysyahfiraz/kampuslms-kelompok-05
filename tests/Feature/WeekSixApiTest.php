@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Assignment;
 use App\Models\Course;
 use App\Models\Grade;
-use App\Models\Material;
 use App\Models\Submission;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -463,6 +462,33 @@ class WeekSixApiTest extends TestCase
             ])
             ->assertForbidden()
             ->assertJsonPath('message', 'Anda tidak memiliki akses ke sumber daya ini.');
+    }
+
+    /** Mahasiswa tidak boleh memanggil endpoint penilaian, dan nilainya tetap kosong. */
+    public function test_student_cannot_grade_submission_via_api(): void
+    {
+        $lecturer = $this->userWithRole('dosen');
+        $student = $this->userWithRole('mahasiswa');
+        $outsider = $this->userWithRole('mahasiswa');
+        $course = $this->courseFor($lecturer);
+        $assignment = $this->assignmentFor($course, $lecturer);
+        $submission = Submission::factory()->create([
+            'assignment_id' => $assignment->id,
+            'user_id' => $student->id,
+        ]);
+
+        foreach ([$student, $outsider] as $actor) {
+            $token = $actor->createToken('test')->plainTextToken;
+
+            $this->withToken($token)
+                ->putJson("/api/v1/submissions/{$submission->id}/grade", [
+                    'score' => 100,
+                    'feedback' => 'Percobaan penilaian oleh mahasiswa.',
+                ])
+                ->assertForbidden();
+        }
+
+        $this->assertDatabaseMissing('grades', ['submission_id' => $submission->id]);
     }
 
     /*

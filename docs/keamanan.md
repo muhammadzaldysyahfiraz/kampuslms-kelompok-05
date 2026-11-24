@@ -67,21 +67,6 @@ Aplikasi **KampusLMS** menerapkan strategi keamanan berlapis (*defense-in-depth*
 
 ## 2. Tabel Resmi Titik Rawan IDOR & Matriks Mitigasi
 
-Berikut adalah daftar titik rawan yang didokumentasikan dan diuji secara menyeluruh pada KampusLMS:
-
-| No | Titik Rawan (Endpoint) | Metode | Skenario Penyerangan (Ancaman IDOR) | Aktor Penguji | Lapis Pertahanan / Mitigasi Backend | Ekspektasi Respons | Bukti Uji `curl` |
-|:--:|:-----------------------|:------:|:------------------------------------|:--------------|:------------------------------------|:------------------:|:-----------------|
-| **1** | `/submissions/{submission}` | `GET` | Mahasiswa mencoba membaca tugas/submission milik mahasiswa lain dengan mengganti parameter ID. | Mahasiswa (User 5) membuka Subm. 79 (User 6) | `SubmissionController@show` & `SubmissionPolicy@view` (`user_id === auth()->id()`) | **403 Forbidden** | Skenario 1 |
-| **2** | `/api/v1/submissions/{id}/grade` | `PUT` | Mahasiswa mencoba memberi nilai pada submission miliknya sendiri atau milik temannya. | Mahasiswa (User 5) mencoba menilai Subm. 1 | `GradeSubmissionRequest::authorize()` & `GradePolicy@create/update` (hanya dosen pengampu) | **403 Forbidden** | Skenario 2 |
-| **3** | `/assignments/{assignment}` | `PUT` / `DELETE` | Dosen mencoba mengedit atau menghapus tugas dari mata kuliah milik dosen lain (*Cross-Lecturer IDOR*). | Dosen A (User 2) mengedit Tugas 1 (diampu Dosen B / User 4) | `AssignmentController::ensureAssignmentManager` & `AssignmentPolicy@update/delete` | **403 Forbidden** | Skenario 3 |
-| **4** | `/materials/{material}` | `PUT` / `DELETE` | Dosen mencoba memodifikasi atau menghapus materi kuliah milik dosen lain. | Dosen A (User 2) menghapus Materi 1 (diampu Dosen B / User 4) | `MaterialController::ensureMaterialManager` & `MaterialPolicy@update/delete` | **403 Forbidden** | Skenario 4 |
-| **5** | `/courses/{course}/assignments/{assignment}` | `GET` | Penyerang mencoba memanggil penugasan milik MK-A melalui konteks URL MK-B (*Cross-Course IDOR*). | Mahasiswa/Dosen memanggil `/courses/2/assignments/1` | `Route::scopeBindings()` & `AssignmentController@showNested` verifikasi `assignment->course_id === course->id` | **404 Not Found** | Skenario 5 |
-| **6** | `/courses/{course}/materials/{material}` | `GET` | Penyerang mencoba memanggil materi milik MK-A melalui konteks URL MK-B (*Cross-Course IDOR*). | Mahasiswa/Dosen memanggil `/courses/2/materials/1` | `Route::scopeBindings()` & `MaterialController@showNested` verifikasi `material->course_id === course->id` | **404 Not Found** | Skenario 6 |
-| **7** | `/courses/{course}` | `PUT` / `DELETE` | Dosen atau Mahasiswa mencoba mengubah metadata atau menghapus data mata kuliah master. | Dosen (User 2) atau Mahasiswa (User 5) mengubah MK 1 | `CoursePolicy@update` & `CoursePolicy@delete` (dibatasi `role === 'admin'`) | **403 Forbidden** | Skenario 7 |
-| **8** | `/users` atau `/admin/users` | `GET` / `POST` | Pengguna selain admin mencoba mengakses daftar seluruh pengguna atau mendaftarkan akun baru. | Dosen (User 2) atau Mahasiswa (User 5) | Rute dilindungi Middleware `role:admin` pada grup rute web. | **403 Forbidden** | Skenario 8 |
-| **9** | `/courses/{course}/enrollments` | `POST` / `DELETE` | Pengguna tidak berwenang mencoba memanipulasi daftar mahasiswa di kelas (*Roster Tamper*). | Dosen non-pengampu atau Mahasiswa | `EnrollmentController` membatasi akses hanya kepada admin atau dosen pengampu mata kuliah. | **403 Forbidden** | Skenario 9 |
-| **10** | `/{role}/notifications/{notification}` | `GET` / `PATCH` | Pengguna mencoba membaca atau menandai notifikasi milik pengguna lain. | Pengguna lain | `NotificationController` hanya mengambil notifikasi melalui relasi pengguna yang sedang login (`$user->notifications()`). | **404 / 403** | Skenario 10 |
-
 Berikut adalah daftar titik rawan beserta feature test yang membuktikan perilaku otorisasinya. Jalankan satu test dengan `php artisan test --filter=NamaTest`.
 
 | No | Titik Rawan (Endpoint) | Metode | Skenario Penyerangan (Ancaman IDOR) | Aktor Penguji | Lapis Pertahanan / Mitigasi Backend | Ekspektasi Respons | Bukti Uji `curl` | Feature test |

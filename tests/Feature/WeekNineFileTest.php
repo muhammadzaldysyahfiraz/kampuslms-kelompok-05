@@ -61,7 +61,7 @@ class WeekNineFileTest extends TestCase
         $filePath = "materials/{$course->id}/sample-material.pdf";
         Storage::disk('local')->put($filePath, 'konten berkas materi privat');
 
-        $material = new Material();
+        $material = new Material;
         $material->course_id = $course->id;
         $material->uploaded_by = $lecturer->id;
         $material->title = 'Modul Pertemuan 2';
@@ -88,7 +88,7 @@ class WeekNineFileTest extends TestCase
         $filePath = "materials/{$course->id}/sample-material.pdf";
         Storage::disk('local')->put($filePath, 'konten berkas materi privat');
 
-        $material = new Material();
+        $material = new Material;
         $material->course_id = $course->id;
         $material->uploaded_by = $lecturer->id;
         $material->title = 'Materi Rahasia';
@@ -102,6 +102,43 @@ class WeekNineFileTest extends TestCase
 
         $response = $this->actingAs($stranger)->get(route('materials.download', $material));
         $response->assertStatus(403);
+    }
+
+    /** Dosen lain tidak boleh mengunggah, mengubah, atau menghapus materi kelas. */
+    public function test_other_lecturer_cannot_create_update_or_delete_course_material(): void
+    {
+        $owner = User::factory()->create(['role' => 'dosen']);
+        $otherLecturer = User::factory()->create(['role' => 'dosen']);
+        $course = Course::factory()->create(['lecturer_id' => $owner->id]);
+
+        $this->actingAs($otherLecturer)
+            ->postJson(route('courses.materials.store', $course), [
+                'title' => 'Materi Tidak Sah',
+                'description' => 'Unggahan dari dosen lain.',
+                'type' => 'link',
+                'external_url' => 'https://example.test/materi',
+            ])
+            ->assertForbidden();
+
+        $material = Material::factory()->create([
+            'course_id' => $course->id,
+            'uploaded_by' => $owner->id,
+        ]);
+        Storage::disk('local')->put($material->file_path, 'isi materi privat');
+
+        $this->actingAs($otherLecturer)
+            ->putJson(route('materials.update', $material), ['title' => 'Judul Diubah'])
+            ->assertForbidden();
+
+        $this->actingAs($otherLecturer)
+            ->deleteJson(route('materials.destroy', $material))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('materials', [
+            'id' => $material->id,
+            'title' => $material->title,
+        ]);
+        Storage::disk('local')->assertExists($material->file_path);
     }
 
     /** Test mahasiswa terdaftar dapat mengumpulkan tugas dengan berkas. */
@@ -237,7 +274,7 @@ class WeekNineFileTest extends TestCase
         $filePath = "submissions/{$assignment->id}/tugas-student-a.pdf";
         Storage::disk('local')->put($filePath, 'tugas a');
 
-        $subA = new Submission();
+        $subA = new Submission;
         $subA->assignment_id = $assignment->id;
         $subA->user_id = $studentA->id;
         $subA->file_path = $filePath;
@@ -273,7 +310,7 @@ class WeekNineFileTest extends TestCase
         $materialPath = "materials/{$course->id}/materi-uji.pdf";
         Storage::disk('local')->put($materialPath, 'isi materi');
 
-        $material = new Material();
+        $material = new Material;
         $material->course_id = $course->id;
         $material->uploaded_by = $lecturer->id;
         $material->title = 'Materi Uji Hapus';
@@ -294,7 +331,7 @@ class WeekNineFileTest extends TestCase
         $subPath = "submissions/{$assignment->id}/jawaban-uji.pdf";
         Storage::disk('local')->put($subPath, 'isi jawaban');
 
-        $sub = new Submission();
+        $sub = new Submission;
         $sub->assignment_id = $assignment->id;
         $sub->user_id = $student->id;
         $sub->file_path = $subPath;

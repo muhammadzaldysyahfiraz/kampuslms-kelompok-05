@@ -46,8 +46,7 @@ class WeekTenNotificationTest extends TestCase
 
         AssignmentPublished::dispatch($assignment);
 
-        Queue::assertPushed(CallQueuedListener::class, fn (CallQueuedListener $job) =>
-            $job->class === SendAssignmentNotification::class
+        Queue::assertPushed(CallQueuedListener::class, fn (CallQueuedListener $job) => $job->class === SendAssignmentNotification::class
         );
     }
 
@@ -102,7 +101,7 @@ class WeekTenNotificationTest extends TestCase
         $course->students()->attach($student->id, ['enrolled_at' => now()]);
         $assignment = Assignment::factory()->create(['course_id' => $course->id]);
 
-        (new SendAssignmentNotification())->handle(new AssignmentPublished($assignment));
+        (new SendAssignmentNotification)->handle(new AssignmentPublished($assignment));
 
         Notification::assertSentTo($student, NewAssignmentNotification::class);
         Notification::assertNotSentTo($outsider, NewAssignmentNotification::class);
@@ -131,14 +130,37 @@ class WeekTenNotificationTest extends TestCase
 
         GradeReleased::dispatch($grade);
 
-        Queue::assertPushed(CallQueuedListener::class, fn (CallQueuedListener $job) =>
-            $job->class === SendGradeNotification::class
+        Queue::assertPushed(CallQueuedListener::class, fn (CallQueuedListener $job) => $job->class === SendGradeNotification::class
         );
 
         $payload = (new GradeReleasedNotification($grade))->toDatabase($student);
         $this->assertSame(['grade_id', 'assignment_id', 'assignment_title'], array_keys($payload));
         $this->assertStringNotContainsString('88', json_encode($payload));
         $this->assertStringNotContainsString('Feedback privat', json_encode($payload));
+    }
+
+    /** Nilai hanya mengirim notifikasi kepada mahasiswa pemilik submission. */
+    public function test_grade_notification_is_sent_only_to_submission_owner(): void
+    {
+        Notification::fake();
+        $lecturer = $this->createUser('dosen');
+        $student = $this->createUser('mahasiswa');
+        $outsider = $this->createUser('mahasiswa');
+        $course = Course::factory()->create(['lecturer_id' => $lecturer->id]);
+        $assignment = Assignment::factory()->create(['course_id' => $course->id]);
+        $submission = Submission::factory()->create([
+            'assignment_id' => $assignment->id,
+            'user_id' => $student->id,
+        ]);
+        $grade = Grade::factory()->create([
+            'submission_id' => $submission->id,
+            'graded_by' => $lecturer->id,
+        ]);
+
+        (new SendGradeNotification)->handle(new GradeReleased($grade));
+
+        Notification::assertSentTo($student, GradeReleasedNotification::class);
+        Notification::assertNotSentTo($outsider, GradeReleasedNotification::class);
     }
 
     public function test_saving_grade_from_web_dispatches_grade_event(): void
@@ -157,8 +179,7 @@ class WeekTenNotificationTest extends TestCase
             ->post(route('submissions.grade.store', $submission), ['score' => 91])
             ->assertRedirect();
 
-        Event::assertDispatched(GradeReleased::class, fn (GradeReleased $event) =>
-            $event->grade->submission_id === $submission->id
+        Event::assertDispatched(GradeReleased::class, fn (GradeReleased $event) => $event->grade->submission_id === $submission->id
         );
     }
 
@@ -178,12 +199,11 @@ class WeekTenNotificationTest extends TestCase
             ->putJson("/api/v1/submissions/{$submission->id}/grade", ['score' => 91])
             ->assertCreated();
 
-        Event::assertDispatched(GradeReleased::class, fn (GradeReleased $event) =>
-            $event->grade->submission_id === $submission->id
+        Event::assertDispatched(GradeReleased::class, fn (GradeReleased $event) => $event->grade->submission_id === $submission->id
         );
     }
 
-    public function test_student_cannot_mark_another_students_notification_as_read(): void
+    public function test_student_cannot_view_mark_or_delete_another_students_notification(): void
     {
         $owner = $this->createUser('mahasiswa');
         $otherStudent = $this->createUser('mahasiswa');
@@ -195,10 +215,19 @@ class WeekTenNotificationTest extends TestCase
         $owner->notifications()->save($notification);
 
         $this->actingAs($otherStudent)
+            ->get(route('notifications.show', $notification))
+            ->assertNotFound();
+
+        $this->actingAs($otherStudent)
             ->patch(route('notifications.read', $notification))
             ->assertNotFound();
 
+        $this->actingAs($otherStudent)
+            ->delete(route('notifications.destroy', $notification))
+            ->assertNotFound();
+
         $this->assertNull($notification->fresh()->read_at);
+        $this->assertDatabaseHas('notifications', ['id' => $notification->id]);
     }
 
     public function test_notification_page_shows_own_messages_and_can_mark_all_read(): void

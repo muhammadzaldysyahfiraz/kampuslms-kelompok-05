@@ -31,10 +31,8 @@ class MaterialFactory extends Factory
         $selected = fake()->randomElement($materials);
 
         return [
-            'course_id' => Course::inRandomOrder()->value('id'),
-            'uploaded_by' => User::where('role', 'dosen')
-                ->inRandomOrder()
-                ->value('id'),
+            'course_id' => fn () => Course::inRandomOrder()->value('id') ?? Course::factory(),
+            'uploaded_by' => fn (array $attributes) => Course::find($attributes['course_id'])?->lecturer_id ?? (User::where('role', 'dosen')->inRandomOrder()->value('id') ?? User::factory()->create(['role' => 'dosen'])->id),
             'title' => $selected['title'],
             'description' => $selected['description'],
             'type' => 'file',

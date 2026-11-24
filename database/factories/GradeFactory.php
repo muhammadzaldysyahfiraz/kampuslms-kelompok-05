@@ -23,10 +23,8 @@ class GradeFactory extends Factory
         ];
 
         return [
-            'submission_id' => Submission::inRandomOrder()->value('id'),
-            'graded_by' => User::where('role', 'dosen')
-                ->inRandomOrder()
-                ->value('id'),
+            'submission_id' => fn () => Submission::inRandomOrder()->value('id') ?? Submission::factory(),
+            'graded_by' => fn (array $attributes) => Submission::find($attributes['submission_id'])?->assignment?->course?->lecturer_id ?? (User::where('role', 'dosen')->inRandomOrder()->value('id') ?? User::factory()->create(['role' => 'dosen'])->id),
             'score' => fake()->numberBetween(75, 100),
             'feedback' => fake()->randomElement($feedbacks),
             'graded_at' => now(),

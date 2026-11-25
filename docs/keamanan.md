@@ -7,6 +7,7 @@
 > 2. Muhammad Yuspa Ardiansyah (10241054)  
 > 3. Muhammad Rifa Al-Rizqul (10241050)  
 > 4. Nova Reskianti (10241058)  
+> 5. Muhammad Farin Murtadho Syafiq (10241046)  
 >
 > **Tujuan Dokumen:**  
 > Panduan resmi arsitektur keamanan, mitigasi *Insecure Direct Object References* (IDOR), matriks otorisasi per peran, dan skrip pembuktian langsung (*live penetration testing*) menggunakan `curl` untuk evaluasi Ujian Tengah Semester (UTS - Bagian 3: Uji Keamanan Langsung).

@@ -1,6 +1,6 @@
 # Catatan Debugging KampusLMS
 
-Dokumen ini mencatat tiga bug yang dilaporkan selama pengembangan, penyebabnya, perbaikannya, dan test yang mencegah bug serupa kembali.
+Dokumen ini mencatat bug nyata yang dilaporkan dan diselesaikan selama pengembangan, penyebabnya, perbaikannya, dan test yang mencegah bug serupa kembali.
 
 ## 1. Otorisasi submission gagal karena argumen Policy
 
@@ -22,5 +22,14 @@ Dokumen ini mencatat tiga bug yang dilaporkan selama pengembangan, penyebabnya, 
 - **Penyebab:** Batas `upload_max_filesize` atau `post_max_size` PHP pada lingkungan yang menjalankan aplikasi lebih kecil dari berkas yang dikirim.
 - **Perbaikan:** Samakan batas PHP dengan batas aplikasi. Konfigurasi Docker saat ini menetapkan `upload_max_filesize = 25M` dan `post_max_size = 30M`; validasi submission aplikasi tetap membatasi berkas sampai 5 MB.
 - **Test regresi:** `SubmissionFormTest::test_submission_form_rejects_oversized_file` memastikan berkas 6 MB yang mencapai Laravel ditolak dan tidak tersimpan. Test ini tidak mensimulasikan penolakan PHP sebelum request masuk ke aplikasi.
+
+## 4. Ketergantungan data seeder pada Model Factories (Seederless DB Failure)
+
+- **Gejala:** Pemanggilan model factories (`Course::factory()`, `Assignment::factory()`, `Submission::factory()`, `GradeFactory`) pada database pengujian bersih melempar error `QueryException: NOT NULL constraint failed: courses.lecturer_id`.
+- **Penyebab:** Kolom relasi foreign key pada factory menggunakan `User::where('role', 'dosen')->inRandomOrder()->value('id')` yang mengembalikan `NULL` saat pengujian berjalan di database kosong tanpa seeder.
+- **Perbaikan:** Menambahkan closure fallback otomatis pada seluruh model factories yang memanggil factory relasinya saat data induk belum ada di database.
+- **Test regresi:** `WeekFourteenDatabaseTest::test_seederless_database_factories_can_generate_all_models_without_seeder` dan `WeekFourteenDatabaseTest::test_database_cascade_and_restrict_integrity_constraints`.
+
+---
 
 Jalankan test terkait dengan `php artisan test --filter=NamaTest`. Test menjaga perilaku aplikasi; untuk batas PHP, periksa juga konfigurasi lingkungan deployment.

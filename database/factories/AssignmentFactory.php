@@ -31,10 +31,8 @@ class AssignmentFactory extends Factory
         $selected = fake()->randomElement($assignments);
 
         return [
-            'course_id' => Course::inRandomOrder()->value('id'),
-            'created_by' => User::where('role', 'dosen')
-                ->inRandomOrder()
-                ->value('id'),
+            'course_id' => fn () => Course::inRandomOrder()->value('id') ?? Course::factory(),
+            'created_by' => fn (array $attributes) => Course::find($attributes['course_id'])?->lecturer_id ?? (User::where('role', 'dosen')->inRandomOrder()->value('id') ?? User::factory()->create(['role' => 'dosen'])->id),
             'title' => $selected['title'],
             'instructions' => $selected['instructions'],
             'due_at' => now()->addDays(7),

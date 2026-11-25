@@ -42,9 +42,9 @@ class CourseFactory extends Factory
             'name' => $selected['name'],
             'description' => $selected['description'],
             'sks' => fake()->numberBetween(2, 4),
-            'lecturer_id' => User::where('role', 'dosen')
+            'lecturer_id' => fn () => User::where('role', 'dosen')
                 ->inRandomOrder()
-                ->value('id'),
+                ->value('id') ?? User::factory()->create(['role' => 'dosen'])->id,
             'status' => 'active',
         ];
     }

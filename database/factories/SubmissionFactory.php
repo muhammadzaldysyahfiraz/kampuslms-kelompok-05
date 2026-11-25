@@ -22,10 +22,10 @@ class SubmissionFactory extends Factory
         ];
 
         return [
-            'assignment_id' => Assignment::inRandomOrder()->value('id'),
-            'user_id' => User::where('role', 'mahasiswa')
+            'assignment_id' => fn () => Assignment::inRandomOrder()->value('id') ?? Assignment::factory(),
+            'user_id' => fn () => User::where('role', 'mahasiswa')
                 ->inRandomOrder()
-                ->value('id'),
+                ->value('id') ?? User::factory()->create(['role' => 'mahasiswa'])->id,
             'file_path' => 'submissions/' . fake()->uuid() . '.pdf',
             'original_name' => 'tugas-praktikum.pdf',
             'file_size' => fake()->numberBetween(120000, 3500000),
